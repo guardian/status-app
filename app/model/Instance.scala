@@ -31,7 +31,7 @@ class Instance(awsInstance: AwsEc2Instance) {
   lazy val tags = awsInstance.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
 
   lazy val stage = tags("Stage")
-  lazy val app = tags("App")
+  lazy val app = tags("Role")
 
   def usefulUrls: List[(String, String)] = Nil
 
@@ -77,6 +77,20 @@ class StandardPlayApp(awsInstance: AwsEc2Instance) extends Instance(awsInstance)
     }
 }
 
+class StandardJettyApp(awsInstance: AwsEc2Instance, port: Int = 8080) extends Instance(awsInstance) {
+  lazy val manifestUrl = "http://%s:%d/management/manifest".format(publicDns, port)
+
+  override def usefulUrls = List(
+    "manifest" -> manifestUrl
+  )
+
+  override val versionFuture =
+    WS.url(manifestUrl).get().map { r =>
+      val values = r.body.lines.map(_.split(':').map(_.trim)).collect { case Array(k, v) => k -> v }.toMap
+      values.get("Build")
+    }
+}
+
 object Instance {
   import play.api.Play.current
 
@@ -95,10 +109,13 @@ object Instance {
   }
 
   private def specificInstanceType(i: AwsEc2Instance) = {
-    val appTag = i.getTags.find(_.getKey == "App").map(_.getValue)
+    val appTag = i.getTags.find(_.getKey == "Role").map(_.getValue)
 
     appTag match {
       case Some("content-api-elasticsearch") => new ElasticSearchInstance(i)
+      case Some("ophan-elasticsearch") => new ElasticSearchInstance(i)
+      case Some("content-api-attendant") => new StandardJettyApp(i)
+      case Some("content-api-concierge") => new StandardJettyApp(i)
       case _ => new StandardPlayApp(i)
     }
   }
