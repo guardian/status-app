@@ -1,0 +1,42 @@
+@(instance: model.Instance)
+
+@main("Instance info for " + instance.id) {
+
+    <div class="container instance-info">
+        <div class="page-header">
+
+            <h1>Instance Status for @instance.id</h1>
+        </div>
+
+        <h2>General</h2>
+        <dl class="dl-horizontal">
+           <dt>Version</dt><dd>@instance.version.getOrElse("Unknown")</dd>
+           <dt>Type</dt><dd>@instance.instanceType</dd>
+           <dt>Launched</dt><dd>@instance.launched</dd>
+           <dt>Uptime</dt><dd>@instance.uptime</dd>
+           <dt>Public DNS</dt><dd>@instance.publicDns</dd>
+           <dt>Public IP</dt><dd>@instance.publicIpAddress</dd>
+           <dt>Private DNS</dt><dd>@instance.privateDns</dd>
+           <dt>Private IP</dt><dd>@instance.privateIpAddress</dd>
+           <dt>Availability Zone</dt><dd>@instance.availabilityZone</dd>
+           <dt>Hourly Rate</dt><dd>$@instance.cost</dd>
+           <dt>Approx. Monthly Rate</dt><dd>$@instance.approxMonthlyCost</dd>
+        </dl>
+
+        <h2>Useful URLS</h2>
+        <dl class="dl-horizontal">
+            @for((name, url) <- instance.usefulUrls) {
+                <dt>@name</dt><dd><a href="@url">@url</a></dd>
+            }
+         </dl>
+
+        <h2>Tags</h2>
+        <dl >
+            @for((t, v) <- instance.tags.toList.sorted) {
+                <dt>@t</dt><dd>@v</dd>
+
+            }
+         </dl>
+   </div>
+
+}
