@@ -2,12 +2,8 @@ package controllers
 
 import play.api.mvc._
 import model.{Instance, Cluster}
-import com.amazonaws.auth.BasicAWSCredentials
 import lib.{AWSCost, AmazonConnection, Config}
 import java.text.DecimalFormat
-import java.io.File
-import play.api.Configuration
-import com.typesafe.config.ConfigFactory
 
 object Application extends Controller {
 
@@ -25,13 +21,6 @@ object Application extends Controller {
 
   def es = Action {
     Ok(views.html.elasticsearch())
-  }
-
-
-  def fileConfig(filePath: String): Configuration = {
-    val file = new File(filePath)
-    if (!file.exists) throw new Error("Could not find %s" format (filePath))
-    Configuration(ConfigFactory.parseFile(file))
   }
 
 
