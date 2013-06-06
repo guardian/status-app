@@ -8,7 +8,7 @@ import java.text.DecimalFormat
 object Application extends Controller {
 
 
-  implicit lazy val amazonConnection = new AmazonConnection(Config.credentials)
+  implicit lazy val amazonConnection = new AmazonConnection(Config.credentials, Config.clientConfiguration)
 
   def index = Action {
     Ok(views.html.index(Cluster.findAll, AWSCost.totalSunkCost, new DecimalFormat("#,###.00")))

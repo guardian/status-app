@@ -9,12 +9,13 @@ import java.io.File
 import com.amazonaws.services.s3.model.{PutObjectRequest, ObjectMetadata}
 import com.amazonaws.services.s3.model.CannedAccessControlList._
 import play.api.libs.iteratee.PushEnumerator
+import com.amazonaws.ClientConfiguration
 
-class AmazonConnection(credentials: AWSCredentials) {
-  val ec2 = new AmazonEC2Client(credentials)
-  val elb = new AmazonElasticLoadBalancingClient(credentials)
-  val autoscaling = new AmazonAutoScalingClient(credentials)
-  val s3 = new AmazonS3Client(credentials)
+class AmazonConnection(credentials: AWSCredentials, clientConfig: ClientConfiguration) {
+  val ec2 = new AmazonEC2Client(credentials, clientConfig)
+  val elb = new AmazonElasticLoadBalancingClient(credentials, clientConfig)
+  val autoscaling = new AmazonAutoScalingClient(credentials, clientConfig)
+  val s3 = new AmazonS3Client(credentials, clientConfig)
 
   ec2.setEndpoint("ec2.eu-west-1.amazonaws.com")
   elb.setEndpoint("elasticloadbalancing.eu-west-1.amazonaws.com")
