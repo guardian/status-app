@@ -6,11 +6,11 @@
 
 <div class="container-fluid cluster-status" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
 
-        <div class="row-fluid">
+        <div class="row">
 
         @for(column <- clusters.grouped(clusters.size / 3)) {
 
-            <div class="span4">
+            <div class="span4 col-lg-4">
             @for(cluster <- column) {
                     <div class="header">
 
@@ -53,11 +53,24 @@
 
                     <div class="financial-info">Approx monthly cost: $@money.format(cluster.approxMonthlyCost)</div>
 
-                    <div class="tech-info">
-                    @for(action <- cluster.asg.recentActivity.take(3)) {
-                        <p><strong>@action.age</strong> @action.cause</p>
-                    }
+                    @if(!cluster.asg.recentActivity.isEmpty) {
+                    <div id="@cluster.name-activity" class="accordion">
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#@cluster.name-activity" href="#@cluster.name-activity-details">
+                                    Recent activity
+                                </a>
+                            </div>
+                            <div id="@cluster.name-activity-details" class="accordion-body collapse">
+                                <div class="accordion-inner">
+                                @for(action <- cluster.asg.recentActivity.take(3)) {
+                                    <p><strong>@action.age</strong> @action.cause</p>
+                                }
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    }
 
                 }
             </div>
