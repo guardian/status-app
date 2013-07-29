@@ -7,11 +7,5 @@ GET     /instance/:instance         controllers.Application.instance(instance)
 
 GET     /es                         controllers.Application.es
 
-POST    /autoscaling/:groupName/suspend     controllers.Autoscaling.suspend(groupName)
-POST    /autoscaling/:groupName/resume      controllers.Autoscaling.resume(groupName)
-
-POST    /autoscaling/:groupName/desiredCapacity      controllers.Autoscaling.desiredCapacity(groupName, newSize: Int)
-
-
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
