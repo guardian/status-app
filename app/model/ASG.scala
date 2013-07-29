@@ -36,11 +36,6 @@ class ASG(asg: AutoScalingGroup)(implicit awsConn: AmazonConnection) {
       .filter(_.isRecent)
   } getOrElse Nil
 
-  lazy val desiredCapacity = asg.getDesiredCapacity
-  def desiredCapacity(capacity: Int) = ASG.desiredCapacity(name, capacity)
-  lazy val maxCapacity = asg.getMaxSize
-  def maxCapacity(capacity: Int) = ASG.maxCapacity(name, capacity)
-
   def refresh() = ASG(name)
 
   class ScalingAction(a: Activity) {
@@ -76,26 +71,6 @@ class ASG(asg: AutoScalingGroup)(implicit awsConn: AmazonConnection) {
 }
 
 object ASG {
-  def suspend(name: String)(implicit conn: AmazonConnection) = {
-    conn.autoscaling.suspendProcesses(new SuspendProcessesRequest().withAutoScalingGroupName(name))
-    ASG(name)
-  }
-  def resume(name: String)(implicit conn: AmazonConnection) = {
-    conn.autoscaling.resumeProcesses(new ResumeProcessesRequest().withAutoScalingGroupName(name))
-    ASG(name)
-  }
-
-  def desiredCapacity(name: String, capacity: Int)(implicit conn: AmazonConnection) = {
-    conn.autoscaling.setDesiredCapacity(
-      new SetDesiredCapacityRequest().withAutoScalingGroupName(name).withDesiredCapacity(capacity))
-    ASG(name)
-  }
-
-  def maxCapacity(name: String, capacity: Int)(implicit conn: AmazonConnection) = {
-    conn.autoscaling.updateAutoScalingGroup(
-      new UpdateAutoScalingGroupRequest().withAutoScalingGroupName(name).withMaxSize(capacity))
-    ASG(name)
-  }
 
   def apply(name: String)(implicit conn: AmazonConnection) =
     new ASG(conn.autoscaling.describeAutoScalingGroups(

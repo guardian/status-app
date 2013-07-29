@@ -40,9 +40,6 @@ class Cluster(val asg: ASG)(implicit awsConn: AmazonConnection) {
     )
   }
 
-  lazy val allNodesUp = asg.desiredCapacity == members.size
-  lazy val healthy = members.forall(_.goodorbad == "good")
-
   def refresh() = Cluster(asg.refresh())
 
   lazy val approxMonthlyCost =

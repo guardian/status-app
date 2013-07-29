@@ -14,36 +14,6 @@
             @for(cluster <- column) {
                     <div class="header">
 
-                    <div class="btn-group action">
-                      <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                        Action
-                        <span class="caret"></span>
-                      </a>
-                      <ul class="dropdown-menu">
-                          <!-- yup this is ugly, sorry - we should really give some user feedback here -->
-                          @if(!cluster.asg.suspendedActivities.isEmpty) {
-                              <li>
-                                <a href="javascript:$.post('@routes.Autoscaling.resume(cluster.asg.name)')">Resume auto-scaling</a>
-                              </li>
-                          } else {
-                              <li>
-                                <a href="javascript:$.post('@routes.Autoscaling.suspend(cluster.asg.name)')">Suspend auto-scaling</a>
-                              </li>
-                          }
-
-                          <li class="dropdown-submenu">
-                              <a href="#">Desired capacity (currently @cluster.asg.desiredCapacity)</a>
-
-                              <ul tabindex="-1" class="dropdown-menu">
-                                  @for(i <- 1 to 10 if i != cluster.asg.desiredCapacity) {
-                                  <li><a href="javascript:$.post('@routes.Autoscaling.desiredCapacity(cluster.asg.name, i)')">@i</a></li>
-                                  }
-                              </ul>
-                          </li>
-
-                      </ul>
-                    </div>
-
                     <h3>@cluster.stage: @cluster.appName</h3>
 
                     </div>
