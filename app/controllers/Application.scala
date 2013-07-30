@@ -14,7 +14,7 @@ object Application extends Controller {
   }
 
   def stage(stage: String) = Action {
-    Ok(views.html.index(Cluster.stages, Cluster.findAll.groupBy(_.stage)(stage), AWSCost.totalSunkCost, new DecimalFormat("#,###.00")))
+    Ok(views.html.index(stage, Cluster.stages, Cluster.findAll.groupBy(_.stage)(stage), AWSCost.totalSunkCost, new DecimalFormat("#,###.00")))
   }
 
   def instance(id: String) = Action {
