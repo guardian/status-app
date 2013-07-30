@@ -8,13 +8,15 @@ import com.amazonaws.ClientConfiguration
 
 object Config {
   private lazy val localPropsFile = System.getProperty("user.home") + "/.gu/statusapp.conf"
-  private lazy val awsConfig = fileConfig(localPropsFile)
+  private lazy val configuration = fileConfig(localPropsFile)
 
-  lazy val accessKey = awsConfig.getString("accessKey").get
-  lazy val secretKey = awsConfig.getString("secretKey").get
-  lazy val esHost = awsConfig.getString("elasticsearchHost").get
-  lazy val proxyHost = awsConfig.getString("proxyHost")
-  lazy val proxyPort = awsConfig.getInt("proxyPort")
+  lazy val accessKey = configuration.getString("accessKey").get
+  lazy val secretKey = configuration.getString("secretKey").get
+  lazy val esHost = configuration.getString("elasticsearchHost").get
+  lazy val proxyHost = configuration.getString("proxyHost")
+  lazy val proxyPort = configuration.getInt("proxyPort")
+
+  lazy val managementPort = configuration.getInt("managementPort")
 
   def clientConfiguration() = {
     val client = new ClientConfiguration()
