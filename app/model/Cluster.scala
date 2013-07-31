@@ -68,11 +68,13 @@ class Cluster(val asg: ASG)(implicit awsConn: AmazonConnection) {
 object Cluster {
   val logger = Logger(getClass)
 
+  def stages(implicit aws: AmazonConnection): Seq[String] =
+    ASG.all.map(_.stage).toSet.toSeq
+
   def findAll(implicit aws: AmazonConnection): List[Cluster] = {
     logger.info("find all clusters")
 
-    val groups = aws.autoscaling.describeAutoScalingGroups().getAutoScalingGroups.toList
-      .map(new ASG(_))
+    val groups = ASG.all.toList
       .map(new Cluster(_))
       .sortBy(c => c.stage + c.appName)
 
