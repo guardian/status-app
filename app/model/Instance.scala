@@ -1,7 +1,7 @@
 package model
 
 import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance, DescribeInstancesRequest}
-import lib.{EC2CostingType, AWSCost, UptimeDisplay, AmazonConnection}
+import lib._
 import collection.JavaConversions._
 import play.api.libs.ws.{Response, WS}
 import play.api.cache.Cache
@@ -9,6 +9,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import concurrent.{Promise, Future, Await}
 import scala.concurrent.duration._
 import util.Try
+import play.api.libs.ws.Response
+import scala.Some
+import lib.EC2CostingType
 
 class Instance(awsInstance: AwsEc2Instance) {
   def id = awsInstance.getInstanceId
@@ -63,21 +66,7 @@ class ElasticSearchInstance(awsInstance: AwsEc2Instance) extends Instance(awsIns
     }
 }
 
-class StandardPlayApp(awsInstance: AwsEc2Instance) extends Instance(awsInstance) {
-  lazy val manifestUrl = "http://%s:9000/management/manifest".format(publicDns)
-
-  override def usefulUrls = List(
-    "manifest" -> manifestUrl
-  )
-
-  override val versionFuture =
-    WS.url(manifestUrl).get().map { r =>
-      val values = r.body.lines.map(_.split(':').map(_.trim)).collect { case Array(k, v) => k -> v }.toMap
-      values.get("Build")
-    }
-}
-
-class StandardJettyApp(awsInstance: AwsEc2Instance, port: Int = 8080) extends Instance(awsInstance) {
+class StandardWebApp(awsInstance: AwsEc2Instance, port: Int = 8080) extends Instance(awsInstance) {
   lazy val manifestUrl = "http://%s:%d/management/manifest".format(publicDns, port)
 
   override def usefulUrls = List(
@@ -111,12 +100,8 @@ object Instance {
   private def specificInstanceType(i: AwsEc2Instance) = {
     val appTag = i.getTags.find(_.getKey == "Role").map(_.getValue)
 
-    appTag match {
-      case Some("content-api-elasticsearch") => new ElasticSearchInstance(i)
-      case Some("ophan-elasticsearch") => new ElasticSearchInstance(i)
-      case Some("content-api-attendant") => new StandardJettyApp(i)
-      case Some("content-api-concierge") => new StandardJettyApp(i)
-      case _ => new StandardPlayApp(i)
-    }
+    (for {
+      role <- appTag if role.contains("elasticsearch")
+    } yield new ElasticSearchInstance(i)) getOrElse new StandardWebApp(i, Config.managementPort.getOrElse(9000))
   }
 }
