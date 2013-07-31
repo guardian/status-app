@@ -72,6 +72,10 @@ class ASG(asg: AutoScalingGroup)(implicit awsConn: AmazonConnection) {
 
 object ASG {
 
+  def all(implicit conn: AmazonConnection): Seq[ASG] =
+    conn.autoscaling.describeAutoScalingGroups().getAutoScalingGroups
+      .map(new ASG(_))
+
   def apply(name: String)(implicit conn: AmazonConnection) =
     new ASG(conn.autoscaling.describeAutoScalingGroups(
       new DescribeAutoScalingGroupsRequest().withAutoScalingGroupNames(name)

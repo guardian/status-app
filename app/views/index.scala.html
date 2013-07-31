@@ -1,10 +1,19 @@
-@(clusters: List[model.Cluster], totalSunkCost: Float, money: java.text.DecimalFormat)
+@(stage: String, stages: Seq[String], clusters: Seq[model.Cluster], totalSunkCost: Float, money: java.text.DecimalFormat)
 
 @import model._
 
 @main("Ophan Status", refreshSecs = Some(10)) {
 
 <div class="container-fluid cluster-status" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+        <div class="row-fluid">
+            <div class="navbar">
+                <ul class="nav navbar-nav">
+                @for(s <- stages) {
+                    <li class="@if(stage == s) {active}"><a href="/@s">@s</a></li>
+                }
+                </ul>
+            </div>
+        </div>
 
         <div class="row">
 
@@ -14,7 +23,7 @@
             @for(cluster <- column) {
                     <div class="header">
 
-                    <h3>@cluster.stage: @cluster.appName</h3>
+                    <h3>@cluster.appName</h3>
 
                     </div>
 
