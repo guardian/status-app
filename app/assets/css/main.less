@@ -39,8 +39,17 @@
     td {
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
     }
+}
+
+.table>tbody>tr>td {
+  max-width: 90px;
+}
+.table>tbody>tr>td:first-child {
+  white-space: nowrap;
+}
+.table>tbody>tr>td:nth-child(4) {
+  white-space: nowrap;
 }
 
 .tight-top {
