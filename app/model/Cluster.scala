@@ -56,9 +56,9 @@ class Cluster(val asg: ASG)(implicit awsConn: AmazonConnection) {
 
     def goodorbad = (healthStatus, lifecycleState, state) match {
       case (_, "Pending", _) | (_, "Terminating", _) => "pending"
-      case ("Healthy", "InService", Some("InService")) => "good"
-      case ("Healthy", "InService", None) => "good"
-      case _ => "bad"
+      case ("Healthy", "InService", Some("InService")) => "success"
+      case ("Healthy", "InService", None) => "success"
+      case _ => "danger"
     }
 
     lazy val instance = model.Instance.get(id)

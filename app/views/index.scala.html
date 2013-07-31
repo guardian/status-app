@@ -5,8 +5,8 @@
 @main("Ophan Status", refreshSecs = Some(10)) {
 
 <div class="container-fluid cluster-status" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
-        <div class="row-fluid">
-            <div class="navbar">
+        <div class="row">
+            <div class="navbar tight-bottom">
                 <ul class="nav navbar-nav">
                 @for(s <- stages) {
                     <li class="@if(stage == s) {active}"><a href="/@s">@s</a></li>
@@ -19,12 +19,11 @@
 
         @for(column <- clusters.grouped(clusters.size / 3)) {
 
-            <div class="span4 col-lg-4">
+            <div class="col-lg-4">
             @for(cluster <- column) {
                     <div class="header">
-
-                    <h3>@cluster.appName</h3>
-
+                        <div class="pull-right">~ $@money.format(cluster.approxMonthlyCost)/month</div>
+                        <h3 class="tight-top">@cluster.appName</h3>
                     </div>
 
                     @if(!cluster.asg.suspendedActivities.isEmpty) {
@@ -34,7 +33,7 @@
                     </div>
                     }
 
-                    <table class="table">
+                    <table class="table table-condensed tight-bottom">
 
                         <thead>
                             <th width="75px">Instance</th>
@@ -60,21 +59,21 @@
 
                     </table>
 
-                    <div class="financial-info">Approx monthly cost: $@money.format(cluster.approxMonthlyCost)</div>
-
                     @if(!cluster.asg.recentActivity.isEmpty) {
                     <div id="@cluster.name-activity" class="accordion">
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#@cluster.name-activity" href="#@cluster.name-activity-details">
+                                <smalll><a class="accordion-toggle" data-toggle="collapse" data-parent="#@cluster.name-activity" href="#@cluster.name-activity-details">
                                     Recent activity
-                                </a>
+                                </a></smalll>
                             </div>
                             <div id="@cluster.name-activity-details" class="accordion-body collapse">
                                 <div class="accordion-inner">
-                                @for(action <- cluster.asg.recentActivity.take(3)) {
-                                    <p><strong>@action.age</strong> @action.cause</p>
-                                }
+                                    <small>
+                                    @for(action <- cluster.asg.recentActivity.take(3)) {
+                                        <p><strong>@action.age</strong> @action.cause</p>
+                                    }
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -96,8 +95,8 @@
 
      </div>
 
-    <div class="row-fluid">
-        <div class="sunk span12">
+    <div class="row">
+        <div class="sunk">
             Approx total monthly cost: $@money.format(clusters.map(_.approxMonthlyCost).sum)
             (total sunk cost: $@money.format(totalSunkCost))
         </div>
