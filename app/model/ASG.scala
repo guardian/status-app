@@ -61,12 +61,6 @@ class ASG(asg: AutoScalingGroup)(implicit awsConn: AmazonConnection) {
     def id = instance.getInstanceId
     def healthStatus = instance.getHealthStatus
     def lifecycleState = instance.getLifecycleState
-
-    def terminate() = {
-      awsConn.autoscaling.terminateInstanceInAutoScalingGroup(
-        new TerminateInstanceInAutoScalingGroupRequest().withInstanceId(id).withShouldDecrementDesiredCapacity(true)
-      )
-    }
   }
 }
 
