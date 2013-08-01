@@ -4,6 +4,9 @@ import play.api.mvc._
 import model.{Instance, Cluster}
 import lib.{AWSCost, AmazonConnection, Config}
 import java.text.DecimalFormat
+import scala.concurrent.ExecutionContext
+
+import ExecutionContext.Implicits.global
 
 object Application extends Controller {
 
@@ -14,11 +17,20 @@ object Application extends Controller {
   }
 
   def stage(stage: String) = Action {
-    Ok(views.html.index(stage, Cluster.stages, Cluster.findAll.groupBy(_.stage)(stage), AWSCost.totalSunkCost, new DecimalFormat("#,###.00")))
+    Async {
+      def stages(clusters: Seq[Cluster]): Seq[String] =
+        clusters.map(_.stage).toSet.toSeq
+
+      for {
+        clusters <- Cluster.findAll
+      } yield Ok(views.html.index(stage, stages(clusters), clusters.groupBy(_.stage)(stage), AWSCost.totalSunkCost, new DecimalFormat("#,###.00")))
+    }
   }
 
   def instance(id: String) = Action {
-    Ok(views.html.instance(Instance.get(id)))
+    Async {
+      Instance.get(id) map (i => Ok(views.html.instance(i)))
+    }
   }
 
   def es = Action {

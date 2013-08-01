@@ -7,9 +7,12 @@ import collection.JavaConversions._
 import lib.AmazonConnection
 import play.api.Logger
 import util.Try
+import scala.concurrent.{ExecutionContext, Future}
+
+import ExecutionContext.Implicits.global
 
 
-class ELB(val name: String, instanceStates: List[InstanceState]) {
+case class ELB(name: String, instanceStates: List[InstanceState]) {
   lazy val members = instanceStates.map(new Member(_))
 
   class Member(instanceState: InstanceState) {
@@ -21,71 +24,60 @@ class ELB(val name: String, instanceStates: List[InstanceState]) {
 }
 
 
-
-
 // right now i'm thinking that Cluster === ASG - this class exists becuase I'm
 // not totally convinced that is always true
-class Cluster(val asg: ASG)(implicit awsConn: AmazonConnection) {
+case class Cluster(val asg: ASG, members: List[ClusterMember]) {
   def name = asg.name
   def appName = asg.app
   def stage = asg.stage
 
   lazy val hasElb = asg.elb.isDefined
 
-  lazy val members: List[Member] = {
-    val membersOfElb = asg.elb.map(_.members).getOrElse(Nil)
-
-    asg.members.map(m =>
-      new Member(m, membersOfElb.find(_.id == m.id))
-    )
-  }
-
-  def refresh() = Cluster(asg.refresh())
-
   lazy val approxMonthlyCost =
     Try(members.map(_.instance.approxMonthlyCost).sum).getOrElse(BigDecimal(0))
 
-  class Member(asgInfo: asg.Member, elbInfo: Option[ELB#Member]) {
-    def id = asgInfo.id
-    def healthStatus = asgInfo.healthStatus
-    def lifecycleState = asgInfo.lifecycleState
+}
+case class ClusterMember(asgInfo: ASGMember, elbInfo: Option[ELB#Member], instance: Instance) {
+  def id = asgInfo.id
+  def healthStatus = asgInfo.healthStatus
+  def lifecycleState = asgInfo.lifecycleState
 
-    def state = elbInfo.map(_.state)
-    def description = elbInfo.flatMap(_.description)
-    def reasonCode = elbInfo.flatMap(_.reasonCode)
+  def state = elbInfo.map(_.state)
+  def description = elbInfo.flatMap(_.description)
+  def reasonCode = elbInfo.flatMap(_.reasonCode)
 
-    def goodorbad = (healthStatus, lifecycleState, state) match {
-      case (_, "Pending", _) | (_, "Terminating", _) => "pending"
-      case ("Healthy", "InService", Some("InService")) => "success"
-      case ("Healthy", "InService", None) => "success"
-      case _ => "danger"
-    }
-
-    lazy val instance = model.Instance.get(id)
+  def goodorbad = (healthStatus, lifecycleState, state) match {
+    case (_, "Pending", _) | (_, "Terminating", _) => "pending"
+    case ("Healthy", "InService", Some("InService")) => "success"
+    case ("Healthy", "InService", None) => "success"
+    case _ => "danger"
   }
 }
 
 object Cluster {
   val logger = Logger(getClass)
 
-  def stages(implicit aws: AmazonConnection): Seq[String] =
-    ASG.all.map(_.stage).toSet.toSeq
-
-  def findAll(implicit aws: AmazonConnection): List[Cluster] = {
+  def findAll(implicit aws: AmazonConnection): Future[Seq[Cluster]] = {
     logger.info("find all clusters")
 
-    val groups = ASG.all.toList
-      .map(new Cluster(_))
-      .sortBy(c => c.stage + c.appName)
-
-      groups.foreach{ cluster => logger.info("Cluster: "+cluster.stage+" - "+cluster.appName)}
-    groups
+    for {
+      asgs <- ASG.all
+      clusters <- Future.sequence(asgs.map(Cluster(_)))
+    } yield clusters.sortBy(c => c.stage + c.appName)
   }
 
   def find(name: String)(implicit aws: AmazonConnection) =
-    Cluster.findAll.filter(_.name == name).headOption
+    ASG(name) map (Cluster(_))
 
-  def apply(asg: ASG)(implicit aws: AmazonConnection) = {
-    new Cluster(asg)
+  def apply(asg: ASG)(implicit aws: AmazonConnection): Future[Cluster] = {
+    val membersOfElb = asg.elb.map(_.members).getOrElse(Nil)
+
+    for {
+      members <- Future.sequence(asg.members map (m =>
+        for {
+          i <- Instance.get(m.id)
+        } yield new ClusterMember(m, membersOfElb.find(_.id == m.id), i)
+      ))
+    } yield Cluster(asg, members)
   }
 }

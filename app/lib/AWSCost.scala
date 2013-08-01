@@ -8,7 +8,7 @@ import controllers.Application
 import collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import concurrent.Await
+import scala.concurrent.{Future, Await}
 import scala.util.Try
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsSuccess
@@ -54,9 +54,9 @@ object AWSCost {
     val allInstances = for {
       reservation <- awsConnection.ec2.describeInstances().getReservations
       instance <- reservation.getInstances
-    } yield new Instance(instance)
+    } yield Instance(instance)
 
-    allInstances.groupBy(_.costingType).mapValues(_.size)
+    Await.result(Future.sequence(allInstances), 5.seconds).groupBy(_.costingType).mapValues(_.size)
   }
 
   lazy val reservationsAgent = ScheduledAgent[Map[EC2CostingType, Seq[Reservation]]](0.seconds, 5.minutes) {
