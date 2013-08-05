@@ -9,34 +9,41 @@ import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
 import com.amazonaws.services.elasticloadbalancing.model.{Instance => AwsElbInstance, DescribeInstanceHealthRequest}
 
 import collection.JavaConversions._
+import scala.util.Try
 
-class ScalingAction(a: Activity) {
-  def startTime = new DateTime(a.getStartTime)
-  def ageMins = new Duration(startTime, DateTime.now).getStandardMinutes
-  def isRecent = ageMins < 60
-
-  def age = UptimeDisplay.print(startTime) + " ago"
-  def cause = a.getCause
-}
-
-case class ASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction]) {
+case class ASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction], members: Seq[ClusterMember]) {
 
   lazy val name = asg.getAutoScalingGroupName
-  lazy val members = asg.getInstances.toList.map(ASGMember(_))
   lazy val tags = asg.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
 
   lazy val status = asg.getStatus
 
   lazy val stage = tags("Stage")
-  lazy val app = (tags get "Role") orElse (tags get "App") getOrElse "?"
+  lazy val appName = (tags get "Role") orElse (tags get "App") getOrElse "?"
+
+  lazy val hasElb = elb.isDefined
 
   lazy val suspendedActivities = asg.getSuspendedProcesses.toList.map(_.getProcessName).sorted
+
+  lazy val approxMonthlyCost =
+    Try(members.map(_.instance.approxMonthlyCost).sum).getOrElse(BigDecimal(0))
 }
 
-case class ASGMember(instance: AwsAsgInstance) {
-  def id = instance.getInstanceId
-  def healthStatus = instance.getHealthStatus
-  def lifecycleState = instance.getLifecycleState
+case class ClusterMember(asgInfo: AwsAsgInstance, elbInfo: Option[ELB#Member], instance: Instance) {
+  def id = asgInfo.getInstanceId
+  def healthStatus = asgInfo.getHealthStatus
+  def lifecycleState = asgInfo.getLifecycleState
+
+  def state = elbInfo.map(_.state)
+  def description = elbInfo.flatMap(_.description)
+  def reasonCode = elbInfo.flatMap(_.reasonCode)
+
+  def goodorbad = (healthStatus, lifecycleState, state) match {
+    case (_, "Pending", _) | (_, "Terminating", _) => "pending"
+    case ("Healthy", "InService", Some("InService")) => "success"
+    case ("Healthy", "InService", None) => "success"
+    case _ => "danger"
+  }
 }
 
 object ASG {
@@ -54,21 +61,27 @@ object ASG {
     } yield asg
 
   def apply(asg: AutoScalingGroup)(implicit conn: AmazonConnection): Future[ASG] =  {
-    val instanceStates = Future.sequence((asg.getLoadBalancerNames.headOption map { lbName =>
-      for {
-        elbHealths <- AWS.futureOf(conn.elb.describeInstanceHealthAsync, new DescribeInstanceHealthRequest(lbName))
-      } yield ELB(lbName, elbHealths.getInstanceStates.toList)
-    }).toSeq)
+    val instanceStates = Future.sequence((asg.getLoadBalancerNames.headOption map (ELB(_))).toSeq)
 
     val recentActivity = for {
-      activities <- AWS.futureOf(conn.autoscaling.describeScalingActivitiesAsync,
-        new DescribeScalingActivitiesRequest().withAutoScalingGroupName(asg.getAutoScalingGroupName))
-    } yield activities.getActivities map (new ScalingAction(_)) filter (_.isRecent)
+      actions <- ScalingAction.forGroup(asg.getAutoScalingGroupName)
+    } yield actions filter (_.isRecent)
+
+    val clusterMembers = for {
+      elb <- instanceStates
+      members <- Future.sequence(asg.getInstances map {m =>
+        val membersOfElb = elb.headOption.map(_.members).getOrElse(Nil)
+        for {
+          i <- Instance.get(m.getInstanceId)
+        } yield new ClusterMember(m, membersOfElb.find(_.id == m.getInstanceId), i)
+      })
+    } yield members
 
     for {
       states <- instanceStates
       activities <- recentActivity
-    } yield ASG(asg, states.headOption, activities)
+      members <- clusterMembers
+    } yield ASG(asg, states.headOption, activities, members)
   }
 }
 

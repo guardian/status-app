@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.mvc._
-import model.{Instance, Cluster}
+import model.{ASG, Instance}
 import lib.{AWSCost, AmazonConnection, Config}
 import java.text.DecimalFormat
 import scala.concurrent.ExecutionContext
@@ -18,12 +18,15 @@ object Application extends Controller {
 
   def stage(stage: String) = Action {
     Async {
-      def stages(clusters: Seq[Cluster]): Seq[String] =
+      def stages(clusters: Seq[ASG]): Seq[String] =
         clusters.map(_.stage).toSet.toSeq
 
       for {
-        clusters <- Cluster.findAll
-      } yield Ok(views.html.index(stage, stages(clusters), clusters.groupBy(_.stage)(stage), AWSCost.totalSunkCost, new DecimalFormat("#,###.00")))
+        clusters <- ASG.all
+      } yield Ok(views.html.index(
+        stage, stages(clusters), clusters.groupBy(_.stage)(stage).sortBy(_.appName),
+        AWSCost.totalSunkCost, new DecimalFormat("#,###.00")
+      ))
     }
   }
 
