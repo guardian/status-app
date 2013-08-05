@@ -1,4 +1,4 @@
-package teamcity
+package lib
 
 import akka.actor.ActorSystem
 import akka.agent.Agent

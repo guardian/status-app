@@ -1,9 +1,7 @@
-package lib
+package model
 
-import teamcity.ScheduledAgent
 import play.api.libs.ws.WS
 import play.api.libs.json._
-import model.Instance
 import controllers.Application
 import collection.JavaConversions._
 import scala.concurrent.duration._
@@ -14,6 +12,7 @@ import play.api.libs.json.JsArray
 import play.api.libs.json.JsSuccess
 import play.api.Logger
 import com.amazonaws.services.ec2.model.{DescribeReservedInstancesRequest, DescribeInstancesRequest}
+import lib.{AWS, ScheduledAgent}
 
 
 object AWSCost {

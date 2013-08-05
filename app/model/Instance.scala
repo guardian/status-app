@@ -3,16 +3,12 @@ package model
 import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance, DescribeInstancesRequest}
 import lib._
 import collection.JavaConversions._
-import play.api.libs.ws.{Response, WS}
+import play.api.libs.ws.WS
 import play.api.cache.Cache
 import scala.concurrent.ExecutionContext.Implicits.global
-import concurrent.{Promise, Future, Await}
-import scala.concurrent.duration._
-import util.Try
+import concurrent.Future
 import play.api.libs.ws.Response
 import scala.Some
-import lib.EC2CostingType
-import org.joda.time.DateTime
 
 case class Instance(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) {
   def id = awsInstance.getInstanceId

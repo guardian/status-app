@@ -1,8 +1,8 @@
 package controllers
 
 import play.api.mvc._
-import model.{ASG, Instance}
-import lib.{AWSCost, AmazonConnection, Config}
+import model.{AWSCost, ASG, Instance}
+import lib.{AmazonConnection, Config}
 import java.text.DecimalFormat
 import scala.concurrent.ExecutionContext
 
