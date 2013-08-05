@@ -5,5 +5,5 @@ resolvers ++= Seq(
     Resolver.url("sbt-plugin-releases",url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns)
 )
 
-addSbtPlugin("play" % "sbt-plugin" % "2.1.1")
+addSbtPlugin("play" % "sbt-plugin" % "2.1.2")
 

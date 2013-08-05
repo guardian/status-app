@@ -1,12 +1,10 @@
 package model
 
 import scala.concurrent.Future
-import lib.{AWS, UptimeDisplay, AmazonConnection}
-import org.joda.time.{Duration, DateTime}
+import lib.{AWS, AmazonConnection}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
-import com.amazonaws.services.elasticloadbalancing.model.{Instance => AwsElbInstance, DescribeInstanceHealthRequest}
 
 import collection.JavaConversions._
 import scala.util.Try
