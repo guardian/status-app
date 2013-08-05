@@ -23,10 +23,15 @@ object Application extends Controller {
 
       for {
         clusters <- ASG.all
-      } yield Ok(views.html.index(
-        stage, stages(clusters), clusters.groupBy(_.stage)(stage).sortBy(_.appName),
-        AWSCost.totalSunkCost, new DecimalFormat("#,###.00")
-      ))
+      } yield {
+        Ok(views.html.index(
+          stage,
+          stages(clusters),
+          clusters.groupBy(_.stage)(stage).sortBy(_.appName),
+          AWSCost.totalSunkCost,
+          new DecimalFormat("#,###.00")
+        ))
+      }
     }
   }
 
