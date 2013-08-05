@@ -1,0 +1,6 @@
+target
+project/target
+project/project/target
+logs
+.idea
+.idea_modules
