@@ -10,8 +10,8 @@ object Config {
   private lazy val localPropsFile = System.getProperty("user.home") + "/.gu/statusapp.conf"
   private lazy val configuration = fileConfig(localPropsFile)
 
-  lazy val accessKey = configuration.getString("accessKey").get
-  lazy val secretKey = configuration.getString("secretKey").get
+  lazy val accessKey = configuration.getString("accessKey")
+  lazy val secretKey = configuration.getString("secretKey")
   lazy val esHost = configuration.getString("elasticsearchHost").get
   lazy val proxyHost = configuration.getString("proxyHost")
   lazy val proxyPort = configuration.getInt("proxyPort")
@@ -25,9 +25,10 @@ object Config {
     client
   }
 
-  lazy val credentials = new BasicAWSCredentials(
-    accessKey, secretKey
-  )
+  lazy val credentials = for {
+    a <- accessKey
+    s <- secretKey
+  } yield new BasicAWSCredentials(a, s)
 
   def fileConfig(filePath: String): Configuration = {
     val file = new File(filePath)

@@ -1,18 +1,18 @@
-package lib
+package model
 
-import teamcity.ScheduledAgent
 import play.api.libs.ws.WS
 import play.api.libs.json._
-import model.Instance
 import controllers.Application
 import collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import concurrent.Await
+import scala.concurrent.Future
 import scala.util.Try
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsSuccess
 import play.api.Logger
+import com.amazonaws.services.ec2.model.{DescribeReservedInstancesRequest, DescribeInstancesRequest}
+import lib.{AWS, ScheduledAgent}
 
 
 object AWSCost {
@@ -50,26 +50,30 @@ object AWSCost {
 
   def reservations = reservationsAgent()
 
-  val typeCounts = ScheduledAgent[Map[EC2CostingType, Int]](0.seconds, 5.minutes) {
-    val allInstances = for {
-      reservation <- awsConnection.ec2.describeInstances().getReservations
-      instance <- reservation.getInstances
-    } yield new Instance(instance)
-
-    allInstances.groupBy(_.costingType).mapValues(_.size)
+  val typeCounts = ScheduledAgent[Map[EC2CostingType, Int]](0.seconds, 5.minutes, Map()) {
+    for {
+      reservations <- AWS.futureOf(awsConnection.ec2.describeInstancesAsync, new DescribeInstancesRequest())
+      instances <- Future.sequence (
+        reservations.getReservations flatMap (_.getInstances) map (Instance(_))
+      )
+    } yield instances.groupBy(_.costingType).mapValues(_.size)
   }
 
-  lazy val reservationsAgent = ScheduledAgent[Map[EC2CostingType, Seq[Reservation]]](0.seconds, 5.minutes) {
+  lazy val reservationsAgent = ScheduledAgent[Map[EC2CostingType, Seq[Reservation]]](0.seconds, 5.minutes, Map()) {
     logger.info("Starting reservationsAgent")
-    val reservs = awsConnection.ec2.describeReservedInstances().getReservedInstances map { r =>
-      (EC2CostingType(r.getInstanceType ,r.getAvailabilityZone) ->
-        Reservation(r.getInstanceCount, r.getFixedPrice, r.getRecurringCharges.head.getAmount))
+    for {
+      reservations <- AWS.futureOf(awsConnection.ec2.describeReservedInstancesAsync, new DescribeReservedInstancesRequest())
+    } yield {
+      val reservs = reservations.getReservedInstances map { r =>
+        (EC2CostingType(r.getInstanceType ,r.getAvailabilityZone) ->
+          Reservation(r.getInstanceCount, r.getFixedPrice, r.getRecurringCharges.head.getAmount))
+      }
+      reservs.foreach{ res => logger.info("Reservation: "+res)}
+      reservs.groupBy { case (costType, _) => costType } mapValues (_ map { case (_, res) => res })
     }
-    reservs.foreach{ res => logger.info("Reservation: "+res)}
-    reservs.groupBy { case (costType, _) => costType } mapValues (_ map { case (_, res) => res })
   }
 
-  lazy val costsAgent = ScheduledAgent[OnDemandPrices](0.seconds, 30.minutes) {
+  lazy val costsAgent = ScheduledAgent[OnDemandPrices](0.seconds, 30.minutes, OnDemandPrices(Map())) {
     // There isn't a proper API for this at time of writing, but handily the
     logger.info("Starting costsAgent")
     val f = (WS.url("http://aws.amazon.com/ec2/pricing/pricing-on-demand-instances.json").get map { response =>
@@ -107,7 +111,7 @@ object AWSCost {
       prices
     })
 
-    Await.result(f, 10.seconds)
+    f
   }
 
   val zoneToCostRegion = Map(
