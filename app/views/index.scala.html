@@ -1,8 +1,8 @@
-@(stage: String, stages: Seq[String], clusters: Seq[model.Cluster], totalSunkCost: Float, money: java.text.DecimalFormat)
+@(stage: String, stages: Seq[String], clusters: Seq[model.ASG], totalSunkCost: Float, money: java.text.DecimalFormat)
 
 @import model._
 
-@main("Ophan Status", refreshSecs = Some(10)) {
+@main("Status Monitor", refreshSecs = Some(15)) {
 
 <div class="container cluster-status">
         <div class="row">
@@ -26,10 +26,10 @@
                         <h3 class="tight-top">@cluster.appName</h3>
                     </div>
 
-                    @if(!cluster.asg.suspendedActivities.isEmpty) {
+                    @if(!cluster.suspendedActivities.isEmpty) {
                     <div class="alert">
                        <strong>Warning!</strong> The following autoscaling activities are currently
-                       suspended: @cluster.asg.suspendedActivities.mkString(", ")
+                       suspended: @cluster.suspendedActivities.mkString(", ")
                     </div>
                     }
 
@@ -59,7 +59,7 @@
 
                     </table>
 
-                    @if(!cluster.asg.recentActivity.isEmpty) {
+                    @if(!cluster.recentActivity.isEmpty) {
                     <div id="@cluster.name-activity" class="accordion">
                         <div class="accordion-group">
                             <div class="accordion-heading">
@@ -70,7 +70,7 @@
                             <div id="@cluster.name-activity-details" class="accordion-body collapse">
                                 <div class="accordion-inner">
                                     <small>
-                                    @for(action <- cluster.asg.recentActivity.take(3)) {
+                                    @for(action <- cluster.recentActivity.take(3)) {
                                         <p><strong>@action.age</strong> @action.cause</p>
                                     }
                                     </small>
@@ -84,15 +84,6 @@
             </div>
         }
 
-            <div class="span4">
-                <a href="http://stats.pingdom.com/eep7lohezpmt">
-                    <img src="https://share.pingdom.com/banners/618fea45"
-                    alt="Uptime Report for ophan dashboard: Last 30 days"
-                    title="Uptime Report for ophan dashboard: Last 30 days"
-                    width="300" height="165" />
-                </a>
-            </div>
-
      </div>
 
     <div class="row">
@@ -101,8 +92,6 @@
             (total sunk cost: $@money.format(totalSunkCost))
         </div>
     </div>
-
-
 
     
 }

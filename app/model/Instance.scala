@@ -3,22 +3,19 @@ package model
 import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance, DescribeInstancesRequest}
 import lib._
 import collection.JavaConversions._
-import play.api.libs.ws.{Response, WS}
+import play.api.libs.ws.WS
 import play.api.cache.Cache
 import scala.concurrent.ExecutionContext.Implicits.global
-import concurrent.{Promise, Future, Await}
-import scala.concurrent.duration._
-import util.Try
+import concurrent.Future
 import play.api.libs.ws.Response
 import scala.Some
-import lib.EC2CostingType
 
-class Instance(awsInstance: AwsEc2Instance) {
+case class Instance(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) {
   def id = awsInstance.getInstanceId
   def publicDns = awsInstance.getPublicDnsName
-  def publicIpAddress = awsInstance.getPublicIpAddress
+  def publicIp = awsInstance.getPublicIpAddress
   def privateDns = awsInstance.getPrivateDnsName
-  def privateIpAddress = awsInstance.getPrivateIpAddress
+  def privateIp = awsInstance.getPrivateIpAddress
   def instanceType = awsInstance.getInstanceType
 
   def availabilityZone = awsInstance.getPlacement.getAvailabilityZone
@@ -26,6 +23,8 @@ class Instance(awsInstance: AwsEc2Instance) {
   def cost = AWSCost(costingType)
 
   def approxMonthlyCost = cost * 24 * 30
+
+  def costingType = EC2CostingType(instanceType, availabilityZone)
 
   def launched = awsInstance.getLaunchTime
 
@@ -35,73 +34,76 @@ class Instance(awsInstance: AwsEc2Instance) {
 
   lazy val stage = tags("Stage")
   lazy val app = tags("Role")
-
-  def usefulUrls: List[(String, String)] = Nil
-
-  protected def versionFuture: Future[Option[String]] =
-    Promise.successful(None).future
-
-  final def version: Option[String] =
-    Try(Await.result(versionFuture, 2.seconds))
-      .recover { case e => Some(e.getMessage) }
-      .get
-
-  def costingType = EC2CostingType(awsInstance.getInstanceType, awsInstance.getPlacement.getAvailabilityZone)
 }
 
-class ElasticSearchInstance(awsInstance: AwsEc2Instance) extends Instance(awsInstance) {
-  lazy val baseUrl = "http://%s:9200".format(publicDns)
+case class ElasticSearchInstance(publicDns: String) extends AppSpecifics {
+  val baseUrl = s"http://$publicDns:9200"
+  val versionUrl = baseUrl
 
-  override def usefulUrls = List(
+  def usefulUrls = List(
     "head" -> (baseUrl + "/_plugin/head/"),
     "bigdesk" -> (baseUrl + "/_plugin/bigdesk/"),
     "paramedic" -> (baseUrl + "/_plugin/paramedic/")
   )
 
-  override val versionFuture =
-    WS.url(baseUrl).get().map { r: Response =>
+  val versionExtractor = { r: Response =>
       val v = (r.json \ "version" \ "number").as[String]
       val name = (r.json \ "name").as[String]
       Some(v + " " + name)
     }
 }
 
-class StandardWebApp(awsInstance: AwsEc2Instance, port: Int = 8080) extends Instance(awsInstance) {
-  lazy val manifestUrl = "http://%s:%d/management/manifest".format(publicDns, port)
+case class StandardWebApp(publicDns: String, port: Int = 8080) extends AppSpecifics {
+  lazy val versionUrl = s"http://$publicDns:$port/management/manifest"
 
-  override def usefulUrls = List(
-    "manifest" -> manifestUrl
+  def usefulUrls = List(
+    "manifest" -> versionUrl
   )
 
-  override val versionFuture =
-    WS.url(manifestUrl).get().map { r =>
+  val versionExtractor = { r: Response =>
       val values = r.body.lines.map(_.split(':').map(_.trim)).collect { case Array(k, v) => k -> v }.toMap
       values.get("Build")
     }
 }
 
+trait AppSpecifics {
+  def usefulUrls: Seq[(String, String)]
+  def versionUrl: String
+  def versionExtractor: Response => Option[String]
+  def version = WS.url(versionUrl).withTimeout(2000).get() map (versionExtractor) recover {
+    case e => Some(e.getMessage)
+  }
+}
+
 object Instance {
   import play.api.Play.current
 
-  private def uncachedGet(id: String)(implicit awsConn: AmazonConnection) = {
-    awsConn.ec2.describeInstances(new DescribeInstancesRequest().withInstanceIds(id))
-      .getReservations
-      .flatMap(_.getInstances)
-      .map(specificInstanceType)
-      .head
+  private def uncachedGet(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
+    for {
+      result <- AWS.futureOf(awsConn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(id))
+      i <- (result.getReservations flatMap (_.getInstances) map (Instance(_))).head
+    } yield i
   }
 
-  def get(id: String)(implicit awsConn: AmazonConnection) = {
-    Cache.getOrElse(id, 30) {
-      uncachedGet(id)
+  def get(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
+    Cache.getAs[Instance](id) map (Future.successful(_)) getOrElse {
+      uncachedGet(id) map { i =>
+        Cache.set(id, i, 30)
+        i
+      }
     }
   }
 
-  private def specificInstanceType(i: AwsEc2Instance) = {
-    val appTag = i.getTags.find(_.getKey == "Role").map(_.getValue)
+  def apply(i: AwsEc2Instance): Future[Instance] = {
+    val tags = i.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
+    val dns = i.getPublicDnsName
 
-    (for {
-      role <- appTag if role.contains("elasticsearch")
-    } yield new ElasticSearchInstance(i)) getOrElse new StandardWebApp(i, Config.managementPort.getOrElse(9000))
+    val specifics =
+      if (tags("Role").contains("elasticsearch")) new ElasticSearchInstance(dns)
+      else new StandardWebApp(dns, Config.managementPort.getOrElse(9000))
+
+    specifics.version map { v =>
+      Instance(i, v, specifics.usefulUrls)
+    }
   }
 }
