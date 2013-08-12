@@ -7,3 +7,5 @@ resolvers ++= Seq(
 
 addSbtPlugin("play" % "sbt-plugin" % "2.1.2")
 
+addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.2.5")
+

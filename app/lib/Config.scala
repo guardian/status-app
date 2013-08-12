@@ -12,7 +12,7 @@ object Config {
 
   lazy val accessKey = configuration.getString("accessKey")
   lazy val secretKey = configuration.getString("secretKey")
-  lazy val esHost = configuration.getString("elasticsearchHost").get
+  lazy val esHost = configuration.getString("elasticsearchHost")
   lazy val proxyHost = configuration.getString("proxyHost")
   lazy val proxyPort = configuration.getInt("proxyPort")
 
@@ -32,8 +32,10 @@ object Config {
 
   def fileConfig(filePath: String): Configuration = {
     val file = new File(filePath)
-    if (!file.exists) throw new Error("Could not find %s" format (filePath))
-    Configuration(ConfigFactory.parseFile(file))
+    if (file.exists)
+      Configuration(ConfigFactory.parseFile(file))
+    else
+      Configuration(ConfigFactory.empty())
   }
 
 }

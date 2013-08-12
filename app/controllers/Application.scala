@@ -44,4 +44,8 @@ object Application extends Controller {
   def es = Action {
     Ok(views.html.elasticsearch())
   }
+
+  def void = Action {
+    NotFound
+  }
 }
