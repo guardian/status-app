@@ -17,7 +17,7 @@
 
         <div class="row">
 
-        @for(column <- clusters.grouped(clusters.size / 3)) {
+        @for(column <- clusters.grouped(math.max(clusters.size / 3, 1))) {
 
             <div class="col-lg-4">
             @for(cluster <- column) {
