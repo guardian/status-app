@@ -22,9 +22,7 @@ $ ->
     "#{y}-#{if (m<=9) then "0" + m else m}-#{if (d <= 9) then "0" + d else d}"
 
   refresh = ->
-    index = "content-api"
-    console.log("index = #{index}")
-    $.getJSON "http://#{hostname}:9200/#{index}/_stats?groups=_all", (data) ->
+    $.getJSON "http://#{hostname}:9200/_all/_stats?groups=_all", (data) ->
 
       groups = (groupToObj(name, group) for name, group of data._all.total.search.groups)
 
