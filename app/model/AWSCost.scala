@@ -76,7 +76,7 @@ object AWSCost {
   lazy val costsAgent = ScheduledAgent[OnDemandPrices](0.seconds, 30.minutes, OnDemandPrices(Map())) {
     // There isn't a proper API for this at time of writing, but handily the
     logger.info("Starting costsAgent")
-    val f = (WS.url("http://aws.amazon.com/ec2/pricing/pricing-on-demand-instances.json").get map { response =>
+    val f = (WS.url("http://aws.amazon.com/ec2/pricing/pricing-on-demand-instances.json").withTimeout(2000).get map { response =>
       logger.info("Fetched cost data")
       implicit object BigDecimalReads extends Reads[BigDecimal]{
         def reads(json: JsValue) = JsSuccess(Try { BigDecimal(json.as[String]) } getOrElse (BigDecimal(0)) )

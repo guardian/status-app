@@ -1,0 +1,182 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description" : "status-app",
+    "Parameters" : {
+        "Name": {
+            "Description": "The name given to the autoscaling group",
+            "Type": "String"
+        },
+        "KeyName" : {
+            "Description" : "The EC2 Key Pair to allow SSH access to the instance",
+            "Type" : "String"
+        },
+        "HostedZone" : {
+            "Description" : "DNS hosted zone for which A CNAME will be created. e.g. 'example.com' (note, no trailing full-stop) for status.example.com",
+            "Type" : "String"
+        },
+        "InstanceType" : {
+            "Description" : "EC2 instance type",
+            "Type" : "String",
+            "Default" : "t1.micro",
+            "AllowedValues" : [ "t1.micro","m1.small","m1.medium","m1.large","m1.xlarge","m2.xlarge","m2.2xlarge","m2.4xlarge","c1.medium","c1.xlarge","cc1.4xlarge","cc2.8xlarge","cg1.4xlarge"],
+            "ConstraintDescription" : "must be a valid EC2 instance type."
+        }
+    },
+
+    "Resources" : {
+
+        "StatusAppRole" : {
+            "Type" : "AWS::IAM::Role",
+            "Properties":{
+                "Path":"/",
+                "AssumeRolePolicyDocument": {
+                    "Statement": [ {
+                        "Effect": "Allow",
+                        "Principal": { "Service": [ "ec2.amazonaws.com" ] },
+                        "Action": [ "sts:AssumeRole" ]
+                    } ]
+                }
+            }
+        },
+        "StatusAppDescribeEC2Policy" : {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "StatusAppDescribeEC2Policy",
+                "PolicyDocument": {
+                    "Statement": [ {
+                        "Action": ["ec2:describe*", "autoscaling:Describe*", "elasticloadbalancing:Describe*"],
+                        "Effect": "Allow",
+                        "Resource":"*"
+                    }]
+                },
+                "Roles": [ { "Ref": "StatusAppRole" } ]
+            }
+        },
+        "StatusAppInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [ {
+                    "Ref": "StatusAppRole"
+                } ]
+            }
+        },
+
+        "LoadBalancer" : {
+            "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties" : {
+                "AvailabilityZones" : { "Fn::GetAZs" : "" },
+                "Listeners" : [ {
+                    "LoadBalancerPort" : "80",
+                    "InstancePort" : "9000",
+                    "Protocol" : "HTTP"
+                } ],
+
+                "HealthCheck" : {
+                    "Target" : "HTTP:9000/management/healthcheck",
+                    "HealthyThreshold" : "2",
+                    "UnhealthyThreshold" : "2",
+                    "Interval" : "10",
+                    "Timeout" : "5"
+                }
+            }
+        },
+
+        "AutoscalingGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "Properties" : {
+                "AvailabilityZones" : { "Fn::GetAZs" : "" },
+                "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
+                "MinSize" : "1",
+                "MaxSize" : "2",
+                "DesiredCapacity" : "1",
+                "HealthCheckType" : "ELB",
+                "HealthCheckGracePeriod" : 300,
+                "LoadBalancerNames" : [ { "Ref": "LoadBalancer" }],
+                "Tags" : [
+                    { "Key" : "Stage", "Value" : "PROD", "PropagateAtLaunch" : "true"  },
+                    { "Key" : "Role", "Value" : { "Ref" : "Name" }, "PropagateAtLaunch" : "true"  }
+                ],
+                "NotificationConfiguration" : {
+                    "TopicARN" : "arn:aws:sns:eu-west-1:021353022223:ophan-service-notifications",
+                    "NotificationTypes":  [
+                        "autoscaling:EC2_INSTANCE_LAUNCH",
+                        "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+                        "autoscaling:EC2_INSTANCE_TERMINATE",
+                        "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+                    ]
+                }
+            }
+        },
+
+        "LaunchConfig" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "Properties" : {
+                "KeyName" : { "Ref" : "KeyName" },
+                "ImageId" : "ami-64636a10",
+                "SecurityGroups": [
+                    { "Ref" : "EC2SecurityGroup" }, { "Ref" : "StatusAppSecurityGroup" }
+                ],
+                "InstanceType" : { "Ref" : "InstanceType" },
+                "IamInstanceProfile": { "Ref" : "StatusAppInstanceProfile" },
+
+                "UserData" : { "Fn::Base64": {
+                    "Fn::Join":["\n", [
+                        "#!/bin/bash -ev",
+                        "apt-get -y update",
+                        "apt-get -y install language-pack-en openjdk-7-jre-headless",
+                        "apt-get -y install unzip",
+
+                        "adduser --system --home /status --disabled-password status",
+
+                        "wget https://s3-eu-west-1.amazonaws.com/ophan-dist/PROD/status-app/status-app.conf --directory-prefix=/etc/init",
+
+                        "wget https://s3-eu-west-1.amazonaws.com/ophan-dist/PROD/status-app/status-app-1.0.zip --directory-prefix=/status",
+
+                        "unzip -d /status /status/status-app-1.0.zip",
+
+                        "chown -R status /status/",
+                        "chmod u+x /status/status-app-1.0/start",
+
+                        "start status-app"
+                    ]]
+
+                }}
+            }
+        },
+
+        "StatusAppSecurityGroup": {
+          "Type": "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Allow Status App access to mangement"
+            }
+        },
+
+        "EC2SecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Open up SSH access and http to load balancer",
+                "SecurityGroupIngress" : [
+                    { "IpProtocol": "tcp", "FromPort": "22",   "ToPort": "22",   "CidrIp": "0.0.0.0/0" },
+                    { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",   "CidrIp": "77.91.248.0/21" },
+                    { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",
+                        "SourceSecurityGroupName": "amazon-elb-sg", "SourceSecurityGroupOwnerId": "amazon-elb" }
+                ]
+            }
+        },
+
+        "MainDnsEntry" : {
+            "Type" : "AWS::Route53::RecordSet",
+            "Properties" : {
+                "HostedZoneName" : { "Fn::Join": ["", [{ "Ref" : "HostedZone" }, "."]] },
+                "Comment" : "CNAME for status app",
+                "Name" : { "Fn::Join": [".", ["status", { "Ref" : "HostedZone" }]] },
+                "Type" : "CNAME",
+                "TTL" : "900",
+                "ResourceRecords" : [
+                    {"Fn::GetAtt":["LoadBalancer","DNSName"]}
+                ]
+            }
+        }
+    }
+}

@@ -2,6 +2,8 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+GET        /favicon.ico               controllers.Application.void
+
 GET        /                          controllers.Application.index
 GET        /:stage                    controllers.Application.stage(stage)
 GET        /instance/:instance        controllers.Application.instance(instance)
@@ -10,3 +12,6 @@ GET        /es                        controllers.Application.es
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file              controllers.Assets.at(path="/public", file)
+
+GET        /management/healthcheck              controllers.Management.healthcheck
+GET        /management/manifest       controllers.Management.manifest

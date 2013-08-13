@@ -9,6 +9,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import concurrent.Future
 import play.api.libs.ws.Response
 import scala.Some
+import play.api.Logger
 
 case class Instance(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) {
   def id = awsInstance.getInstanceId
@@ -47,10 +48,10 @@ case class ElasticSearchInstance(publicDns: String) extends AppSpecifics {
   )
 
   val versionExtractor = { r: Response =>
-      val v = (r.json \ "version" \ "number").as[String]
-      val name = (r.json \ "name").as[String]
-      Some(v + " " + name)
-    }
+    val v = (r.json \ "version" \ "number").as[String]
+    val name = (r.json \ "name").as[String]
+    Some(v + " " + name)
+  }
 }
 
 case class StandardWebApp(publicDns: String, port: Int = 8080) extends AppSpecifics {
@@ -61,22 +62,29 @@ case class StandardWebApp(publicDns: String, port: Int = 8080) extends AppSpecif
   )
 
   val versionExtractor = { r: Response =>
-      val values = r.body.lines.map(_.split(':').map(_.trim)).collect { case Array(k, v) => k -> v }.toMap
-      values.get("Build")
-    }
+    val values = r.body.lines.map(_.split(':').map(_.trim)).collect { case Array(k, v) => k -> v }.toMap
+    values.get("Build")
+  }
 }
 
 trait AppSpecifics {
+  val log = Logger[AppSpecifics](classOf[AppSpecifics])
+
   def usefulUrls: Seq[(String, String)]
   def versionUrl: String
   def versionExtractor: Response => Option[String]
   def version = WS.url(versionUrl).withTimeout(2000).get() map (versionExtractor) recover {
-    case e => Some(e.getMessage)
+    case e => {
+      log.error(s"Couldn't retrieve $versionUrl", e)
+      Some(e.getMessage)
+    }
   }
 }
 
 object Instance {
   import play.api.Play.current
+
+  val log = Logger[Instance](classOf[Instance])
 
   private def uncachedGet(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
     for {
@@ -102,6 +110,7 @@ object Instance {
       if (tags("Role").contains("elasticsearch")) new ElasticSearchInstance(dns)
       else new StandardWebApp(dns, Config.managementPort.getOrElse(9000))
 
+    log.debug(s"Retrieveing version of instance with tags: $tags")
     specifics.version map { v =>
       Instance(i, v, specifics.usefulUrls)
     }
