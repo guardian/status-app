@@ -1,3 +1,5 @@
+@(esHost: Option[String])
+
 @main("elasticsearch status", scripts=List("/assets/js/es.js")) {
 
 <div class="container instance-info">
@@ -29,6 +31,6 @@
 
 </div>
 <script>
-  var hostname = "@lib.Config.esHost.get";
+  var hostname = "@esHost.getOrElse("")";
 </script>
 }

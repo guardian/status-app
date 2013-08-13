@@ -76,7 +76,7 @@ trait AppSpecifics {
   def version = WS.url(versionUrl).withTimeout(2000).get() map (versionExtractor) recover {
     case e => {
       log.error(s"Couldn't retrieve $versionUrl", e)
-      Some(e.getMessage)
+      None
     }
   }
 }

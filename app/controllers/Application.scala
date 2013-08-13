@@ -42,10 +42,25 @@ object Application extends Controller {
   }
 
   def es = Action {
-    Ok(views.html.elasticsearch())
+    Async {
+      for {
+        clusters <- ASG.all
+      } yield {
+        val esHost = clusters.filter(_.appName.contains("elasticsearch"))
+          .headOption.flatMap(_.members.headOption).map(_.instance.publicDns)
+        Ok(views.html.elasticsearch(esHost))
+      }
+    }
   }
 
   def void = Action {
     NotFound
+  }
+  def robots = Action {
+    Ok(
+      """
+        |User-agent: *
+        |Disallow: *
+      """.stripMargin)
   }
 }
