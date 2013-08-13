@@ -8,6 +8,7 @@ import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
 
 import collection.JavaConversions._
 import scala.util.Try
+import play.api.Logger
 
 case class ASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction], members: Seq[ClusterMember]) {
 
@@ -45,12 +46,15 @@ case class ClusterMember(asgInfo: AwsAsgInstance, elbInfo: Option[ELB#Member], i
 }
 
 object ASG {
+  val log = Logger[ASG](classOf[ASG])
 
-  def all(implicit conn: AmazonConnection): Future[Seq[ASG]] =
+  def all(implicit conn: AmazonConnection): Future[Seq[ASG]] = {
+    log.info("Finding all ASGs")
     for {
       groups <- AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, new DescribeAutoScalingGroupsRequest)
       asgs <- Future.sequence(groups.getAutoScalingGroups map (ASG(_)))
     } yield asgs
+  }
 
   def apply(name: String)(implicit conn: AmazonConnection): Future[ASG] =
     for {
@@ -59,6 +63,7 @@ object ASG {
     } yield asg
 
   def apply(asg: AutoScalingGroup)(implicit conn: AmazonConnection): Future[ASG] =  {
+    log.info(s"Retrieveing details for ${asg.getAutoScalingGroupName}")
     val instanceStates = Future.sequence((asg.getLoadBalancerNames.headOption map (ELB(_))).toSeq)
 
     val recentActivity = for {
@@ -67,7 +72,7 @@ object ASG {
 
     val clusterMembers = for {
       elb <- instanceStates
-      members <- Future.sequence(asg.getInstances map {m =>
+      members <- Future.sequence(asg.getInstances map { m =>
         val membersOfElb = elb.headOption.map(_.members).getOrElse(Nil)
         for {
           i <- Instance.get(m.getInstanceId)
