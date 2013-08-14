@@ -1,7 +1,7 @@
 package model
 
 import scala.concurrent.Future
-import lib.{AWS, AmazonConnection}
+import lib.AmazonConnection
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
@@ -14,8 +14,6 @@ case class ASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[Scal
 
   lazy val name = asg.getAutoScalingGroupName
   lazy val tags = asg.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
-
-  lazy val status = asg.getStatus
 
   lazy val stage = tags("Stage")
   lazy val appName = (tags get "Role") orElse (tags get "App") getOrElse "?"
@@ -47,20 +45,6 @@ case class ClusterMember(asgInfo: AwsAsgInstance, elbInfo: Option[ELB#Member], i
 
 object ASG {
   val log = Logger[ASG](classOf[ASG])
-
-  def all(implicit conn: AmazonConnection): Future[Seq[ASG]] = {
-    log.info("Finding all ASGs")
-    for {
-      groups <- AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, new DescribeAutoScalingGroupsRequest)
-      asgs <- Future.sequence(groups.getAutoScalingGroups map (ASG(_)))
-    } yield asgs
-  }
-
-  def apply(name: String)(implicit conn: AmazonConnection): Future[ASG] =
-    for {
-      result <- AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, new DescribeAutoScalingGroupsRequest().withAutoScalingGroupNames(name))
-      asg <- ASG(result.getAutoScalingGroups.head)
-    } yield asg
 
   def apply(asg: AutoScalingGroup)(implicit conn: AmazonConnection): Future[ASG] =  {
     log.info(s"Retrieveing details for ${asg.getAutoScalingGroupName}")

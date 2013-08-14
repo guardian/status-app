@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.mvc._
-import model.{AWSCost, ASG, Instance}
+import model.{Estate, AWSCost, ASG, Instance}
 import lib.{AmazonConnection, Config}
 import java.text.DecimalFormat
 import scala.concurrent.ExecutionContext
@@ -17,22 +17,15 @@ object Application extends Controller {
   }
 
   def stage(stage: String) = Action {
-    Async {
-      def stages(clusters: Seq[ASG]): Seq[String] =
-        clusters.map(_.stage).toSet.toSeq
-
-      for {
-        clusters <- ASG.all
-      } yield {
-        Ok(views.html.index(
-          stage,
-          stages(clusters),
-          clusters.groupBy(_.stage)(stage).sortBy(_.appName),
-          AWSCost.totalSunkCost,
-          new DecimalFormat("#,###.00")
-        ))
-      }
-    }
+    if (Estate().populated)
+      Ok(views.html.index(
+        stage,
+        Estate(),
+        AWSCost.totalSunkCost,
+        new DecimalFormat("#,###.00")
+      ))
+    else
+      Ok(views.html.loading())
   }
 
   def instance(id: String) = Action {
@@ -42,15 +35,9 @@ object Application extends Controller {
   }
 
   def es = Action {
-    Async {
-      for {
-        clusters <- ASG.all
-      } yield {
-        val esHost = clusters.filter(_.appName.contains("elasticsearch"))
-          .headOption.flatMap(_.members.headOption).map(_.instance.publicDns)
-        Ok(views.html.elasticsearch(esHost))
-      }
-    }
+    val esHost = Estate().values.flatten.filter(_.appName.contains("elasticsearch"))
+      .headOption.flatMap(_.members.headOption).map(_.instance.publicDns)
+    Ok(views.html.elasticsearch(esHost))
   }
 
   def void = Action {

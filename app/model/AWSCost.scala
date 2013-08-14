@@ -3,7 +3,7 @@ package model
 import play.api.libs.ws.WS
 import play.api.libs.json._
 import controllers.Application
-import collection.JavaConversions._
+import collection.convert.wrapAsScala._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

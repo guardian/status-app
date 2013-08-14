@@ -1,4 +1,4 @@
-@(stage: String, stages: Seq[String], clusters: Seq[model.ASG], totalSunkCost: Float, money: java.text.DecimalFormat)
+@(stage: String, estate: model.Estate, totalSunkCost: Float, money: java.text.DecimalFormat)
 
 @import model._
 
@@ -8,7 +8,7 @@
         <div class="row">
             <div class="navbar tight-bottom">
                 <ul class="nav navbar-nav">
-                @for(s <- stages) {
+                @for(s <- estate.stages) {
                     <li class="@if(stage == s) {active}"><a href="/@s">@s</a></li>
                 }
                 </ul>
@@ -17,7 +17,7 @@
 
         <div class="row">
 
-        @for(column <- clusters.grouped(math.max(clusters.size / 3, 1))) {
+        @for(column <- estate(stage).grouped(math.max(estate(stage).size / 3, 1))) {
 
             <div class="col-lg-4">
             @for(cluster <- column) {
@@ -88,7 +88,7 @@
 
     <div class="row">
         <div class="sunk">
-            Approx total monthly cost: $@money.format(clusters.map(_.approxMonthlyCost).sum)
+            Approx total monthly cost: $@money.format(estate(stage).map(_.approxMonthlyCost).sum)
             (total sunk cost: $@money.format(totalSunkCost))
         </div>
     </div>
