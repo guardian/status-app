@@ -1,0 +1,150 @@
+package controllers
+
+import play.api.mvc._
+import play.api.mvc.Results._
+import play.api.mvc.BodyParsers.parse
+import play.api.libs.json.Json
+import play.api.libs.openid.{OpenIDError, OpenID}
+
+import scala.concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
+
+object AuthAction {
+
+  def apply[A](p: BodyParser[A])(f: AuthenticatedRequest[A] => Result) = {
+    Action(p) { implicit request =>
+      UserIdentity.fromRequest(request).map { identity =>
+        f(new AuthenticatedRequest(Some(identity), request))
+      }.getOrElse(Redirect(routes.Login.loginAction).withSession {
+        request.session + ("loginFromUrl", request.uri)
+      })
+    }
+  }
+
+  def apply(f: AuthenticatedRequest[AnyContent] => Result): Action[AnyContent] = {
+    this.apply(parse.anyContent)(f)
+  }
+
+  def apply(block: => Result): Action[AnyContent] = {
+    this.apply(_ => block)
+  }
+
+}
+
+class AuthenticatedRequest[A](val identity: Option[Identity], request: Request[A]) extends WrappedRequest(request) {
+  lazy val isAuthenticated = identity.isDefined
+  lazy val betaUser = identity.map(_.fullName=="Simon Hildrew").getOrElse(false)
+}
+
+trait Identity {
+  def fullName: String
+}
+
+case class UserIdentity(openid: String, email: String, firstName: String, lastName: String) extends Identity {
+  lazy val fullName = firstName + " " + lastName
+  lazy val emailDomain = email.split("@").last
+}
+
+object UserIdentity {
+  val KEY = "identity"
+  implicit val formats = Json.format[UserIdentity]
+  def readJson(json: String) = Json.fromJson[UserIdentity](Json.parse(json)).get
+  def writeJson(id: UserIdentity) = Json.stringify(Json.toJson(id))
+  def fromRequest(request: Request[Any]): Option[UserIdentity] = {
+    request.session.get(KEY).map(credentials => UserIdentity.readJson(credentials))
+  }
+}
+
+object Login extends Controller {
+  val validator = new AuthorisationValidator {
+    def emailDomainWhitelist = Seq("theguardian.com", "guardian.co.uk")//auth.domains
+    def emailWhitelistEnabled = false //auth.whitelist.useDatabase || !auth.whitelist.addresses.isEmpty
+    def emailWhitelistContains(email: String) = {
+      val lowerCaseEmail = email.toLowerCase
+      false
+//      auth.whitelist.addresses.contains(lowerCaseEmail) ||
+//        (auth.whitelist.useDatabase && Persistence.store.getAuthorisation(lowerCaseEmail).isDefined)
+    }
+  }
+
+  val openIdAttributes = Seq(
+    ("email", "http://axschema.org/contact/email"),
+    ("firstname", "http://axschema.org/namePerson/first"),
+    ("lastname", "http://axschema.org/namePerson/last")
+  )
+
+  def login = Action { request =>
+    val error = request.flash.get("error")
+    Ok(views.html.auth.login(error))
+  }
+
+  def loginAction = Action { implicit request =>
+    val secureConnection = request.headers.get("X-Forwarded-Proto").map(_ == "https").getOrElse(false)
+    AsyncResult(
+      OpenID
+        .redirectURL(
+          "https://www.google.com/accounts/o8/id",
+//          auth.openIdUrl,
+          routes.Login.openIDCallback.absoluteURL(secureConnection), openIdAttributes)
+        .map { url =>
+        Redirect(url)
+      }
+        .recover {
+        case t => Redirect(routes.Login.login).flashing(("error" -> s"Unknown error: ${t.getMessage}:${t.getCause}"))
+      }
+    )
+  }
+
+  def openIDCallback = Action { implicit request =>
+    AsyncResult(
+      OpenID.verifiedId map { info =>
+        val credentials = UserIdentity(
+          info.id,
+          info.attributes.get("email").get,
+          info.attributes.get("firstname").get,
+          info.attributes.get("lastname").get
+        )
+        if (validator.isAuthorised(credentials)) {
+          Redirect(session.get("loginFromUrl").getOrElse("/")).withSession (
+            session + (UserIdentity.KEY -> UserIdentity.writeJson(credentials)) - "loginFromUrl"
+          )
+        } else {
+          Redirect(routes.Login.login).flashing(
+            ("error" -> (validator.authorisationError(credentials).get))
+          ).withSession(session - UserIdentity.KEY)
+        }
+      } recover {
+        case t => {
+          // Here you should look at the error, and give feedback to the user
+          val message = t match {
+            case e:OpenIDError => "Failed to login (%s): %s" format (e.id, e.message)
+            case other => "Unknown login failure: %s" format t.toString
+          }
+          Redirect(routes.Login.login).flashing(
+            ("error" -> (message))
+          )
+        }
+      }
+    )
+  }
+
+  def logout = Action { implicit request =>
+    Redirect("/").withNewSession
+  }
+}
+
+trait AuthorisationValidator {
+  def emailDomainWhitelist: Seq[String]
+  def emailWhitelistEnabled: Boolean
+  def emailWhitelistContains(email:String): Boolean
+  def isAuthorised(id: UserIdentity) = authorisationError(id).isEmpty
+  def authorisationError(id: UserIdentity): Option[String] = {
+    if (!emailDomainWhitelist.isEmpty && !emailDomainWhitelist.contains(id.emailDomain)) {
+      Some("The e-mail address domain you used to login to Riff-Raff (%s) is not in the configured whitelist.  Please try again with another account or contact the Riff-Raff administrator." format id.email)
+    } else if (emailWhitelistEnabled && !emailWhitelistContains(id.email)) {
+      Some("The e-mail address you used to login to Riff-Raff (%s) is not authorised.  Please try again with another account, ask a colleague to add your address or contact the Riff-Raff administrator." format id.email)
+    } else {
+      None
+    }
+  }
+}

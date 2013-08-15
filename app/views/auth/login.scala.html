@@ -1,0 +1,23 @@
+@(error: Option[String] = None)
+
+@main("Login") {
+    <div class="row-fluid">
+        <div class="span6">
+            <h1>Login</h1>
+
+            <p>Please click the button to login with your google account.</p>
+        </div>
+        <div class="span6">
+            @if(error.isDefined) {
+                <div class="alert alert-error">
+                    <p>@error.get</p>
+                </div>
+            }
+
+            <form action="@routes.Login.loginAction()" method="get">
+                <input value="Log In" class="btn btn-primary" type="submit">
+            </form>
+        </div>
+
+    </div>
+}
