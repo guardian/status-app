@@ -1,4 +1,4 @@
-@(stage: String, estate: model.Estate, totalSunkCost: Float, money: java.text.DecimalFormat)
+@(stage: String, estate: model.Estate, totalSunkCost: Float, money: java.text.DecimalFormat)(implicit request: AuthenticatedRequest[AnyContent])
 
 @import model._
 
@@ -12,6 +12,15 @@
                     <li class="@if(stage == s) {active}"><a href="/@s">@s</a></li>
                 }
                 </ul>
+                <div class="btn-group pull-right">
+                    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="icon-user"></i> @request.identity.get.fullName
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="@routes.Login.logout()">Sign Out</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
 

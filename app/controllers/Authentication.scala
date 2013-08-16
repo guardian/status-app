@@ -13,7 +13,7 @@ object AuthAction {
 
   def apply[A](p: BodyParser[A])(f: AuthenticatedRequest[A] => Result) = {
     Action(p) { implicit request =>
-      UserIdentity.fromRequest(request).map { identity =>
+      User.fromRequest(request).map { identity =>
         f(new AuthenticatedRequest(Some(identity), request))
       }.getOrElse(Redirect(routes.Login.loginAction).withSession {
         request.session + ("loginFromUrl", request.uri)
@@ -31,27 +31,22 @@ object AuthAction {
 
 }
 
-class AuthenticatedRequest[A](val identity: Option[Identity], request: Request[A]) extends WrappedRequest(request) {
+class AuthenticatedRequest[A](val identity: Option[User], request: Request[A]) extends WrappedRequest(request) {
   lazy val isAuthenticated = identity.isDefined
-  lazy val betaUser = identity.map(_.fullName=="Simon Hildrew").getOrElse(false)
 }
 
-trait Identity {
-  def fullName: String
-}
-
-case class UserIdentity(openid: String, email: String, firstName: String, lastName: String) extends Identity {
+case class User(openid: String, email: String, firstName: String, lastName: String) {
   lazy val fullName = firstName + " " + lastName
   lazy val emailDomain = email.split("@").last
 }
 
-object UserIdentity {
+object User {
   val KEY = "identity"
-  implicit val formats = Json.format[UserIdentity]
-  def readJson(json: String) = Json.fromJson[UserIdentity](Json.parse(json)).get
-  def writeJson(id: UserIdentity) = Json.stringify(Json.toJson(id))
-  def fromRequest(request: Request[Any]): Option[UserIdentity] = {
-    request.session.get(KEY).map(credentials => UserIdentity.readJson(credentials))
+  implicit val formats = Json.format[User]
+  def readJson(json: String) = Json.fromJson[User](Json.parse(json)).get
+  def writeJson(id: User) = Json.stringify(Json.toJson(id))
+  def fromRequest(request: Request[Any]): Option[User] = {
+    request.session.get(KEY).map(credentials => User.readJson(credentials))
   }
 }
 
@@ -98,7 +93,7 @@ object Login extends Controller {
   def openIDCallback = Action { implicit request =>
     AsyncResult(
       OpenID.verifiedId map { info =>
-        val credentials = UserIdentity(
+        val credentials = User(
           info.id,
           info.attributes.get("email").get,
           info.attributes.get("firstname").get,
@@ -106,12 +101,12 @@ object Login extends Controller {
         )
         if (validator.isAuthorised(credentials)) {
           Redirect(session.get("loginFromUrl").getOrElse("/")).withSession (
-            session + (UserIdentity.KEY -> UserIdentity.writeJson(credentials)) - "loginFromUrl"
+            session + (User.KEY -> User.writeJson(credentials)) - "loginFromUrl"
           )
         } else {
           Redirect(routes.Login.login).flashing(
             ("error" -> (validator.authorisationError(credentials).get))
-          ).withSession(session - UserIdentity.KEY)
+          ).withSession(session - User.KEY)
         }
       } recover {
         case t => {
@@ -137,8 +132,8 @@ trait AuthorisationValidator {
   def emailDomainWhitelist: Seq[String]
   def emailWhitelistEnabled: Boolean
   def emailWhitelistContains(email:String): Boolean
-  def isAuthorised(id: UserIdentity) = authorisationError(id).isEmpty
-  def authorisationError(id: UserIdentity): Option[String] = {
+  def isAuthorised(id: User) = authorisationError(id).isEmpty
+  def authorisationError(id: User): Option[String] = {
     if (!emailDomainWhitelist.isEmpty && !emailDomainWhitelist.contains(id.emailDomain)) {
       Some("The e-mail address domain you used to login to Riff-Raff (%s) is not in the configured whitelist.  Please try again with another account or contact the Riff-Raff administrator." format id.email)
     } else if (emailWhitelistEnabled && !emailWhitelistContains(id.email)) {

@@ -16,7 +16,7 @@ object Application extends Controller {
     Redirect(routes.Application.stage("PROD"))
   }
 
-  def stage(stage: String) = AuthAction {
+  def stage(stage: String) = AuthAction { implicit req =>
     if (Estate().populated)
       Ok(views.html.index(
         stage,
