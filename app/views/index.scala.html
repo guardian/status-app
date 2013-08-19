@@ -32,13 +32,14 @@
 
             <div class="col-lg-4">
             @for(cluster <- column) {
-                    <div class="header">
+                <div class="panel">
+                    <div class="panel-heading">
                         <div class="pull-right">~ $@money.format(cluster.approxMonthlyCost)/month</div>
-                        <h3 class="tight-top">@cluster.appName</h3>
+                        @cluster.appName
                     </div>
 
                     @if(!cluster.suspendedActivities.isEmpty) {
-                    <div class="alert">
+                    <div class="alert panel-body">
                        <strong>Warning!</strong> The following autoscaling activities are currently
                        suspended: @cluster.suspendedActivities.mkString(", ")
                     </div>
@@ -90,8 +91,8 @@
                         </div>
                     </div>
                     }
-
-                }
+                </div>
+            }
             </div>
         }
 
