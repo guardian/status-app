@@ -35,7 +35,7 @@
                 <div class="panel">
                     <div class="panel-heading">
                         <div class="pull-right">~ $@money.format(cluster.approxMonthlyCost)/month</div>
-                        @cluster.appName
+                        <h4 class="panel-title">@cluster.appName</h4>
                     </div>
 
                     @if(!cluster.suspendedActivities.isEmpty) {
@@ -45,16 +45,16 @@
                     </div>
                     }
 
-                    <table class="table table-condensed tight-bottom">
+                    <table class="table table-condensed">
 
                         <thead>
-                            <th width="75px">Instance</th>
+                            <th>Instance</th>
                             <th>AutoScaling Status</th>
                             @if(cluster.hasElb) {
                                 <th>ELB Status</th>
                             }
-                            <th width="60px">Uptime</th>
-                            <th width="50px">Version</th>
+                            <th>Uptime</th>
+                            <th>Version</th>
                         </thead>
 
                     @for(member <- cluster.members) {
@@ -72,12 +72,12 @@
                     </table>
 
                     @if(!cluster.recentActivity.isEmpty) {
-                    <div id="@cluster.name-activity" class="accordion">
+                    <div id="@cluster.name-activity" class="accordion panel-footer">
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <smalll><a class="accordion-toggle" data-toggle="collapse" data-parent="#@cluster.name-activity" href="#@cluster.name-activity-details">
-                                    Recent activity
-                                </a></smalll>
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#@cluster.name-activity" href="#@cluster.name-activity-details">
+                                    <small>Recent activity</small>
+                                </a>
                             </div>
                             <div id="@cluster.name-activity-details" class="accordion-body collapse">
                                 <div class="accordion-inner">
