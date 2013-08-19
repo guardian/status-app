@@ -116,7 +116,7 @@ object Login extends Controller {
   }
 
   def logout = Action { implicit request =>
-    Redirect("/").withNewSession
+    Redirect(routes.Login.login).withNewSession
   }
 }
 
