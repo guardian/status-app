@@ -17,7 +17,7 @@ case class PopulatedEstate(asgs: Seq[ASG]) extends Estate {
   def get(key: String) = stageMap.get(key)
   def iterator = stageMap.iterator
 
-  lazy val stages = stageMap.keys
+  lazy val stages = stageMap.keys.toSeq.sorted.sortWith((a, _) => if (a == "PROD") true else false)
 
   def populated = true
 }
