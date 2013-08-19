@@ -4,6 +4,10 @@ $ ->
      <td>#{g.query.formattedTime}</td><td>#{g.query.count}</td>
      <td>#{(g.query.time / g.query.count).toFixed(0)}</td></tr>"
 
+  indexToObj = (name, index) ->
+    name: name
+    groups: (groupToObj(name, group) for name, group of index.total.search.groups)
+
   groupToObj = (grpName, grp) ->
     name: grpName
     query:
@@ -15,14 +19,10 @@ $ ->
       time: grp.fetch_time_in_millis
       formattedTime: grp.fetch_time
 
-  dateToYMD = (date) ->
-    d = date.getDate();
-    m = date.getMonth() + 1;
-    y = date.getFullYear();
-    "#{y}-#{if (m<=9) then "0" + m else m}-#{if (d <= 9) then "0" + d else d}"
-
   refresh = ->
     $.getJSON "http://#{hostname}:9200/_all/_stats?groups=_all", (data) ->
+
+      indices = (indexToObj(name, index) for name, index of data.indices)
 
       groups = (groupToObj(name, group) for name, group of data._all.total.search.groups)
 
@@ -33,7 +33,11 @@ $ ->
 
       html = "#{renderGroupStats(groupToObj("(overall)", data._all.total.search))} #{tableBody.join(" ")}"
 
+      indexHtml = ("<h4>#{index.name}</h4><table>#{(renderGroupStats(g) for g in index.groups.sort (a,b) ->
+        b.query.time - a.query.time).join(" ")}</table>" for index in indices).join(" ")
+
       $("#stats-body").html(html)
+      $("#stats-body").after(indexHtml)
 
   refresh()
 
