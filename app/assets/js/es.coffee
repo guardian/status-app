@@ -19,6 +19,22 @@ $ ->
       time: grp.fetch_time_in_millis
       formattedTime: grp.fetch_time
 
+  tableTemplate = (tableBody) ->
+    "<table class='table table-striped'>
+      <thead>
+        <tr>
+          <th>Stats Group</th>
+          <th>Fetch Time</th>
+          <th>Query Total Time</th>
+          <th>Query Requests</th>
+          <th>Query Avg Req Time</th>
+        </tr>
+      </thead>
+    <tbody>
+      #{tableBody}
+    </tbody>
+    </table>"
+
   refresh = ->
     $.getJSON "http://#{hostname}:9200/_all/_stats?groups=_all", (data) ->
 
@@ -33,11 +49,12 @@ $ ->
 
       html = "#{renderGroupStats(groupToObj("(overall)", data._all.total.search))} #{tableBody.join(" ")}"
 
-      indexHtml = ("<h4>#{index.name}</h4><table>#{(renderGroupStats(g) for g in index.groups.sort (a,b) ->
-        b.query.time - a.query.time).join(" ")}</table>" for index in indices).join(" ")
+      indexHtml = ("<h4>#{index.name}</h4>#{tableTemplate(
+        (renderGroupStats(g) for g in index.groups.sort (a,b) -> b.query.time - a.query.time).join(" ")
+      )}" for index in indices).join(" ")
 
       $("#stats-body").html(html)
-      $("#stats-body").after(indexHtml)
+      $("#indices").html(indexHtml)
 
   refresh()
 
