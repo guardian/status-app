@@ -52,14 +52,7 @@ object User {
 
 object Login extends Controller {
   val validator = new AuthorisationValidator {
-    def emailDomainWhitelist = Seq("theguardian.com", "guardian.co.uk")//auth.domains
-    def emailWhitelistEnabled = false //auth.whitelist.useDatabase || !auth.whitelist.addresses.isEmpty
-    def emailWhitelistContains(email: String) = {
-      val lowerCaseEmail = email.toLowerCase
-      false
-//      auth.whitelist.addresses.contains(lowerCaseEmail) ||
-//        (auth.whitelist.useDatabase && Persistence.store.getAuthorisation(lowerCaseEmail).isDefined)
-    }
+    def emailDomainWhitelist = Seq("theguardian.com", "guardian.co.uk")
   }
 
   val openIdAttributes = Seq(
@@ -79,7 +72,6 @@ object Login extends Controller {
       OpenID
         .redirectURL(
           "https://www.google.com/accounts/o8/id",
-//          auth.openIdUrl,
           routes.Login.openIDCallback.absoluteURL(secureConnection), openIdAttributes)
         .map { url =>
         Redirect(url)
@@ -130,14 +122,10 @@ object Login extends Controller {
 
 trait AuthorisationValidator {
   def emailDomainWhitelist: Seq[String]
-  def emailWhitelistEnabled: Boolean
-  def emailWhitelistContains(email:String): Boolean
   def isAuthorised(id: User) = authorisationError(id).isEmpty
   def authorisationError(id: User): Option[String] = {
     if (!emailDomainWhitelist.isEmpty && !emailDomainWhitelist.contains(id.emailDomain)) {
-      Some("The e-mail address domain you used to login to Riff-Raff (%s) is not in the configured whitelist.  Please try again with another account or contact the Riff-Raff administrator." format id.email)
-    } else if (emailWhitelistEnabled && !emailWhitelistContains(id.email)) {
-      Some("The e-mail address you used to login to Riff-Raff (%s) is not authorised.  Please try again with another account, ask a colleague to add your address or contact the Riff-Raff administrator." format id.email)
+      Some(s"The e-mail address domain you used to login (${id.email}) is not in the configured whitelist.  Please try again with another account or contact the administrator.")
     } else {
       None
     }
