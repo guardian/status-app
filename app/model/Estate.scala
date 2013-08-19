@@ -1,7 +1,7 @@
 package model
 
 import lib.{Config, AmazonConnection, AWS, ScheduledAgent}
-import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsRequest
+import com.amazonaws.services.autoscaling.model.{TagDescription, AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import scala.concurrent.Future
 import controllers.Application
 import com.amazonaws.services.sqs.model.ListQueuesRequest
@@ -51,5 +51,23 @@ object Estate {
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue(_))
     } yield PopulatedEstate(asgs, queues)
   }
-  def apply() = estateAgent()
+  def apply() = EstateFixture()
+    //estateAgent()
 }
+
+object EstateFixture {
+  import collection.convert.wrapAll._
+  def apply() = {
+    PopulatedEstate(Seq(
+      ASG(asg("Example 1", "PROD"), None, Seq(), Seq(ClusterMember(
+        new com.amazonaws.services.autoscaling.model.Instance(), None,  Instance(new com.amazonaws.services.ec2.model.Instance(), None, Seq())))),
+      ASG(asg("Example 2", "PROD"), None, Seq(), Seq())
+    ))
+  }
+
+  def asg(role: String, stage: String) =
+    new AutoScalingGroup().withTags(Seq(
+      new TagDescription().withKey("Role").withValue(role),
+      new TagDescription().withKey("Stage").withValue(stage)))
+}
+
