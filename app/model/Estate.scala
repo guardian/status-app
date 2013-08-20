@@ -60,7 +60,9 @@ object EstateFixture {
   def apply() = {
     PopulatedEstate(Seq(
       ASG(asg("Example 1", "PROD"), None, Seq(), Seq(ClusterMember(
-        new com.amazonaws.services.autoscaling.model.Instance(), None,  Instance(new com.amazonaws.services.ec2.model.Instance(), None, Seq())))),
+        new com.amazonaws.services.autoscaling.model.Instance().withInstanceId("i-123abc").withLifecycleState("InService"),
+        None,
+        Instance(new com.amazonaws.services.ec2.model.Instance(), None, Seq())))),
       ASG(asg("Example 2", "PROD"), None, Seq(), Seq())
     ))
   }
