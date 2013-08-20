@@ -12,11 +12,11 @@ object Application extends Controller {
 
   implicit lazy val amazonConnection = new AmazonConnection(Config.credentials, Config.clientConfiguration)
 
-  def index = Action {
+  def index = AuthAction {
     Redirect(routes.Application.stage("PROD"))
   }
 
-  def stage(stage: String) = Action {
+  def stage(stage: String) = AuthAction { implicit req =>
     if (Estate().populated)
       Ok(views.html.index(
         stage,
@@ -28,13 +28,13 @@ object Application extends Controller {
       Ok(views.html.loading())
   }
 
-  def instance(id: String) = Action {
+  def instance(id: String) = AuthAction {
     Async {
       Instance.get(id) map (i => Ok(views.html.instance(i)))
     }
   }
 
-  def es = Action {
+  def es = AuthAction {
     val esHost = Estate().values.flatten.filter(_.appName.contains("elasticsearch"))
       .headOption.flatMap(_.members.headOption).map(_.instance.publicDns)
     Ok(views.html.elasticsearch(esHost))
