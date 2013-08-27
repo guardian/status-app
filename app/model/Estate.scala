@@ -63,8 +63,9 @@ object EstateFixture {
     val elb = ELB("ELB1", Nil, Nil, Nil)
 
     PopulatedEstate(Seq(
-      WebAppASG(asg("Example 1", "PROD"), Some(elb), Seq(), Seq(member()), Nil),
-      WebAppASG(asg("Example 2", "PROD"), None, Seq(), Seq(), Nil)
+      WebAppASG(asg("Example 1", "PROD"), Some(elb), Seq(), Seq(member(), member(elbStatus = "OutOfService")), Nil),
+      WebAppASG(asg("Example 2", "PROD"), None, Seq(), Seq(member(), member(autoScalingStatus = "Pending")), Nil),
+      WebAppASG(asg("Example 1", "CODE"), None, Seq(), Seq(member()), Nil)
     ),
     Nil)
   }
@@ -74,9 +75,9 @@ object EstateFixture {
       new TagDescription().withKey("Role").withValue(role),
       new TagDescription().withKey("Stage").withValue(stage)))
 
-  def member(id: String=s"i-${Random.nextString(6)}", autoScalingStatus : String="InService", elbStatus: String="InService") =
+  def member(id: String=s"i-${new String(Random.alphanumeric.take(6).toArray).toLowerCase}", autoScalingStatus : String="InService", elbStatus: String="InService") =
     ClusterMember(
-      new com.amazonaws.services.autoscaling.model.Instance().withInstanceId(id).withLifecycleState(autoScalingStatus),
+      new com.amazonaws.services.autoscaling.model.Instance().withInstanceId(id).withLifecycleState(autoScalingStatus).withHealthStatus("Healthy"),
       Some(ELBMember(new InstanceState().withInstanceId(id).withState(elbStatus))),
       Instance(new com.amazonaws.services.ec2.model.Instance(), None, Seq()))
 }
