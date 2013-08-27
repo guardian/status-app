@@ -78,7 +78,7 @@ trait ASG {
   def moreDetailsLink: Option[String] = None
 }
 
-case class ClusterMember(asgInfo: AwsAsgInstance, elbInfo: Option[ELB#Member], instance: Instance) {
+case class ClusterMember(asgInfo: AwsAsgInstance, elbInfo: Option[ELBMember], instance: Instance) {
   def id = asgInfo.getInstanceId
   def healthStatus = asgInfo.getHealthStatus
   def lifecycleState = asgInfo.getLifecycleState

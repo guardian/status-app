@@ -5,6 +5,8 @@ import com.amazonaws.services.autoscaling.model.{TagDescription, AutoScalingGrou
 import scala.concurrent.Future
 import controllers.Application
 import com.amazonaws.services.sqs.model.ListQueuesRequest
+import com.amazonaws.services.elasticloadbalancing.model.InstanceState
+import scala.util.Random
 
 trait Estate extends Map[String, Seq[ASG]] {
   def populated: Boolean
@@ -58,18 +60,24 @@ object Estate {
 object EstateFixture {
   import collection.convert.wrapAll._
   def apply() = {
+    val elb = ELB("ELB1", Nil, Nil, Nil)
+
     PopulatedEstate(Seq(
-      ASG(asg("Example 1", "PROD"), None, Seq(), Seq(ClusterMember(
-        new com.amazonaws.services.autoscaling.model.Instance().withInstanceId("i-123abc").withLifecycleState("InService"),
-        None,
-        Instance(new com.amazonaws.services.ec2.model.Instance(), None, Seq())))),
-      ASG(asg("Example 2", "PROD"), None, Seq(), Seq())
-    ))
+      WebAppASG(asg("Example 1", "PROD"), Some(elb), Seq(), Seq(member()), Nil),
+      WebAppASG(asg("Example 2", "PROD"), None, Seq(), Seq(), Nil)
+    ),
+    Nil)
   }
 
   def asg(role: String, stage: String) =
     new AutoScalingGroup().withTags(Seq(
       new TagDescription().withKey("Role").withValue(role),
       new TagDescription().withKey("Stage").withValue(stage)))
+
+  def member(id: String=s"i-${Random.nextString(6)}", autoScalingStatus : String="InService", elbStatus: String="InService") =
+    ClusterMember(
+      new com.amazonaws.services.autoscaling.model.Instance().withInstanceId(id).withLifecycleState(autoScalingStatus),
+      Some(ELBMember(new InstanceState().withInstanceId(id).withState(elbStatus))),
+      Instance(new com.amazonaws.services.ec2.model.Instance(), None, Seq()))
 }
 

@@ -9,16 +9,16 @@ import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricS
 import org.joda.time.DateTime
 
 case class ELB(name: String, instanceStates: List[InstanceState], latency: Seq[Datapoint], requestCount: Seq[Datapoint]) {
-  lazy val members = instanceStates.map(new Member(_))
+  lazy val members = instanceStates.map(new ELBMember(_))
 
   lazy val active = requestCount.nonEmpty && requestCount.map(_.getSum).max > 10
+}
 
-  class Member(instanceState: InstanceState) {
-    def id = instanceState.getInstanceId
-    def state = instanceState.getState
-    def description = Option(instanceState.getDescription).filter(_ != "N/A")
-    def reasonCode = Option(instanceState.getReasonCode).filter(_ != "N/A")
-  }
+case class ELBMember(instanceState: InstanceState) {
+  def id = instanceState.getInstanceId
+  def state = instanceState.getState
+  def description = Option(instanceState.getDescription).filter(_ != "N/A")
+  def reasonCode = Option(instanceState.getReasonCode).filter(_ != "N/A")
 }
 
 object ELB {
