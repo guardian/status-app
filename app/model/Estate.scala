@@ -65,9 +65,15 @@ object EstateFixture {
     PopulatedEstate(Seq(
       WebAppASG(asg("Example 1", "PROD"), Some(elb), Seq(), Seq(member(), member(elbStatus = "OutOfService")), Nil),
       WebAppASG(asg("Example 2", "PROD"), None, Seq(), Seq(member(), member(autoScalingStatus = "Pending")), Nil),
+      WebAppASG(asg("Example 3", "PROD"), None, Seq(), Seq.fill(10)(member()), Nil),
+      WebAppASG(asg("Example 4", "PROD"), None, Seq(), Seq.fill(3)(member()), Nil),
+      WebAppASG(asg("Example 6", "PROD"), None, Seq(), Seq.fill(2)(member()), Nil),
+      WebAppASG(asg("Example 5", "PROD"), None, Seq(), Seq.fill(3)(member()), Nil),
+      WebAppASG(asg("Example 7", "PROD"), None, Seq(), Seq(member()), Nil),
+      WebAppASG(asg("Example 8", "PROD"), None, Seq(), Seq(member()), Nil),
+      WebAppASG(asg("Example 9", "PROD"), None, Seq(), Seq(member()), Nil),
       WebAppASG(asg("Example 1", "CODE"), None, Seq(), Seq(member()), Nil)
-    ),
-    Nil)
+    ), Nil)
   }
 
   def asg(role: String, stage: String) =
