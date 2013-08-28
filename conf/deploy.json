@@ -1,6 +1,6 @@
 {
     "packages":{
-        "status-app":{
+        "ophan-status-app":{
             "type":"autoscaling",
             "data":{
                 "bucket": "status-app"
