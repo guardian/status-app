@@ -9,7 +9,7 @@
     },
     "recipes":{
         "default":{
-            "actionsBeforeApp": ["status-app.uploadArtifacts"]
+            "actionsBeforeApp": ["ophan-status-app.uploadArtifacts"]
         }
     }
 }
