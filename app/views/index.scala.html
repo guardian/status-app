@@ -4,56 +4,54 @@
 
 @main("Status Monitor", refreshSecs = Some(15)) {
 
-<div class="container cluster-status">
-        <div class="row">
-            <div class="navbar tight-bottom">
-                <ul class="nav navbar-nav">
-                @for(s <- estate.stages) {
-                    <li class="@if(stage == s) {active}"><a href="/@s">@s</a></li>
-                }
+    <nav class="navbar navbar-default navbar-static-top tight-bottom">
+        <ul class="nav navbar-nav">
+        @for(s <- estate.stages) {
+            <li class="@if(stage == s) {active}"><a href="/@s">@s</a></li>
+        }
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+            <li class="dropdown">
+                <a data-toggle="dropdown" href="#" class="dropdown-toggle">
+                    <i class="glyphicon glyphicon-user"></i> @request.identity.get.fullName
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="@routes.Login.logout()">Sign Out</a></li>
                 </ul>
-                <ul class="nav navbar-nav navbar-right">
-                    <li class="dropdown">
-                        <a data-toggle="dropdown" href="#" class="dropdown-toggle">
-                            <i class="glyphicon glyphicon-user"></i> @request.identity.get.fullName
-                            <span class="caret"></span>
-                        </a>
-                        <ul class="dropdown-menu" role="menu">
-                            <li><a href="@routes.Login.logout()">Sign Out</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
+            </li>
+        </ul>
+    </nav>
+    <div class="container cluster-status">
         <div class="row">
 
         @for(column <- estate(stage).grouped(math.max(estate(stage).size / 3, 1))) {
 
             <div class="col-lg-4">
             @for(cluster <- column) {
-                    <div class="header">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
                         <div class="pull-right">~ $@money.format(cluster.approxMonthlyCost)/month</div>
-                        <h3 class="tight-top">@cluster.appName</h3>
+                        <h4 class="panel-title">@cluster.appName</h4>
                     </div>
 
                     @if(!cluster.suspendedActivities.isEmpty) {
-                    <div class="alert">
+                    <div class="alert alert-warning panel-body">
                        <strong>Warning!</strong> The following autoscaling activities are currently
                        suspended: @cluster.suspendedActivities.mkString(", ")
                     </div>
                     }
 
-                    <table class="table table-condensed tight-bottom">
+                    <table class="table table-condensed">
 
                         <thead>
-                            <th width="75px">Instance</th>
-                            <th>AutoScaling Status</th>
+                            <th>Instance</th>
+                            <th>AutoScaling</th>
                             @if(cluster.hasElb) {
-                                <th>ELB Status</th>
+                                <th>ELB</th>
                             }
-                            <th width="60px">Uptime</th>
-                            <th width="50px">Version</th>
+                            <th>Uptime</th>
+                            <th>Version</th>
                         </thead>
 
                     @for(member <- cluster.members) {
@@ -71,12 +69,12 @@
                     </table>
 
                     @if(!cluster.recentActivity.isEmpty) {
-                    <div id="@cluster.name-activity" class="accordion">
+                    <div id="@cluster.name-activity" class="accordion panel-footer">
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <smalll><a class="accordion-toggle" data-toggle="collapse" data-parent="#@cluster.name-activity" href="#@cluster.name-activity-details">
-                                    Recent activity
-                                </a></smalll>
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#@cluster.name-activity" href="#@cluster.name-activity-details">
+                                    <small>Recent activity</small>
+                                </a>
                             </div>
                             <div id="@cluster.name-activity-details" class="accordion-body collapse">
                                 <div class="accordion-inner">
@@ -90,19 +88,16 @@
                         </div>
                     </div>
                     }
-
-                }
+                </div>
+            }
             </div>
         }
-
-     </div>
-
-    <div class="row">
-        <div class="sunk">
-            Approx total monthly cost: $@money.format(estate(stage).map(_.approxMonthlyCost).sum)
-            (total sunk cost: $@money.format(totalSunkCost))
+        </div>
+        <div class="row">
+            <div class="well">
+                Approximate total monthly cost for all stages: $@money.format(estate(stage).map(_.approxMonthlyCost).sum)
+                @if(totalSunkCost > 0) { (total sunk cost: $@money.format(totalSunkCost)) }
+            </div>
         </div>
     </div>
-
-    
 }
