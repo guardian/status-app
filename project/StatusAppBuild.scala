@@ -2,6 +2,7 @@ import sbt._
 import Keys._
 import play.Project._
 import sbtbuildinfo.Plugin._
+import PlayArtifact._
 
 object StatusAppBuild extends Build {
 
@@ -13,7 +14,9 @@ object StatusAppBuild extends Build {
   )
 
   lazy val statusApp = play.Project("status-app", "1.0", statusAppDependencies, path = file("."))
-    .settings(buildInfoSettings: _*).settings(
+    .settings(buildInfoSettings: _*)
+    .settings(playArtifactDistSettings: _*)
+    .settings(
 
     resolvers ++= Seq(Classpaths.typesafeReleases),
     scalacOptions ++= List("-feature"),
@@ -31,6 +34,8 @@ object StatusAppBuild extends Build {
       // it was loaded is just fine
       BuildInfoKey.constant("buildTime", System.currentTimeMillis)
     ),
-    buildInfoPackage := "controllers"
+    buildInfoPackage := "controllers",
+
+    magentaPackageName := "status-app"
   )
 }

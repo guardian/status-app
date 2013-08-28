@@ -1,0 +1,15 @@
+{
+    "packages":{
+        "status-app":{
+            "type":"autoscaling",
+            "data":{
+                "bucket": "status-app"
+            }
+        }
+    },
+    "recipes":{
+        "default":{
+            "actionsBeforeApp": ["status-app.uploadArtifacts"]
+        }
+    }
+}
