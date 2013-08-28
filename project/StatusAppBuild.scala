@@ -36,6 +36,6 @@ object StatusAppBuild extends Build {
     ),
     buildInfoPackage := "controllers",
 
-    magentaPackageName := "status-app"
+    magentaPackageName := "ophan-status-app"
   )
 }

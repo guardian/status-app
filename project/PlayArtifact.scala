@@ -30,8 +30,8 @@ object PlayArtifact extends Plugin {
     playArtifact <<= buildDeployArtifact tag Tags.Disk
   )
 
-  private def buildDeployArtifact = (streams, target, playArtifactResources, playArtifactFile, magentaPackageName) map {
-    (s, target, resources, artifactFileName, magentaPackageName) =>
+  private def buildDeployArtifact = (streams, target, playArtifactResources, playArtifactFile) map {
+    (s, target, resources, artifactFileName) =>
       val distFile = target / artifactFileName
       s.log.info("Disting " + distFile)
 
