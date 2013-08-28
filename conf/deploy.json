@@ -3,7 +3,7 @@
         "ophan-status-app":{
             "type":"autoscaling",
             "data":{
-                "bucket": "status-app"
+                "bucket": "ophan-dist"
             }
         }
     },
