@@ -12,8 +12,12 @@ object Application extends Controller {
 
   implicit lazy val amazonConnection = new AmazonConnection(Config.credentials, Config.clientConfiguration)
 
-  def index = AuthAction {
-    Redirect(routes.Application.stage("PROD"))
+  def index = AuthAction { implicit req =>
+    Estate().stages.headOption map (stage =>
+      Redirect(routes.Application.stage(stage))
+    ) getOrElse (
+      Ok(views.html.loading())
+    )
   }
 
   def stage(stage: String) = AuthAction { implicit req =>

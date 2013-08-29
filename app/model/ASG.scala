@@ -13,9 +13,9 @@ import play.api.Logger
 case class ASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction], members: Seq[ClusterMember]) {
 
   lazy val name = asg.getAutoScalingGroupName
-  lazy val tags = asg.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
+  lazy val tags = asg.getTags.map(t => t.getKey -> t.getValue).toMap
 
-  lazy val stage = tags("Stage")
+  lazy val stage = tags.get("Stage").getOrElse("?")
   lazy val appName = (tags get "Role") orElse (tags get "App") getOrElse "?"
 
   lazy val hasElb = elb.isDefined
