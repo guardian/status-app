@@ -129,9 +129,9 @@
 
                         "adduser --system --home /status --disabled-password status",
 
-                        "wget https://s3-eu-west-1.amazonaws.com/ophan-dist/PROD/status-app/status-app.conf --directory-prefix=/etc/init",
+                        "wget https://s3-eu-west-1.amazonaws.com/ophan-dist/PROD/ophan-status-app/status-app.conf --directory-prefix=/etc/init",
 
-                        "wget https://s3-eu-west-1.amazonaws.com/ophan-dist/PROD/status-app/status-app-1.0.zip --directory-prefix=/status",
+                        "wget https://s3-eu-west-1.amazonaws.com/ophan-dist/PROD/ophan-status-app/status-app-1.0.zip --directory-prefix=/status",
 
                         "unzip -d /status /status/status-app-1.0.zip",
 
