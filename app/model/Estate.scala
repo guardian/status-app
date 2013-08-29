@@ -53,7 +53,9 @@ object Estate {
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue(_))
     } yield PopulatedEstate(asgs, queues)
   }
-  def apply() = EstateFixture()
+  def apply() =
+//    PendingEstate
+    EstateFixture()
     //estateAgent()
 }
 
@@ -74,6 +76,12 @@ object EstateFixture {
       WebAppASG(asg("Example 9", "PROD"), None, Seq(), Seq(member()), Nil),
       WebAppASG(asg("Example 1", "CODE"), None, Seq(), Seq(member()), Nil)
     ), Nil)
+  }
+
+  def noStage() = {
+    PopulatedEstate(Seq(
+      ASG(new AutoScalingGroup(), None, Seq(), Seq(member(), member(elbStatus = "OutOfService")))
+    ))
   }
 
   def asg(role: String, stage: String) =
