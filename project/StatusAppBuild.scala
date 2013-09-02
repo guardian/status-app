@@ -10,12 +10,13 @@ object StatusAppBuild extends Build {
 
   val statusAppDependencies = Seq(
     awsSdk,
-    "com.typesafe.akka" %% "akka-agent" % "2.1.0"
+    "com.typesafe.akka" %% "akka-agent" % "2.1.0",
+    cache
   )
 
   lazy val statusApp = play.Project("status-app", "1.0", statusAppDependencies, path = file("."))
     .settings(buildInfoSettings: _*)
-    .settings(playArtifactDistSettings: _*)
+//    .settings(playArtifactDistSettings: _*)
     .settings(
 
     resolvers ++= Seq(Classpaths.typesafeReleases),
@@ -34,8 +35,9 @@ object StatusAppBuild extends Build {
       // it was loaded is just fine
       BuildInfoKey.constant("buildTime", System.currentTimeMillis)
     ),
-    buildInfoPackage := "controllers",
 
-    magentaPackageName := "ophan-status-app"
+//    magentaPackageName := "ophan-status-app",
+
+    buildInfoPackage := "controllers"
   )
 }
