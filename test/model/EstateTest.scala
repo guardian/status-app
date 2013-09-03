@@ -13,7 +13,7 @@ class EstateTest extends Specification {
         ASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "CODE"))), None, Seq(), Seq()),
         ASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "QA"))), None, Seq(), Seq())
       ))
-      estate.stages should contain ("PROD", "CODE", "QA", "TEST").only.inOrder
+      estate.stages should contain(exactly("PROD", "CODE", "QA", "TEST"))
     }
   }
 

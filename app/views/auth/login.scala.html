@@ -3,12 +3,13 @@
 @main("Login") {
     <div class="container">
         <div class="row">
-            <div class="col-lg-6">
-                <h1>Login</h1>
+            <div class="col-lg-10 col-lg-offset-2">
+                <h1>Status Monitor</h1>
+            </div>
+            <div class="col-lg-6 col-lg-offset-2">
+                <h2>Login</h2>
 
                 <p>Please click the button to login with your google account.</p>
-            </div>
-            <div class="col-lg-6">
                 @if(error.isDefined) {
                     <div class="alert alert-error">
                         <p>@error.get</p>
