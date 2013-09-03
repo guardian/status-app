@@ -1,14 +1,18 @@
 package lib
 
 import java.io.File
-import play.api.Configuration
+import play.api.{Application, Configuration}
 import com.typesafe.config.ConfigFactory
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.ClientConfiguration
 
 object Config {
+  import play.api.Play.current
+
   private lazy val localPropsFile = System.getProperty("user.home") + "/.gu/statusapp.conf"
-  private lazy val configuration = fileConfig(localPropsFile)
+  def configuration(implicit app: Application) =
+//    app.configuration.
+    fileConfig(localPropsFile)
 
   lazy val accessKey = configuration.getString("accessKey")
   lazy val secretKey = configuration.getString("secretKey")
@@ -22,6 +26,9 @@ object Config {
     val client = new ClientConfiguration()
     if (proxyHost.isDefined) client.setProxyHost(proxyHost.get)
     if (proxyPort.isDefined) client.setProxyPort(proxyPort.get)
+
+    println(accessKey)
+
     client
   }
 
