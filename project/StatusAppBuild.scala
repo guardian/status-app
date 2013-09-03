@@ -1,8 +1,10 @@
 import sbt._
-import Keys._
+import sbt.Keys._
 import play.Project._
 import sbtbuildinfo.Plugin._
 import PlayArtifact._
+import com.typesafe.sbt.SbtNativePackager._
+import com.typesafe.sbt.packager.Keys._
 
 object StatusAppBuild extends Build {
 
@@ -16,7 +18,7 @@ object StatusAppBuild extends Build {
 
   lazy val statusApp = play.Project("status-app", "1.0", statusAppDependencies, path = file("."))
     .settings(buildInfoSettings: _*)
-//    .settings(playArtifactDistSettings: _*)
+    .settings(playArtifactDistSettings: _*)
     .settings(
 
     resolvers ++= Seq(Classpaths.typesafeReleases),
@@ -36,7 +38,7 @@ object StatusAppBuild extends Build {
       BuildInfoKey.constant("buildTime", System.currentTimeMillis)
     ),
 
-//    magentaPackageName := "ophan-status-app",
+    magentaPackageName := "ophan-status-app",
 
     buildInfoPackage := "controllers"
   )
