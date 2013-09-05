@@ -1,4 +1,4 @@
-@(stage: String, estate: model.Estate, totalSunkCost: Float, money: java.text.DecimalFormat)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
+@(stage: String, estate: model.Estate, totalSunkCost: Float)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User], money: java.text.DecimalFormat)
 
 @import model._
 
@@ -10,7 +10,7 @@
             <li class="@if(stage == s) {active}"><a href="/@s">@s</a></li>
         }
         </ul>
-        <ul class="nav navbar-nav navbar-right">
+        <ul class="nav navbar-nav navbar-right hidden-xs">
             <li class="dropdown">
                 <a data-toggle="dropdown" href="#" class="dropdown-toggle">
                     <i class="glyphicon glyphicon-user"></i> @request.user.fullName
@@ -26,69 +26,16 @@
         <div class="row">
 
         @for(column <- estate(stage).grouped(math.max(estate(stage).size / 3, 1))) {
-
-            <div class="col-lg-4">
-            @for(cluster <- column) {
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <div class="pull-right">~ $@money.format(cluster.approxMonthlyCost)/month</div>
-                        <h4 class="panel-title">@cluster.appName</h4>
-                    </div>
-
-                    @if(!cluster.suspendedActivities.isEmpty) {
-                    <div class="alert alert-warning panel-body">
-                       <strong>Warning!</strong> The following autoscaling activities are currently
-                       suspended: @cluster.suspendedActivities.mkString(", ")
-                    </div>
-                    }
-
-                    <table class="table table-condensed">
-
-                        <thead>
-                            <th>Instance</th>
-                            <th>AutoScaling</th>
-                            @if(cluster.hasElb) {
-                                <th>ELB</th>
-                            }
-                            <th>Uptime</th>
-                            <th>Version</th>
-                        </thead>
-
-                    @for(member <- cluster.members) {
-                      <tr class="@member.goodorbad">
-                      <td><a href="@routes.Application.instance(member.id)">@member.id</a></td>
-                      <td>@member.lifecycleState</td>
-                      @if(cluster.hasElb) {
-                      <td title="@member.description">@member.state<br>@member.description</td>
-                      }
-                      <td>@member.instance.uptime</td>
-                      <td>@member.instance.version.getOrElse("?")</td>
-                      </tr>
-                    }
-
-                    </table>
-
-                    @if(!cluster.recentActivity.isEmpty) {
-                    <div id="@cluster.name-activity" class="accordion panel-footer">
-                        <div class="accordion-group">
-                            <div class="accordion-heading">
-                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#@cluster.name-activity" href="#@cluster.name-activity-details">
-                                    <small>Recent activity</small>
-                                </a>
-                            </div>
-                            <div id="@cluster.name-activity-details" class="accordion-body collapse">
-                                <div class="accordion-inner">
-                                    <small>
-                                    @for(action <- cluster.recentActivity.take(3)) {
-                                        <p><strong>@action.age</strong> @action.cause</p>
-                                    }
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    }
-                </div>
+            <div class="col-lg-4 hidden-md">
+            @for(asg <- column) {
+                @snippets.renderASG(asg)
+            }
+            </div>
+        }
+        @for(column <- estate(stage).grouped(math.max(estate(stage).size / 2, 1))) {
+            <div class="col-md-6 visible-md">
+            @for(asg <- column) {
+                @snippets.renderASG(asg)
             }
             </div>
         }

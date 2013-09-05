@@ -11,6 +11,7 @@ import ExecutionContext.Implicits.global
 object Application extends Controller {
 
   implicit lazy val amazonConnection = new AmazonConnection(Config.credentials, Config.clientConfiguration)
+  implicit val moneyFormat = new DecimalFormat("#,###.00")
 
   def index = Authenticated { implicit req =>
     Estate().stages.headOption map (stage =>
@@ -26,8 +27,7 @@ object Application extends Controller {
       Ok(views.html.index(
         stage,
         Estate(),
-        AWSCost.totalSunkCost,
-        new DecimalFormat("#,###.00")
+        AWSCost.totalSunkCost
       ))
     else
       Ok(views.html.loading())

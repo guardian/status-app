@@ -1,0 +1,62 @@
+@(asg: model.ASG)(implicit money: java.text.DecimalFormat)
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="pull-right">~ $@money.format(asg.approxMonthlyCost)/month</div>
+        <h4 class="panel-title">@asg.appName</h4>
+    </div>
+
+    @if(!asg.suspendedActivities.isEmpty) {
+        <div class="alert alert-warning panel-body">
+            <strong>Warning!</strong> The following autoscaling activities are currently
+            suspended: @asg.suspendedActivities.mkString(", ")
+        </div>
+    }
+
+    <table class="table table-condensed">
+
+        <thead>
+            <th>Instance</th>
+            <th>AutoScaling</th>
+            @if(asg.hasElb) {
+                <th>ELB</th>
+            }
+            <th>Uptime</th>
+            <th>Version</th>
+        </thead>
+
+        @for(member <- asg.members) {
+            <tr class="@member.goodorbad">
+                <td><a href="@routes.Application.instance(member.id)">@member.id</a></td>
+                <td>@member.lifecycleState</td>
+                @if(asg.hasElb) {
+                    <td title="@member.description">@member.state<br>@member.description</td>
+                }
+                <td>@member.instance.uptime</td>
+                <td>@member.instance.version.getOrElse("?")</td>
+            </tr>
+        }
+
+    </table>
+
+    @if(!asg.recentActivity.isEmpty) {
+        <div id="@asg.name-activity" class="accordion panel-footer">
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#@asg.name-activity" href="#@asg.name-activity-details">
+                        <small>Recent activity</small>
+                    </a>
+                </div>
+                <div id="@asg.name-activity-details" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <small>
+                        @for(action <- asg.recentActivity.take(3)) {
+                            <p><strong>@action.age</strong> @action.cause</p>
+                        }
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -27,6 +27,8 @@ object User {
   def writeJson(id: User) = Json.stringify(Json.toJson(id))
   def fromRequest(request: RequestHeader): Option[User] = {
     request.session.get(KEY).map(credentials => User.readJson(credentials))
+
+    Some(User("foo", "philip.wills@guardian.co.uk", "Phil", "Wills"))
   }
 }
 
