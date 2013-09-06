@@ -3,7 +3,9 @@
 <div class="panel panel-default">
     <div class="panel-heading">
         <div class="pull-right">~ $@money.format(asg.approxMonthlyCost)/month</div>
-        <h4 class="panel-title">@asg.appName</h4>
+        <h4 class="panel-title">
+            @for(link <- asg.moreDetailsLink) {<a href="@link">}@asg.appName @for(link <- asg.moreDetailsLink) {</a>}
+        </h4>
     </div>
 
     @if(!asg.suspendedActivities.isEmpty) {
