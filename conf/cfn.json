@@ -132,7 +132,6 @@
                         "unzip -d /status /status/status-app-1.0.zip",
 
                         "chown -R status /status/",
-                        "chmod u+x /status/status-app-1.0/start",
 
                         "start status-app"
                     ]]

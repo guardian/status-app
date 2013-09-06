@@ -1,6 +1,8 @@
 import sbt._
 import sbt.Keys._
 import play.Project._
+import com.typesafe.sbt.SbtNativePackager._
+import com.typesafe.sbt.packager.Keys._
 
 object PlayArtifact extends Plugin {
 
@@ -12,38 +14,28 @@ object PlayArtifact extends Plugin {
 
   lazy val playArtifactDistSettings = Seq(
 
-    playArtifactResources <<= (dist, magentaPackageName, baseDirectory) map {
-      (artifact, packageName, baseDirectory) =>
-        Seq(
-          // upstart config file
-          baseDirectory / (packageName + ".conf") -> ("packages/" + packageName + "/" + packageName + ".conf"),
-
-          // the uberjar
-          artifact -> "packages/%s/%s".format(packageName, artifact.getName),
-
-          // and the riff raff deploy instructions
-          baseDirectory / "conf" / "deploy.json" -> "deploy.json"
-        )
-    },
+    playArtifactResources := Seq(
+      baseDirectory.value / (magentaPackageName.value + ".conf") ->
+        ("packages/" + magentaPackageName.value + "/" + magentaPackageName.value + ".conf"),
+      dist.value -> "packages/%s/%s".format(magentaPackageName.value, dist.value.getName),
+      baseDirectory.value / "conf" / "deploy.json" -> "deploy.json"
+    ),
 
     playArtifactFile := "artifacts.zip",
-    playArtifact <<= buildDeployArtifact tag Tags.Disk
-  )
-
-  private def buildDeployArtifact = (streams, target, playArtifactResources, playArtifactFile) map {
-    (s, target, resources, artifactFileName) =>
-      val distFile = target / artifactFileName
-      s.log.info("Disting " + distFile)
+    playArtifact := {
+      val distFile = target.value / playArtifactFile.value
+      streams.value.log.info("Disting " + distFile)
 
       if (distFile.exists()) {
         distFile.delete()
       }
-      IO.zip(resources, distFile)
+      IO.zip(playArtifactResources.value, distFile)
 
       // Tells TeamCity to publish the artifact => leave this println in here
       println("##teamcity[publishArtifacts '%s']".format(distFile))
 
-      s.log.info("Done disting.")
+      streams.value.log.info("Done disting.")
       distFile
-  }
+    }
+  )
 }

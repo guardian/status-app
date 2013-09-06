@@ -1,8 +1,10 @@
 import sbt._
-import Keys._
+import sbt.Keys._
 import play.Project._
 import sbtbuildinfo.Plugin._
 import PlayArtifact._
+import com.typesafe.sbt.SbtNativePackager._
+import com.typesafe.sbt.packager.Keys._
 
 object StatusAppBuild extends Build {
 
@@ -10,7 +12,8 @@ object StatusAppBuild extends Build {
 
   val statusAppDependencies = Seq(
     awsSdk,
-    "com.typesafe.akka" %% "akka-agent" % "2.1.0"
+    "com.typesafe.akka" %% "akka-agent" % "2.1.0",
+    cache
   )
 
   lazy val statusApp = play.Project("status-app", "1.0", statusAppDependencies, path = file("."))
@@ -34,8 +37,9 @@ object StatusAppBuild extends Build {
       // it was loaded is just fine
       BuildInfoKey.constant("buildTime", System.currentTimeMillis)
     ),
-    buildInfoPackage := "controllers",
 
-    magentaPackageName := "ophan-status-app"
+    magentaPackageName := "ophan-status-app",
+
+    buildInfoPackage := "controllers"
   )
 }
