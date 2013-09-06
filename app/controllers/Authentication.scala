@@ -25,11 +25,8 @@ object User {
   implicit val formats = Json.format[User]
   def readJson(json: String) = Json.fromJson[User](Json.parse(json)).get
   def writeJson(id: User) = Json.stringify(Json.toJson(id))
-  def fromRequest(request: RequestHeader): Option[User] = {
+  def fromRequest(request: RequestHeader): Option[User] =
     request.session.get(KEY).map(credentials => User.readJson(credentials))
-
-    Some(User("foo", "philip.wills@guardian.co.uk", "Phil", "Wills"))
-  }
 }
 
 object Authenticated extends AuthenticatedBuilder(req => User.fromRequest(req), RedirectToLogin(_))
