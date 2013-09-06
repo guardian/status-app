@@ -2,37 +2,17 @@ package controllers
 
 import play.api.mvc._
 import play.api.mvc.Results._
-import play.api.mvc.BodyParsers.parse
 import play.api.libs.json.Json
 import play.api.libs.openid.{OpenIDError, OpenID}
 
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
+import play.api.mvc.Security.AuthenticatedBuilder
 
-object AuthAction {
-
-  def apply[A](p: BodyParser[A])(f: AuthenticatedRequest[A] => Result) = {
-    Action(p) { implicit request =>
-      User.fromRequest(request).map { identity =>
-        f(new AuthenticatedRequest(Some(identity), request))
-      }.getOrElse(Redirect(routes.Login.loginAction).withSession {
-        request.session + ("loginFromUrl", request.uri)
-      })
-    }
+object RedirectToLogin {
+  def apply(request: RequestHeader) = Redirect(routes.Login.loginAction).withSession {
+    request.session + ("loginFromUrl", request.uri)
   }
-
-  def apply(f: AuthenticatedRequest[AnyContent] => Result): Action[AnyContent] = {
-    this.apply(parse.anyContent)(f)
-  }
-
-  def apply(block: => Result): Action[AnyContent] = {
-    this.apply(_ => block)
-  }
-
-}
-
-class AuthenticatedRequest[A](val identity: Option[User], request: Request[A]) extends WrappedRequest(request) {
-  lazy val isAuthenticated = identity.isDefined
 }
 
 case class User(openid: String, email: String, firstName: String, lastName: String) {
@@ -45,10 +25,12 @@ object User {
   implicit val formats = Json.format[User]
   def readJson(json: String) = Json.fromJson[User](Json.parse(json)).get
   def writeJson(id: User) = Json.stringify(Json.toJson(id))
-  def fromRequest(request: Request[Any]): Option[User] = {
+  def fromRequest(request: RequestHeader): Option[User] = {
     request.session.get(KEY).map(credentials => User.readJson(credentials))
   }
 }
+
+object Authenticated extends AuthenticatedBuilder(req => User.fromRequest(req), RedirectToLogin(_))
 
 object Login extends Controller {
   val validator = new AuthorisationValidator {
@@ -66,53 +48,49 @@ object Login extends Controller {
     Ok(views.html.auth.login(error))
   }
 
-  def loginAction = Action { implicit request =>
+  def loginAction = Action.async { implicit request =>
     val secureConnection = request.headers.get("X-Forwarded-Proto").map(_ == "https").getOrElse(false)
-    AsyncResult(
-      OpenID
-        .redirectURL(
-          "https://www.google.com/accounts/o8/id",
-          routes.Login.openIDCallback.absoluteURL(secureConnection), openIdAttributes)
-        .map { url =>
-        Redirect(url)
-      }
-        .recover {
-        case t => Redirect(routes.Login.login).flashing(("error" -> s"Unknown error: ${t.getMessage}:${t.getCause}"))
-      }
-    )
+    OpenID
+      .redirectURL(
+        "https://www.google.com/accounts/o8/id",
+        routes.Login.openIDCallback.absoluteURL(secureConnection), openIdAttributes)
+      .map { url =>
+      Redirect(url)
+    }
+      .recover {
+      case t => Redirect(routes.Login.login).flashing(("error" -> s"Unknown error: ${t.getMessage}:${t.getCause}"))
+    }
   }
 
-  def openIDCallback = Action { implicit request =>
-    AsyncResult(
-      OpenID.verifiedId map { info =>
-        val credentials = User(
-          info.id,
-          info.attributes.get("email").get,
-          info.attributes.get("firstname").get,
-          info.attributes.get("lastname").get
+  def openIDCallback = Action.async { implicit request =>
+    OpenID.verifiedId map { info =>
+      val credentials = User(
+        info.id,
+        info.attributes.get("email").get,
+        info.attributes.get("firstname").get,
+        info.attributes.get("lastname").get
+      )
+      if (validator.isAuthorised(credentials)) {
+        Redirect(session.get("loginFromUrl").getOrElse("/")).withSession (
+          session + (User.KEY -> User.writeJson(credentials)) - "loginFromUrl"
         )
-        if (validator.isAuthorised(credentials)) {
-          Redirect(session.get("loginFromUrl").getOrElse("/")).withSession (
-            session + (User.KEY -> User.writeJson(credentials)) - "loginFromUrl"
-          )
-        } else {
-          Redirect(routes.Login.login).flashing(
-            ("error" -> (validator.authorisationError(credentials).get))
-          ).withSession(session - User.KEY)
-        }
-      } recover {
-        case t => {
-          // Here you should look at the error, and give feedback to the user
-          val message = t match {
-            case e:OpenIDError => "Failed to login (%s): %s" format (e.id, e.message)
-            case other => "Unknown login failure: %s" format t.toString
-          }
-          Redirect(routes.Login.login).flashing(
-            ("error" -> (message))
-          )
-        }
+      } else {
+        Redirect(routes.Login.login).flashing(
+          ("error" -> (validator.authorisationError(credentials).get))
+        ).withSession(session - User.KEY)
       }
-    )
+    } recover {
+      case t => {
+        // Here you should look at the error, and give feedback to the user
+        val message = t match {
+          case e:OpenIDError => "Failed to login (%s): %s" format (e.id, e.message)
+          case other => "Unknown login failure: %s" format t.toString
+        }
+        Redirect(routes.Login.login).flashing(
+          ("error" -> (message))
+        )
+      }
+    }
   }
 
   def logout = Action { implicit request =>
