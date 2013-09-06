@@ -11,7 +11,6 @@ object Config {
 
   private lazy val localPropsFile = System.getProperty("user.home") + "/.gu/statusapp.conf"
   def configuration(implicit app: Application) =
-//    app.configuration.
     fileConfig(localPropsFile)
 
   lazy val accessKey = configuration.getString("accessKey")
@@ -26,9 +25,6 @@ object Config {
     val client = new ClientConfiguration()
     if (proxyHost.isDefined) client.setProxyHost(proxyHost.get)
     if (proxyPort.isDefined) client.setProxyPort(proxyPort.get)
-
-    println(accessKey)
-
     client
   }
 
