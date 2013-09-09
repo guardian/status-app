@@ -4,7 +4,7 @@
 
 GET        /favicon.ico                   controllers.Application.void
 GET        /robots.txt                    controllers.Application.robots
-GET        /es                            controllers.Application.es
+GET        /es/:name                      controllers.Application.es(name)
 
 GET        /login                         controllers.Login.login
 GET        /loginAction                   controllers.Login.loginAction

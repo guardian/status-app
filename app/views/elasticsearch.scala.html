@@ -1,36 +1,41 @@
-@(esHost: Option[String])
+@(asg: model.ElasticSearchASG, esHost: Option[String])
 
-@main("elasticsearch status", scripts=List("/assets/js/es.js")) {
+@main("elasticsearch status") {
 
 <div class="container instance-info">
     <div class="page-header">
-        <h1>elasticsearch status</h1>
+        <h1>Elasticsearch stats</h1>
     </div>
-
-    <h2>Usage Stats</h2>
-
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th>Stats Group</th>
-            <th>Fetch Time</th>
-            <th>Query Total Time</th>
-            <th>Query Requests</th>
-            <th>Query Avg Req Time</th>
-        </tr>
-        </thead>
-        <tbody id="stats-body">
-
-        <tr>
-            <td colspan="3">Loading...</td>
-        </tr>
-        </tbody>
-    </table>
-
-    <div id="indices"></div>
-
+    <ul class="nav nav-pills">
+    @for((index, i) <- asg.stats.zipWithIndex) {
+        <li @if(i==0){class="active"}><a href="#@{index.name.replaceAll(" ", "_")}" data-toggle="tab">@index.name</a></li>
+    }
+    </ul>
+    <div class="tab-content">
+    @for((index, i) <- asg.stats.zipWithIndex) {
+        <div class="tab-pane @if(i==0){active}" id="@{index.name.replaceAll(" ", "_")}">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Stats Group</th>
+                    <th>Query Total Time</th>
+                    <th>Query Requests</th>
+                    <th>Query Avg Req Time</th>
+                </tr>
+                </thead>
+                <tbody id="stats-body">
+                @for(statsGroup <- index.statsGroups) {
+                    <tr>
+                        <td>@statsGroup.name</td>
+                        <td>@statsGroup.humanTime</td>
+                        <td>@statsGroup.queryCount</td>
+                        <td>@statsGroup.averageRequestTime</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    </div>
 </div>
-<script>
-  var hostname = "@esHost.getOrElse("")";
-</script>
 }

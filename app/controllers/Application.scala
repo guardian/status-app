@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.mvc._
-import model.{Estate, AWSCost, ASG, Instance}
+import model._
 import lib.{AmazonConnection, Config}
 import java.text.DecimalFormat
 import scala.concurrent.ExecutionContext
@@ -22,7 +22,6 @@ object Application extends Controller {
   }
 
   def stage(stage: String) = Authenticated { implicit req =>
-
     if (Estate().populated)
       Ok(views.html.index(
         stage,
@@ -37,10 +36,13 @@ object Application extends Controller {
     Instance.get(id) map (i => Ok(views.html.instance(i)))
   }
 
-  def es = Authenticated {
-    val esHost = Estate().values.flatten.filter(_.appName.contains("elasticsearch"))
-      .headOption.flatMap(_.members.headOption).map(_.instance.publicDns)
-    Ok(views.html.elasticsearch(esHost))
+  def es(name: String) = Authenticated {
+    val asg = Estate().values.flatten.find(_.name == name)
+    val esHost = asg.flatMap(_.members.headOption).map(_.instance.publicDns)
+    asg map {
+      case a: ElasticSearchASG => Ok(views.html.elasticsearch(a, esHost))
+      case _ => NotFound
+    } getOrElse Ok(views.html.loading())
   }
 
   def void = Action {
