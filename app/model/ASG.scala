@@ -10,7 +10,7 @@ import collection.JavaConversions._
 import scala.util.Try
 import play.api.Logger
 import play.api.libs.ws.WS
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsObject, JsValue}
 import controllers.routes
 
 case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction], members: Seq[ClusterMember])
@@ -19,7 +19,37 @@ case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Se
 case class ElasticSearchASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
                             members: Seq[ClusterMember], esStats: JsValue)
   extends ASG {
-  override def moreDetailsLink = Some(routes.Application.es.url)
+  override def moreDetailsLink = Some(routes.Application.es(name).url)
+
+  lazy val stats = {
+    Index("All indexes", esStats \ "_all") :: (esStats \ "indices" match {
+      case JsObject(indexes) => indexes.toList map {
+        case (k, v) => Index(k, v)
+      }
+    }).sortBy(_.name)
+  }
+
+}
+case class StatsGroup(name: String, queryTime: Long, queryCount: Long, humanTime: String) {
+  lazy val averageRequestTime = if (queryCount == 0) 0 else queryTime / queryCount
+}
+object StatsGroup {
+  def apply(name: String, v: JsValue): StatsGroup =
+    StatsGroup(name, (v \ "query_time_in_millis").as[Long], (v \ "query_total").as[Long], (v \ "query_time").as[String])
+}
+case class Index(name: String, statsGroups: Seq[StatsGroup])
+object Index {
+  def apply(name: String, v: JsValue): Index = {
+    val allSearch = v \ "total" \ "search"
+    val stats = StatsGroup("(overall)", allSearch) ::
+      (allSearch \ "groups" match {
+        case JsObject(groups) => groups.toList map {
+          case (k, v) => StatsGroup(k, v)
+        }
+        case _ => Nil
+      }).sortBy(- _.queryTime)
+    Index(name, stats)
+  }
 }
 
 trait ASG {
@@ -95,7 +125,7 @@ object ASG {
       states <- instanceStates
       activities <- recentActivity
       members <- clusterMembers
-      esStats <- elasticsSeachStats
+      esStats <- elasticsSeachStats recover { case _ => None }
     } yield {
       esStats map (
         ElasticSearchASG(asg, states.headOption, activities, members, _)
