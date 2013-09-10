@@ -10,12 +10,13 @@ object Config {
   import play.api.Play.current
 
   private lazy val localPropsFile = System.getProperty("user.home") + "/.gu/statusapp.conf"
+
   def configuration(implicit app: Application) =
-    fileConfig(localPropsFile)
+    Configuration(fileConfig(localPropsFile).withFallback(ConfigFactory.load()))
 
   lazy val accessKey = configuration.getString("accessKey")
   lazy val secretKey = configuration.getString("secretKey")
-  lazy val esHost = configuration.getString("elasticsearchHost")
+
   lazy val proxyHost = configuration.getString("proxyHost")
   lazy val proxyPort = configuration.getInt("proxyPort")
 
@@ -33,12 +34,12 @@ object Config {
     s <- secretKey
   } yield new BasicAWSCredentials(a, s)
 
-  def fileConfig(filePath: String): Configuration = {
+  def fileConfig(filePath: String) = {
     val file = new File(filePath)
     if (file.exists)
-      Configuration(ConfigFactory.parseFile(file))
+      ConfigFactory.parseFile(file)
     else
-      Configuration(ConfigFactory.empty())
+      ConfigFactory.empty()
   }
 
 }
