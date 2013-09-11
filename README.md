@@ -3,6 +3,8 @@ Guardian Status App
 
 Shows the status of autoscaling groups in an AWS account.
 
+![Status app in action](screenshot.png)
+
 Configuration
 -------------
 
