@@ -10,6 +10,11 @@
             "Description" : "The EC2 Key Pair to allow SSH access to the instance",
             "Type" : "String"
         },
+        "ManagementPort": {
+            "Description": "Port used to retrieve version information from web-apps",
+            "Type": "Number",
+            "Default": "9000"
+        },
         "InstanceType" : {
             "Description" : "EC2 instance type",
             "Type" : "String",
@@ -133,7 +138,7 @@
 
                         "chown -R status /status/",
 
-                        "start status-app"
+                        {"Fn::Join": ["", ["start status-app MANAGEMENT_PORT=", { "Ref" : "ManagementPort" }]]}
                     ]]
 
                 }}

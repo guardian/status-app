@@ -14,6 +14,11 @@
             "Description" : "DNS hosted zone for which A CNAME will be created. e.g. 'example.com' (note, no trailing full-stop) for status.example.com",
             "Type" : "String"
         },
+        "ManagementPort": {
+            "Description": "Port used to retrieve version information from web-apps",
+            "Type": "Number",
+            "Default": "9000"
+        },
         "InstanceType" : {
             "Description" : "EC2 instance type",
             "Type" : "String",
@@ -137,7 +142,7 @@
 
                         "chown -R status /status/",
 
-                        "start status-app"
+                        {"Fn::Join": ["", ["start status-app MANAGEMENT_PORT=", { "Ref" : "ManagementPort" }]]}
                     ]]
 
                 }}
