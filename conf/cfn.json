@@ -125,8 +125,7 @@
                     "Fn::Join":["\n", [
                         "#!/bin/bash -ev",
                         "apt-get -y update",
-                        "apt-get -y install language-pack-en openjdk-7-jre-headless",
-                        "apt-get -y install unzip",
+                        "apt-get -y install language-pack-en openjdk-7-jre-headless unzip",
 
                         "adduser --system --home /status --disabled-password status",
 
