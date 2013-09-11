@@ -1,52 +1,45 @@
 Guardian Status App
 =====================================
 
-Shows the status of autoscaling groups in an AWS account.
+Shows an overview of the status of autoscaling groups in an AWS account:
 
 ![Status app in action](screenshot.png)
 
-Configuration
--------------
+How do I run it?
+----------------
 
-Compile a distribution using ```sbt dist```
-scp the ```dist/status-app-1.0.tar.gz``` onto your destination server
-Ensure the server has java installed (```apt-get install java```)
-unzip on the target server (```/src/status-app-1.0``` for us)
-in that directory run ```./start &```
+The simplest way to run it is to use the [Cloud Formation scripts](cloud-formation/). 
 
-Additional Config
------------------
+If you're tagging your auto-scaling groups with a 'Role' and 'Stage', you should then
+have something to see. Note that these Cloud Formation templates require the creation 
+of new IAM resources.
 
-We recommend running on a box behind an apache.
+For best results, you'll want to allow the security group created by the Cloud 
+Formation script, called something like status-app-EC2SecurityGroup-XXXXXXXXXXXX, 
+access to the management port of your apps.
 
-First install the requirements.
+Running locally
+---------------
 
-```
-sudo apt-get update
-sudo apt-get install apache2 openjdk-7-jre-headless
-```
+If you just want to run it locally, it's a standard [Play 2](http://www.playframework.com/) 
+app and can be run with the 'run' command from an [SBT](http://www.scala-sbt.org/) prompt.
 
 You'll need a file in ~/.gu/statusapp.conf that has contents something like
 ```
 accessKey=<AWS ACCESSKEY>
 secretKey=<AWS SECRETKEY>
-elasticsearchHost=localhost
-proxyHost=proxy
-proxyPort=3128
+managementPort=<XXXX>
 ```
 
-You may want to create an apache site in /etc/apache/sites-available/status-app like:
+or to set environment variables analogously:
 ```
-<VirtualHost *:80>
-  ServerName status.cp.dev-theguardian.com
-  ProxyPass / http://127.0.0.1:9000/
-</VirtualHost>
-```
-Then enable the site and the proxy module in apache using
-```
-a2ensite status-app
-a2enmod proxy
-a2enmod proxy_http
+ACCESS_KEY=<AWS ACCESSKEY> SECRET_KEY=<AWS SECRETKEY> sbt
 ```
 
-Best of luck
+Contributing
+------------
+
+Pull requests are welcomed. If you hit a problem, or have an idea for improvments, 
+open an issue, or let me know directly.
+
+@philwills
