@@ -97,16 +97,7 @@
                 "Tags" : [
                     { "Key" : "Stage", "Value" : "PROD", "PropagateAtLaunch" : "true"  },
                     { "Key" : "Role", "Value" : { "Ref" : "Name" }, "PropagateAtLaunch" : "true"  }
-                ],
-                "NotificationConfiguration" : {
-                    "TopicARN" : "arn:aws:sns:eu-west-1:021353022223:ophan-service-notifications",
-                    "NotificationTypes":  [
-                        "autoscaling:EC2_INSTANCE_LAUNCH",
-                        "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
-                        "autoscaling:EC2_INSTANCE_TERMINATE",
-                        "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
-                    ]
-                }
+                ]
             }
         },
 
