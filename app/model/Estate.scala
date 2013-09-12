@@ -7,6 +7,7 @@ import controllers.Application
 import com.amazonaws.services.sqs.model.ListQueuesRequest
 import com.amazonaws.services.elasticloadbalancing.model.InstanceState
 import scala.util.Random
+import com.amazonaws.services.ec2.model.Placement
 
 trait Estate extends Map[String, Seq[ASG]] {
   def populated: Boolean
@@ -61,7 +62,9 @@ object Estate {
 
 object EstateFixture {
   import collection.convert.wrapAll._
-  def apply() = {
+  def apply() = fakeEstate
+
+  lazy val fakeEstate = {
     val elb = ELB("ELB1", Nil, Nil, Nil)
 
     PopulatedEstate(Seq(
@@ -93,6 +96,8 @@ object EstateFixture {
     ClusterMember(
       new com.amazonaws.services.autoscaling.model.Instance().withInstanceId(id).withLifecycleState(autoScalingStatus).withHealthStatus("Healthy"),
       Some(ELBMember(new InstanceState().withInstanceId(id).withState(elbStatus))),
-      Instance(new com.amazonaws.services.ec2.model.Instance(), None, Seq()))
+      Instance(new com.amazonaws.services.ec2.model.Instance().withInstanceId(id).withPlacement(
+        new Placement().withAvailabilityZone("eu-west-1a")
+      ), None, Seq()))
 }
 
