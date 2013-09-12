@@ -1,3 +1,5 @@
+@()(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
+
 @main("Status Monitor loading...", refreshSecs = Some(2)) {
     <div class="progress progress-striped active loading">
         <div class="progress-bar"  role="progressbar" style="width: 100%">

@@ -32,7 +32,7 @@ object Application extends Controller {
       Ok(views.html.loading())
   }
 
-  def instance(id: String) = Authenticated {
+  def instance(id: String) = Authenticated { implicit req =>
     val instance = for {
       asgs <- Estate().values
       asg <- asgs
@@ -41,7 +41,7 @@ object Application extends Controller {
     instance.headOption map (i => Ok(views.html.instance(i.instance))) getOrElse NotFound
   }
 
-  def es(name: String) = Authenticated {
+  def es(name: String) = Authenticated { implicit req =>
     val asg = Estate().values.flatten.find(_.name == name)
     val esHost = asg.flatMap(_.members.headOption).map(_.instance.publicDns)
     asg map {

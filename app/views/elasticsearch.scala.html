@@ -1,6 +1,6 @@
-@(asg: model.ElasticSearchASG, esHost: Option[String])
+@(asg: model.ElasticSearchASG, esHost: Option[String])(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
 
-@main("elasticsearch status") {
+@main("elasticsearch status", refreshSecs = Some(15)) {
 
 <div class="container instance-info">
     <div class="page-header">

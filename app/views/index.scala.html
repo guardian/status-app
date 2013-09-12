@@ -2,26 +2,8 @@
 
 @import model._
 
-@main("Status Monitor", refreshSecs = Some(15)) {
+@main("Status Monitor", stage=Some(stage), refreshSecs = Some(15)) {
 
-    <nav class="navbar navbar-default navbar-static-top tight-bottom">
-        <ul class="nav navbar-nav">
-        @for(s <- estate.stages) {
-            <li class="@if(stage == s) {active}"><a href="/@s">@s</a></li>
-        }
-        </ul>
-        <ul class="nav navbar-nav navbar-right hidden-xs">
-            <li class="dropdown">
-                <a data-toggle="dropdown" href="#" class="dropdown-toggle">
-                    <i class="glyphicon glyphicon-user"></i> @request.user.fullName
-                    <span class="caret"></span>
-                </a>
-                <ul class="dropdown-menu" role="menu">
-                    <li><a href="@routes.Login.logout()">Sign Out</a></li>
-                </ul>
-            </li>
-        </ul>
-    </nav>
     <div class="container cluster-status">
         <div class="row">
 

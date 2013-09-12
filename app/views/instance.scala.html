@@ -1,6 +1,6 @@
-@(instance: model.Instance)
+@(instance: model.Instance)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
 
-@main("Instance info for " + instance.id) {
+@main("Instance info for " + instance.id, refreshSecs = Some(15)) {
 
     <div class="container instance-info">
         <div class="page-header">
