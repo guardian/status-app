@@ -32,8 +32,13 @@ object Application extends Controller {
       Ok(views.html.loading())
   }
 
-  def instance(id: String) = Authenticated.async {
-    Instance.get(id) map (i => Ok(views.html.instance(i)))
+  def instance(id: String) = Authenticated {
+    val instance = for {
+      asgs <- Estate().values
+      asg <- asgs
+      member <- asg.members if member.id == id
+    } yield member
+    instance.headOption map (i => Ok(views.html.instance(i.instance))) getOrElse NotFound
   }
 
   def es(name: String) = Authenticated {
