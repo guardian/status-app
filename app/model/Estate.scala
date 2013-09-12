@@ -80,8 +80,8 @@ object EstateFixture {
 
   def noStage() = {
     PopulatedEstate(Seq(
-      ASG(new AutoScalingGroup(), None, Seq(), Seq(member(), member(elbStatus = "OutOfService")))
-    ))
+      WebAppASG(new AutoScalingGroup(), None, Seq(), Seq(member(), member(elbStatus = "OutOfService")), Nil)
+    ), Nil)
   }
 
   def asg(role: String, stage: String) =
