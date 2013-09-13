@@ -1,6 +1,6 @@
 package model
 
-import lib.{AWS, ScheduledAgent}
+import lib.{Config, AmazonConnection, AWS, ScheduledAgent}
 import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsRequest
 import scala.concurrent.Future
 import controllers.Application
@@ -10,9 +10,10 @@ trait Estate extends Map[String, Seq[ASG]] {
   def stages: Iterable[String]
   def -(key: String) = throw new UnsupportedOperationException
   def +[B1 >: Seq[ASG]](kv: (String, B1)) = throw new UnsupportedOperationException
+  def asgs: Seq[ASG] = values.flatten.toSeq
 }
 
-case class PopulatedEstate(asgs: Seq[ASG]) extends Estate {
+case class PopulatedEstate(override val asgs: Seq[ASG]) extends Estate {
   lazy val stageMap = asgs.groupBy(_.stage)
   def get(key: String) = stageMap.get(key)
   def iterator = stageMap.iterator
@@ -34,7 +35,7 @@ object Estate {
   import scala.concurrent.ExecutionContext.Implicits.global
   import collection.convert.wrapAsScala._
 
-  implicit val conn = Application.amazonConnection
+  implicit val conn = AmazonConnection()
 
   val estateAgent = ScheduledAgent[Estate](0.seconds, 10.seconds, PendingEstate) {
     for {
@@ -43,4 +44,8 @@ object Estate {
     } yield PopulatedEstate(asgs)
   }
   def apply() = estateAgent()
+}
+
+object AmazonConnection {
+  def apply() = new AmazonConnection(Config.credentials, Config.clientConfiguration)
 }

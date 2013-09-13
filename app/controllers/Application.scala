@@ -2,15 +2,10 @@ package controllers
 
 import play.api.mvc._
 import model._
-import lib.{AmazonConnection, Config}
 import java.text.DecimalFormat
-import scala.concurrent.ExecutionContext
-
-import ExecutionContext.Implicits.global
 
 object Application extends Controller {
 
-  implicit lazy val amazonConnection = new AmazonConnection(Config.credentials, Config.clientConfiguration)
   implicit val moneyFormat = new DecimalFormat("#,###.00")
 
   def index = Authenticated { implicit req =>
@@ -34,20 +29,19 @@ object Application extends Controller {
 
   def instance(id: String) = Authenticated { implicit req =>
     val instance = for {
-      asgs <- Estate().values
-      asg <- asgs
+      asg <- Estate().asgs
       member <- asg.members if member.id == id
     } yield member
     instance.headOption map (i => Ok(views.html.instance(i.instance))) getOrElse NotFound
   }
 
   def es(name: String) = Authenticated { implicit req =>
-    val asg = Estate().values.flatten.find(_.name == name)
-    val esHost = asg.flatMap(_.members.headOption).map(_.instance.publicDns)
-    asg map {
-      case a: ElasticSearchASG => Ok(views.html.elasticsearch(a, esHost))
+    (for {
+      asg <- Estate().asgs if asg.name == name
+    } yield asg match {
+      case a: ElasticSearchASG => Ok(views.html.elasticsearch(a))
       case _ => NotFound
-    } getOrElse Ok(views.html.loading())
+    }).headOption getOrElse Ok(views.html.loading())
   }
 
   def void = Action {

@@ -1,4 +1,4 @@
-@(asg: model.ElasticSearchASG, esHost: Option[String])(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
+@(asg: model.ElasticSearchASG)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
 
 @main("elasticsearch status", refreshSecs = Some(15)) {
 
