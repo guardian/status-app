@@ -8,10 +8,10 @@ class EstateTest extends Specification {
   "Estate stages" should {
     "be sorted with PROD first" in {
       val estate = PopulatedEstate(Seq(
-        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "TEST"))), None, Seq(), Seq()),
-        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "PROD"))), None, Seq(), Seq()),
-        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "CODE"))), None, Seq(), Seq()),
-        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "QA"))), None, Seq(), Seq())
+        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "TEST"))), None, Seq(), Seq(), Seq()),
+        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "PROD"))), None, Seq(), Seq(), Seq()),
+        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "CODE"))), None, Seq(), Seq(), Seq()),
+        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "QA"))), None, Seq(), Seq(), Seq())
       ))
       estate.stages should contain(exactly("PROD", "CODE", "QA", "TEST"))
     }
