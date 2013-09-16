@@ -10,6 +10,8 @@ import com.amazonaws.handlers.AsyncHandler
 import java.util.concurrent.{Future => JuncFuture}
 import scala.concurrent.{Promise, Future}
 import scala.util.{Success, Failure}
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClient
+import com.amazonaws.regions.{Regions, Region}
 
 class AmazonConnection(credentials: Option[AWSCredentials], clientConfig: ClientConfiguration) {
   val credentialsProvider =  new AWSCredentialsProvider() {
@@ -25,6 +27,8 @@ class AmazonConnection(credentials: Option[AWSCredentials], clientConfig: Client
   val elb = new AmazonElasticLoadBalancingAsyncClient(credentialsProvider, clientConfig)
   val autoscaling = new AmazonAutoScalingAsyncClient(credentialsProvider, clientConfig)
   val s3 = new AmazonS3Client(credentialsProvider, clientConfig)
+  val cloudWatch = Region.getRegion(Regions.EU_WEST_1).createClient(
+    classOf[AmazonCloudWatchAsyncClient], credentialsProvider, new ClientConfiguration())
 
   ec2.setEndpoint("ec2.eu-west-1.amazonaws.com")
   elb.setEndpoint("elasticloadbalancing.eu-west-1.amazonaws.com")

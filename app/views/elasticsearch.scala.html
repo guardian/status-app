@@ -7,12 +7,12 @@
         <h1>Elasticsearch stats</h1>
     </div>
     <ul class="nav nav-pills">
-    @for((index, i) <- asg.stats.zipWithIndex) {
+    @for((index, i) <- asg.elasticSearchStats.zipWithIndex) {
         <li @if(i==0){class="active"}><a href="#@{index.name.replaceAll(" ", "_")}" data-toggle="tab">@index.name</a></li>
     }
     </ul>
     <div class="tab-content">
-    @for((index, i) <- asg.stats.zipWithIndex) {
+    @for((index, i) <- asg.elasticSearchStats.zipWithIndex) {
         <div class="tab-pane @if(i==0){active}" id="@{index.name.replaceAll(" ", "_")}">
             <table class="table table-striped">
                 <thead>

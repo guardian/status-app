@@ -1,7 +1,7 @@
 package model
 
 import scala.concurrent.Future
-import lib.AmazonConnection
+import lib.{AWS, AmazonConnection}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
@@ -12,16 +12,19 @@ import play.api.Logger
 import play.api.libs.ws.WS
 import play.api.libs.json.{JsObject, JsValue}
 import controllers.routes
+import com.amazonaws.services.cloudwatch.model.{Datapoint, GetMetricStatisticsResult, Dimension, GetMetricStatisticsRequest}
+import org.joda.time.DateTime
 
-case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction], members: Seq[ClusterMember])
+case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
+                     members: Seq[ClusterMember], averageCPU: Seq[Datapoint])
   extends ASG
 
 case class ElasticSearchASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
-                            members: Seq[ClusterMember], esStats: JsValue)
+                            members: Seq[ClusterMember], averageCPU: Seq[Datapoint], esStats: JsValue)
   extends ASG {
   override def moreDetailsLink = Some(routes.Application.es(name).url)
 
-  lazy val stats = {
+  lazy val elasticSearchStats = {
     Index("All indexes", esStats \ "_all") :: (esStats \ "indices" match {
       case JsObject(indexes) => indexes.toList map {
         case (k, v) => Index(k, v)
@@ -57,6 +60,7 @@ trait ASG {
   val elb: Option[ELB]
   val recentActivity: Seq[ScalingAction]
   val members: Seq[ClusterMember]
+  val averageCPU: Seq[Datapoint]
 
   lazy val name = asg.getAutoScalingGroupName
   lazy val tags = asg.getTags.map(t => t.getKey -> t.getValue).toMap
@@ -121,16 +125,24 @@ object ASG {
       } yield stats map (_.json)
     else Future.successful(None)
 
+    val stats = AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
+      .withDimensions(new Dimension().withName("AutoScalingGroupName").withValue(asg.getAutoScalingGroupName))
+      .withMetricName("CPUUtilization").withNamespace("AWS/EC2").withPeriod(60).withStatistics("Average")
+      .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
+    )
+
     for {
       states <- instanceStates
       activities <- recentActivity
       members <- clusterMembers
+      asgStats <- stats
       esStats <- elasticsSeachStats recover { case _ => None }
     } yield {
+      val averageCPU = asgStats.getDatapoints.sortBy(_.getTimestamp)
       esStats map (
-        ElasticSearchASG(asg, states.headOption, activities, members, _)
+        ElasticSearchASG(asg, states.headOption, activities, members, averageCPU, _)
       ) getOrElse
-        WebAppASG(asg, states.headOption, activities, members)
+        WebAppASG(asg, states.headOption, activities, members, averageCPU)
     }
   }
 }

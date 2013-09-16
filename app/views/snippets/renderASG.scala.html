@@ -40,6 +40,13 @@
         }
 
     </table>
+    <svg id="@asg.name-stats" class="sparkline stats"></svg>
+    <script>
+        $(function() {
+            statsSpark('#@asg.name-stats',
+                [@for(point <-  asg.averageCPU) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}])
+        })
+    </script>
 
     @if(!asg.recentActivity.isEmpty) {
         <div id="@asg.name-activity" class="accordion panel-footer">

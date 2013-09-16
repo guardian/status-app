@@ -40,7 +40,7 @@ object Estate {
   val estateAgent = ScheduledAgent[Estate](0.seconds, 10.seconds, PendingEstate) {
     for {
       groups <- AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, new DescribeAutoScalingGroupsRequest)
-      asgs <- Future.sequence(groups.getAutoScalingGroups map (ASG(_)))
+      asgs <- Future.traverse(groups.getAutoScalingGroups.toSeq)(ASG(_))
     } yield PopulatedEstate(asgs)
   }
   def apply() = estateAgent()

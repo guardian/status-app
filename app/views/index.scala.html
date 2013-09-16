@@ -2,7 +2,7 @@
 
 @import model._
 
-@main("Status Monitor", stage=Some(stage), refreshSecs = Some(15)) {
+@main("Status Monitor", stage=Some(stage), refreshSecs = Some(15), scripts = List("assets/js/stats-sparkline.js")) {
 
     <div class="container cluster-status">
         <div class="row">
