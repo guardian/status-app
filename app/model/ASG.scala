@@ -12,7 +12,7 @@ import play.api.Logger
 import play.api.libs.ws.WS
 import play.api.libs.json.{JsObject, JsValue}
 import controllers.routes
-import com.amazonaws.services.cloudwatch.model.{Datapoint, GetMetricStatisticsResult, Dimension, GetMetricStatisticsRequest}
+import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricStatisticsRequest}
 import org.joda.time.DateTime
 
 case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],

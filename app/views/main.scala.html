@@ -21,7 +21,7 @@
     <body>
         <nav class="navbar navbar-default navbar-static-top tight-bottom">
             <ul class="nav navbar-nav">
-            @for(s <- model.Estate().stages) {
+            @for(s <- model.Estate().stageNames) {
                 <li class="@if(stage.exists(_ == s)) {active}"><a href="/@s">@s</a></li>
             }
             </ul>

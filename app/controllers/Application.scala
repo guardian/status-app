@@ -9,7 +9,7 @@ object Application extends Controller {
   implicit val moneyFormat = new DecimalFormat("#,###.00")
 
   def index = Authenticated { implicit req =>
-    Estate().stages.headOption map (stage =>
+    Estate().stageNames.headOption map (stage =>
       Redirect(routes.Application.stage(stage))
     ) getOrElse (
       Ok(views.html.loading())

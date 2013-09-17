@@ -44,7 +44,8 @@
     <script>
         $(function() {
             statsSpark('#@asg.name-stats',
-                [@for(point <-  asg.averageCPU) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}])
+                [@for(point <-  asg.averageCPU) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}],
+                '%')
         })
     </script>
 

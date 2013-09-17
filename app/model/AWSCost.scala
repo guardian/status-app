@@ -18,7 +18,7 @@ import lib.{AWS, ScheduledAgent}
 object AWSCost {
   val logger = Logger(getClass)
 
-  implicit val awsConnection = AmazonConnection()
+  implicit val awsConnection = AWS.connection
 
   def apply(costType: EC2CostingType) = {
     val onDemandRate: BigDecimal = onDemandPriceFor(costType)

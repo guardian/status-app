@@ -2,9 +2,33 @@
 
 @import model._
 
-@main("Status Monitor", stage=Some(stage), refreshSecs = Some(15), scripts = List("assets/js/stats-sparkline.js")) {
+@main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/graph.js")) {
 
     <div class="container cluster-status">
+
+        <div class="row">
+            <div class="panel panel-default">
+                <table class="table table-condensed">
+                @for(queue <- estate.queues) {
+                    <tr>
+                        <td><h4 class="panel-title">@queue.name</h4></td>
+                        <td>
+                            <svg id="@queue.name-stats" class="sparkline stats"></svg>
+                            <script>
+                            $(function() {
+                                statsBar('#@queue.name-stats', [{
+                                    values: [@for(point <-  queue.approxQueueLength) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}],
+                                    key: 'Approximate visible messages',
+                                }])
+                            })
+                            </script>
+                        </td>
+                    </tr>
+                }
+                </table>
+            </div>
+        </div>
+
         <div class="row">
 
         @for(column <- estate(stage).grouped(math.max(estate(stage).size / 3, 1))) {
