@@ -20,8 +20,12 @@ statsBar = (containerId, data) ->
   nv.addGraph({
     generate: () ->
       containerParent = $(containerId).parent()
+      nameContainter = $(containerId).prev()
+      candidateWidth = containerParent.width() - nameContainter.width() - 50
+      width = if (candidateWidth > 0) then candidateWidth else containerParent.width()
+      $(containerId).width(width)
       chart = nv.models.historicalBar()
-        .width(containerParent.width())
+        .width(width)
         .height(containerParent.height())
         .color(() -> '#333333')
 

@@ -6,26 +6,26 @@
 
     <div class="container cluster-status">
 
-        <div class="row">
-            <div class="panel panel-default">
-                <table class="table table-condensed">
-                @for(queue <- estate.queues) {
-                    <tr>
-                        <td><h4 class="panel-title">@queue.name</h4></td>
-                        <td>
-                            <svg id="@queue.name-stats" class="sparkline stats"></svg>
-                            <script>
-                            $(function() {
-                                statsBar('#@queue.name-stats', [{
-                                    values: [@for(point <-  queue.approxQueueLength) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}],
-                                    key: 'Approximate visible messages',
-                                }])
-                            })
-                            </script>
-                        </td>
-                    </tr>
-                }
-                </table>
+        <div class="row queues">
+            <div class="col-sm-12">
+            <ul class="list-group">
+            @for(queue <- estate.queues) {
+                <li class="list-group-item">
+                    <div class="row">
+                        <h4 class="col-md-4 queue-condensed">@queue.name</h4>
+                        <svg id="@queue.name-stats" class="queue-stats" class="col-md-8"></svg>
+                        <script>
+                        $(function() {
+                            statsBar('#@queue.name-stats', [{
+                                values: [@for(point <-  queue.approxQueueLength) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}],
+                                key: 'Approximate visible messages',
+                            }])
+                        })
+                        </script>
+                    </div>
+                </li>
+            }
+            </ul>
             </div>
         </div>
 
