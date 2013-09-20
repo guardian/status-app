@@ -2,7 +2,7 @@
 
 @import model._
 
-@main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/graph.js")) {
+@main("Status Monitor", stage=Some(stage), refreshSecs = Some(15), scripts = List("assets/js/graph.js")) {
 
     <div class="container cluster-status">
 
