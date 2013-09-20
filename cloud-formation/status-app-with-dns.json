@@ -49,7 +49,13 @@
                 "PolicyName": "StatusAppDescribeEC2Policy",
                 "PolicyDocument": {
                     "Statement": [ {
-                        "Action": ["ec2:describe*", "autoscaling:Describe*", "elasticloadbalancing:Describe*", "cloudwatch:Get*"],
+                        "Action": [
+                            "ec2:describe*",
+                            "autoscaling:Describe*",
+                            "elasticloadbalancing:Describe*",
+                            "cloudwatch:Get*",
+                            "sqs:ListQueues"
+                        ],
                         "Effect": "Allow",
                         "Resource":"*"
                     }]
