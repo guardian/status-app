@@ -43,10 +43,10 @@
                 }
             }
         },
-        "StatusAppDescribeEC2Policy" : {
+        "StatusAppReadMetadataPolicy" : {
             "Type": "AWS::IAM::Policy",
             "Properties": {
-                "PolicyName": "StatusAppDescribeEC2Policy",
+                "PolicyName": "StatusAppReadMetadataPolicy",
                 "PolicyDocument": {
                     "Statement": [ {
                         "Action": [
