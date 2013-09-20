@@ -12,7 +12,7 @@ class EstateTest extends Specification {
         WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "PROD"))), None, Seq(), Seq(), Seq()),
         WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "CODE"))), None, Seq(), Seq(), Seq()),
         WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "QA"))), None, Seq(), Seq(), Seq())
-      ))
+      ), Seq())
       estate.stageNames should contain(exactly("PROD", "CODE", "QA", "TEST"))
     }
   }
