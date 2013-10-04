@@ -1,4 +1,4 @@
-statsSpark = (containerId, data, formatSuffix = '') ->
+statsSpark = (containerSelector, data, formatSuffix = '') ->
   nv.addGraph(() ->
     chart = nv.models.sparklinePlus()
 
@@ -8,7 +8,7 @@ statsSpark = (containerId, data, formatSuffix = '') ->
       .xTickFormat((d) -> d3.time.format('%H:%M')(new Date(data[d].x)))
       .yTickFormat((d) -> d3.format('.0f')(d) + formatSuffix)
 
-    d3.select(containerId)
+    d3.selectAll(containerSelector)
       .datum(data)
       .transition().duration(250)
       .call(chart)
