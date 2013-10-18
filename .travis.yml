@@ -1,1 +1,17 @@
 language: scala
+
+script:
+  - sbt clean test play-artifact
+
+after_success:
+  - "travis-artifacts upload --path target/artifacts.zip"
+
+before_script:
+   - "gem install travis-artifacts"
+
+env: 
+  global: 
+  - "ARTIFACTS_S3_BUCKET=eu-west-1"
+  - "ARTIFACTS_S3_BUCKET=travis-ci-artifact-test"
+  - secure: QP+TAysQmOfzGOq9hDxQPtQWreLaqDvpnVa4afKkxCVraZVERrH36f9ran6sqyCIkVcvkh44OdxPjYFIs2IlO8hwGJ//6qkdtF9kBjSyQC3dgHkIIPVl2sEk8UKbfdY66KT7aribwqA9qWP7L0t0wK3ZfacxfJYtwbD3jBIOT6s=
+  - secure: fUyZAezvsWWGgMKbJTLdwiC/BnPBUL6M70Dfl1CdQrjvmnwUm4JxsndLOf24PX1JrQCffOZpW7x+DVFg9a6mOXVwN6UA58a4/Tn2IbePg3+mWNBdERGhUzGNGIdSQ6QpDrLFZBH2EBCqEqDxP/Yb2FeEbXOZL3F4UO/325LyXS4=
