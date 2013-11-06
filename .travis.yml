@@ -7,7 +7,7 @@ after_success:
 - travis-artifacts upload --path target/artifacts.zip
 env: 
   global: 
-  - ARTIFACTS_S3_BUCKET=eu-west-1
+  - ARTIFACTS_AWS_REGION=eu-west-1
   - ARTIFACTS_S3_BUCKET=travis-ci-artifact-test
   - secure: OP/NaOF3MJl3gv4VJpu4hvJf+9Vu0C40Yw1VQs392p8mifgE6qCS4tBnDyYEkjQm3wsT5Wkn7RLhzyy1AeVBegmeuNtFyT5cdh2rJ8E2V0BFEKRdH6TC/Nptkka8uxYN5T7BZXJSKUE8UK1xApVmLMMUlSQnLeo3HjNzqdwTCDU=
   - secure: Gtpwse8l6GaCXS6vI0bVKWiosuiE6TvqD9IyjSnqYB6VHcN2b9k7TQIvZnvmfhrEo0x1bO1mxKcrMKDvDiAkkHWXEzriq51zOUpkV1W1zdJs5PV9+MBHOqqJI9KNfRalgNfZu2u4LrA23TZDB314Xpz9Zs5xxafg+mqTyoip1r0=
