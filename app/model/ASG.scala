@@ -7,7 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
 
 import collection.JavaConversions._
-import scala.util.Try
+import scala.util.{Random, Try}
 import play.api.Logger
 import play.api.libs.ws.WS
 import play.api.libs.json.{JsObject, JsValue}
@@ -120,7 +120,7 @@ object ASG {
       for {
         members <- clusterMembers
         stats  <- FutureOption(
-          (members.headOption map (m => WS.url(s"http://${m.instance.publicDns}:9200/_all/_stats?groups=_all").get))
+          (Random.shuffle(members).headOption map (m => WS.url(s"http://${m.instance.publicDns}:9200/_all/_stats?groups=_all").get))
         )
       } yield stats map (_.json)
     else Future.successful(None)
