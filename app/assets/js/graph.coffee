@@ -8,7 +8,7 @@ statsSpark = (containerSelector, data, formatSuffix = '') ->
       .xTickFormat((d) -> d3.time.format('%H:%M')(new Date(data[d].x)))
       .yTickFormat((d) -> d3.format('.0f')(d) + formatSuffix)
 
-    d3.selectAll(containerSelector)
+    d3.selectAll(containerSelector).filter(() -> this.offsetHeight != 0)
       .datum(data)
       .transition().duration(250)
       .call(chart)
