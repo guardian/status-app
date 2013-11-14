@@ -14,6 +14,8 @@ GET        /logout                        controllers.Login.logout
 GET        /                              controllers.Application.index
 GET        /:stage                        controllers.Application.stage(stage)
 GET        /instance/:instance            controllers.Application.instance(instance)
+GET        /asg/:asg                      controllers.Application.asg(asg)
+GET        /queue/:queue                  controllers.Application.queue(queue)
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file                  controllers.Assets.at(path="/public", file)

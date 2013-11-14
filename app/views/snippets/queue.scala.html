@@ -1,0 +1,13 @@
+@(queue: model.Queue)
+<div class="row">
+    <h4 class="col-md-4 queue-condensed">@queue.name</h4>
+    <svg class="queue-stats @queue.name-stats" class="col-md-8"></svg>
+    <script>
+        $(function() {
+            statsBar('.@queue.name-stats', [{
+            values: [@for(point <-  queue.approxQueueLength) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}],
+            key: 'Approximate visible messages',
+            }])
+        })
+    </script>
+</div>

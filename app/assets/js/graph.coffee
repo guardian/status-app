@@ -10,7 +10,6 @@ statsSpark = (containerSelector, data, formatSuffix = '') ->
 
     d3.selectAll(containerSelector).filter(() -> this.offsetHeight != 0)
       .datum(data)
-      .transition().duration(250)
       .call(chart)
 
     chart

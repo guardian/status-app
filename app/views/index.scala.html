@@ -2,7 +2,7 @@
 
 @import model._
 
-@main("Status Monitor", stage=Some(stage), refreshSecs = Some(15), scripts = List("assets/js/graph.js")) {
+@main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/graph.js")) {
 
     <div class="container cluster-status">
 
@@ -10,38 +10,24 @@
             <div class="col-sm-12">
             <ul class="list-group">
             @for(queue <- estate.queues) {
-                <li class="list-group-item list-group-item-condensed">
-                    <div class="row">
-                        <h4 class="col-md-4 queue-condensed">@queue.name</h4>
-                        <svg class="queue-stats @queue.name-stats" class="col-md-8"></svg>
-                        <script>
-                        $(function() {
-                            statsBar('.@queue.name-stats', [{
-                                values: [@for(point <-  queue.approxQueueLength) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}],
-                                key: 'Approximate visible messages',
-                            }])
-                        })
-                        </script>
-                    </div>
-                </li>
+                <li class="list-group-item list-group-item-condensed" data-ajax-refresh="/queue/@queue.name"></li>
             }
             </ul>
             </div>
         </div>
 
         <div class="row">
-
         @for(column <- estate(stage).grouped(math.max(estate(stage).size / 3, 1))) {
             <div class="col-lg-4 hidden-md">
             @for(asg <- column) {
-                @snippets.renderASG(asg)
+                <div data-ajax-refresh="/asg/@asg.name" class="panel panel-default"></div>
             }
             </div>
         }
         @for(column <- estate(stage).grouped(math.max(estate(stage).size / 2, 1))) {
             <div class="col-md-6 visible-md">
             @for(asg <- column) {
-                @snippets.renderASG(asg)
+                <div data-ajax-refresh="/asg/@asg.name" class="panel panel-default"></div>
             }
             </div>
         }
@@ -53,4 +39,7 @@
             </div>
         </div>
     </div>
+
+    <script>var interval = 15000</script>
+    <script src="assets/js/auto-refresh.js" type="text/javascript"></script>
 }

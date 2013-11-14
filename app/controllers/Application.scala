@@ -27,6 +27,24 @@ object Application extends Controller {
       Ok(views.html.loading())
   }
 
+  def asg(asg: String) = Authenticated { implicit req =>
+    if (Estate().populated)
+      Ok(views.html.snippets.renderASG(
+        Estate().asgs.find(_.name == asg).get
+      ))
+    else
+      Ok(views.html.loading())
+  }
+
+  def queue(queue: String) = Authenticated { implicit req =>
+    if (Estate().populated)
+      Ok(views.html.snippets.queue(
+        Estate().queues.find(_.name == queue).get
+      ))
+    else
+      Ok(views.html.loading())
+  }
+
   def instance(id: String) = Authenticated { implicit req =>
     val instance = for {
       asg <- Estate().asgs
