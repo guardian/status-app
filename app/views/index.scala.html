@@ -2,15 +2,19 @@
 
 @import model._
 
-@main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/graph.js")) {
+@main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/graph.js", "assets/js/settings.js")) {
 
+    <div data-spy="affix" data-offset-top="150" class="settings">
+        <button type="button" class="btn btn-default glyphicon glyphicon-wrench pull-left"
+        data-toggle="modal" data-target="#config"></button>
+    </div>
     <div class="container cluster-status">
-
         <div class="row queues">
             <div class="col-sm-12">
             <ul class="list-group">
             @for(queue <- estate.queues) {
-                <li class="list-group-item list-group-item-condensed" data-ajax-refresh="/queue/@queue.name"></li>
+                <li id="@queue.name" class="list-group-item list-group-item-condensed queue"
+                    data-ajax-refresh="/queue/@queue.name"></li>
             }
             </ul>
             </div>
@@ -36,6 +40,32 @@
             <div class="well">
                 Approximate total monthly cost for all stages: $@money.format(estate(stage).map(_.approxMonthlyCost).sum)
                 @if(totalSunkCost > 0) { (total sunk cost: $@money.format(totalSunkCost)) }
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="config" tabindex="-1" role="dialog" aria-labelledby="configLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="configLabel">Queues to show</h4>
+                </div>
+                <div class="modal-body">
+                    @for(queue <- estate.queues) {
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" value="@queue.name" checked>
+                                @queue.name
+                            </label>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" id="save-setttings" class="btn btn-primary">Save changes</button>
+                </div>
             </div>
         </div>
     </div>

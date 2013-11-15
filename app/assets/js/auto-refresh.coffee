@@ -2,7 +2,12 @@ jQuery ->
 
   reload = ->
     $('[data-ajax-refresh]').each ->
-      $(this).filter(':visible').load($(this).data("ajax-refresh"))
+      $(this).map(() ->
+        if localStorage[this.id] == "off"
+          $(this).hide()
+        else
+          this
+      ).filter(':visible').load($(this).data("ajax-refresh"))
 
   reload()
 
