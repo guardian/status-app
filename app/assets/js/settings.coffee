@@ -18,3 +18,13 @@ jQuery ->
     $('#config').modal('hide')
   )
 
+  $('#all-queues').click((e) ->
+    e.preventDefault()
+    $('#config input').prop('checked', true)
+  )
+
+  $('#no-queues').click((e) ->
+    e.preventDefault()
+    $('#config input').prop('checked', false)
+  )
+
