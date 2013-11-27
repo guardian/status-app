@@ -38,7 +38,7 @@ object AWSCost {
   def onDemandPriceFor(costType: EC2CostingType) = {
     costsAgent()
       .regions(zoneToCostRegion(costType.zone))
-      .instanceTypes(typeToCostSize(costType.instanceType))
+      .instanceTypes(costType.instanceType)
   }
 
   def totalSunkCost = (for {
@@ -86,12 +86,11 @@ object AWSCost {
           val JsArray(typeGroups) = json
           val typeToCost = for {
             group <- typeGroups
-            typePrefix = (group \ "type").as[String]
             JsArray(size) = (group \ "sizes")
             s <- size
           } yield {
             val JsArray(c) = (s \ "valueColumns")
-            (typePrefix + "_" + (s \ "size").as[String] -> (c.head \ "prices" \ "USD").as[BigDecimal])
+            ((s \ "size").as[String] -> (c.head \ "prices" \ "USD").as[BigDecimal])
           }
 
           JsSuccess(RegionPrices(Map(typeToCost: _*)))
@@ -135,27 +134,6 @@ object AWSCost {
     "ap-southeast-2b" -> "apac-syd",
     "sa-east-1a" -> "sa-east-1",
     "sa-east-1b" -> "sa-east-1"
-  )
-
-  val typeToCostSize = Map(
-    "m1.small" -> "stdODI_sm",
-    "m1.medium" -> "stdODI_med",
-    "m1.large" -> "stdODI_lg",
-    "m1.xlarge" -> "stdODI_xl",
-    "m3.xlarge" -> "secgenstdODI_xl",
-    "m3.2xlarge" -> "secgenstdODI_xxl",
-    "t1.micro" -> "uODI_u",
-    "m2.xlarge" -> "hiMemODI_xl",
-    "m2.2xlarge" -> "hiMemODI_xxl",
-    "m2.4xlarge" -> "hiMemODI_xxxxl",
-    "c1.medium" -> "hiCPUODI_med",
-    "c1.xlarge" -> "hiCPUODI_xl",
-    "cc2.4xlarge" -> "clusterComputeI_xxxxl",
-    "cc2.8xlarge" -> "clusterComputeI_xxxxxxxxl",
-    "cr1.8xlarge" -> "clusterHiMemODI_xxxxxxxxl",
-    "cg1.4xlarge" -> "clusterGPUI_xxxxl",
-    "hi1.4xlarge" -> "hiIoODI_xxxxl",
-    "hs1.8xlarge" -> "hiStoreODI_xxxxxxxxl"
   )
 }
 

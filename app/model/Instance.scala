@@ -10,6 +10,7 @@ import concurrent.Future
 import play.api.libs.ws.Response
 import scala.Some
 import play.api.Logger
+import scala.util.Try
 
 case class Instance(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) {
   def id = awsInstance.getInstanceId
@@ -21,7 +22,7 @@ case class Instance(awsInstance: AwsEc2Instance, version: Option[String], useful
 
   def availabilityZone = awsInstance.getPlacement.getAvailabilityZone
 
-  def cost = AWSCost(costingType)
+  def cost = Try(AWSCost(costingType)).getOrElse(BigDecimal(0))
 
   def approxMonthlyCost = cost * 24 * 30
 
