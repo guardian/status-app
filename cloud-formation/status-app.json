@@ -10,6 +10,10 @@
             "Description" : "The EC2 Key Pair to allow SSH access to the instance",
             "Type" : "String"
         },
+        "HostedZone" : {
+            "Description" : "DNS hosted zone for which A CNAME will be created. e.g. 'example.com' (note, no trailing full-stop) for status.example.com. Leave empty if you don't want to add a CNAME to the status app",
+            "Type" : "String"
+        },
         "ManagementPort": {
             "Description": "Port used to retrieve version information from web-apps",
             "Type": "Number",
@@ -23,7 +27,9 @@
             "ConstraintDescription" : "must be a valid EC2 instance type."
         }
     },
-
+    "Conditions": {
+        "HasDNS": { "Fn::Not" : [{"Fn::Equals" : [{"Ref" : "HostedZone"}, "" ] } ] }
+    },
     "Resources" : {
 
         "StatusAppRole" : {
@@ -157,6 +163,21 @@
                     { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",   "CidrIp": "77.91.248.0/21" },
                     { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",
                         "SourceSecurityGroupName": "amazon-elb-sg", "SourceSecurityGroupOwnerId": "amazon-elb" }
+                ]
+            }
+        },
+
+        "MainDnsEntry" : {
+            "Type" : "AWS::Route53::RecordSet",
+            "Condition": "HasDNS",
+            "Properties" : {
+                "HostedZoneName" : { "Fn::Join": ["", [{ "Ref" : "HostedZone" }, "."]] },
+                "Comment" : "CNAME for status app",
+                "Name" : { "Fn::Join": [".", ["status", { "Ref" : "HostedZone" }]] },
+                "Type" : "CNAME",
+                "TTL" : "900",
+                "ResourceRecords" : [
+                    {"Fn::GetAtt":["LoadBalancer","DNSName"]}
                 ]
             }
         }
