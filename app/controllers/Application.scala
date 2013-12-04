@@ -6,7 +6,7 @@ import java.text.DecimalFormat
 
 object Application extends Controller {
 
-  implicit val moneyFormat = new DecimalFormat("#,###.00")
+  implicit val moneyFormat = new DecimalFormat("#,###")
 
   def index = Authenticated { implicit req =>
     Estate().stageNames.headOption map (stage =>

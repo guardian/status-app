@@ -1,8 +1,15 @@
 @(asg: model.ASG)(implicit money: java.text.DecimalFormat)
 <div class="panel-heading">
-    <div class="pull-right">~ $@money.format(asg.approxMonthlyCost)/month</div>
     <h4 class="panel-title">
+        <div class="pull-right">
+            <button id="@{asg.name}-copy" data-clipboard-text="@{asg.name}"
+                style="position: relative; top: -3px; left: 5px" title="Copy ASG name to clipboard">
+                <img src="/assets/images/ios7-copy-outline.png" height="16px"/>
+            </button>
+            <script>new ZeroClipboard( $("#@{asg.name}-copy") );</script>
+        </div>
         @for(link <- asg.moreDetailsLink) {<a href="@link">}@asg.appName @for(link <- asg.moreDetailsLink) {</a>}
+        <small>(~ $@money.format(asg.approxMonthlyCost)/month)</small>
     </h4>
 </div>
 
