@@ -1,4 +1,4 @@
-@(asg: model.ElasticSearchASG)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
+@(asg: model.ElasticSearchASG)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User], human: java.text.DecimalFormat)
 
 @main("elasticsearch status") {
 
@@ -19,8 +19,8 @@
                 <tr>
                     <th>Stats Group</th>
                     <th>Query Total Time</th>
-                    <th>Query Requests</th>
-                    <th>Query Avg Req Time</th>
+                    <th class="text-right">Query Requests</th>
+                    <th class="text-right">Query Avg Req Time</th>
                 </tr>
                 </thead>
                 <tbody id="stats-body">
@@ -28,8 +28,8 @@
                     <tr>
                         <td>@statsGroup.name</td>
                         <td>@statsGroup.humanTime</td>
-                        <td>@statsGroup.queryCount</td>
-                        <td>@statsGroup.averageRequestTime</td>
+                        <td class="text-right">@human.format(statsGroup.queryCount)</td>
+                        <td class="text-right">@human.format(statsGroup.averageRequestTime)</td>
                     </tr>
                 }
                 </tbody>
