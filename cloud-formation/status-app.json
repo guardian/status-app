@@ -10,6 +10,11 @@
             "Description" : "The EC2 Key Pair to allow SSH access to the instance",
             "Type" : "String"
         },
+        "Stage": {
+            "Description" : "Instances are tagged with this as their Stage",
+            "Type" : "String",
+            "Default" : "PROD"
+        },
         "HostedZone" : {
             "Description" : "DNS hosted zone for which A CNAME will be created. e.g. 'example.com' (note, no trailing full-stop) for status.example.com. Leave empty if you don't want to add a CNAME to the status app",
             "Type" : "String"
@@ -107,7 +112,7 @@
                 "HealthCheckGracePeriod" : 300,
                 "LoadBalancerNames" : [ { "Ref": "LoadBalancer" }],
                 "Tags" : [
-                    { "Key" : "Stage", "Value" : "PROD", "PropagateAtLaunch" : "true"  },
+                    { "Key" : "Stage", "Value" : { "Ref" : "Stage" }, "PropagateAtLaunch" : "true"  },
                     { "Key" : "Role", "Value" : { "Ref" : "Name" }, "PropagateAtLaunch" : "true"  }
                 ]
             }
