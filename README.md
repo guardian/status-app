@@ -43,4 +43,3 @@ Pull requests are welcomed. If you hit a problem, or have an idea for improvment
 open an issue, or let me know directly.
 
 @philwills
-
