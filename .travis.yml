@@ -4,7 +4,7 @@ script:
 before_script: 
 - gem install travis-artifacts
 after_success: 
-- travis-artifacts upload --path target/artifacts.zip --target-path artifacts/$TRAVIS_BUILD_ID
+- travis-artifacts upload --path target/artifacts.zip --target-path artifacts/$TRAVIS_BUILD_NUMBER
 env: 
   global: 
   - ARTIFACTS_AWS_REGION=eu-west-1
