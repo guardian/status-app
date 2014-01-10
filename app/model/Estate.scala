@@ -41,10 +41,13 @@ object Estate {
   implicit val conn = AWS.connection
 
   val estateAgent = ScheduledAgent[Estate](0.seconds, 10.seconds, PendingEstate) {
+    val groupsFuture = AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, new DescribeAutoScalingGroupsRequest)
+    val queuesFuture = AWS.futureOf(conn.sqs.listQueuesAsync, new ListQueuesRequest())
+
     for {
-      groups <- AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, new DescribeAutoScalingGroupsRequest)
+      groups <- groupsFuture
       asgs <- Future.traverse(groups.getAutoScalingGroups.toSeq)(ASG(_))
-      queueResult <- AWS.futureOf(conn.sqs.listQueuesAsync, new ListQueuesRequest())
+      queueResult <- queuesFuture
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue(_))
     } yield PopulatedEstate(asgs, queues)
   }

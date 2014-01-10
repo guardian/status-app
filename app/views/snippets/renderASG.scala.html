@@ -32,6 +32,12 @@
         <th>Version</th>
     </thead>
 
+    @for(elb <- asg.elb) {
+        @if(elb.active) {
+            <svg id="@elb.name-stats" class="sparkline stats"></svg>
+        }
+    }
+
     @for(member <- asg.members) {
         <tr class="@member.goodorbad">
             <td><a href="@routes.Application.instance(member.id)">@member.id</a></td>
@@ -51,6 +57,13 @@
         statsSpark('#@asg.name-stats',
             [@for(point <-  asg.averageCPU) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}],
             '%')
+        @for(elb <- asg.elb) {
+            @if(elb.active) {
+                statsSpark('#@elb.name-stats',
+                    [@for(point <-  elb.latency) { {x: @point.getTimestamp.getTime, y: @{point.getAverage * 1000} },}],
+                'ms')
+            }
+        }
     })
 </script>
 
