@@ -3,6 +3,7 @@ package model
 import org.specs2.mutable._
 import com.amazonaws.services.autoscaling.model.{TagDescription, AutoScalingGroup}
 import collection.convert.wrapAll._
+import org.joda.time.DateTime
 
 class EstateTest extends Specification {
   "Estate stages" should {
@@ -12,7 +13,7 @@ class EstateTest extends Specification {
         WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "PROD"))), None, Seq(), Seq(), Seq()),
         WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "CODE"))), None, Seq(), Seq(), Seq()),
         WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "QA"))), None, Seq(), Seq(), Seq())
-      ), Seq())
+      ), Seq(), DateTime.now)
       estate.stageNames should contain(exactly("PROD", "CODE", "QA", "TEST"))
     }
   }
