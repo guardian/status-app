@@ -36,6 +36,11 @@
                     </ul>
                 </li>
             </ul>
+            @for(updatedTime <- model.Estate().lastUpdated) {
+                <p class="navbar-text navbar-right hidden-xs">
+                    <small>Last Updated: @lib.UptimeDisplay.print(updatedTime) ago</small>
+                </p>
+            }
         </nav>
 
         @content

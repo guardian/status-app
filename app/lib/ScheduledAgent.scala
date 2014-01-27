@@ -6,6 +6,7 @@ import play.api.libs.concurrent.Akka
 import concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.Try
 
 object ScheduledAgent {
   import play.api.Play.current
@@ -23,8 +24,8 @@ class ScheduledAgent[T](initialDelay: FiniteDuration, frequency: FiniteDuration,
 
   val agentSchedule = system.scheduler.schedule(initialDelay, frequency) {
     for {
-      result <- block
-    } agent send result
+      resultFuture <- Try { block }
+    } resultFuture foreach (result => agent send result)
   }
 
   def get(): T = agent()

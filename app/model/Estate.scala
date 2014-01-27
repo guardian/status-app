@@ -5,6 +5,7 @@ import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsRequest
 import scala.concurrent.Future
 import controllers.Application
 import com.amazonaws.services.sqs.model.ListQueuesRequest
+import org.joda.time.DateTime
 
 trait Estate extends Map[String, Seq[ASG]] {
   def populated: Boolean
@@ -13,9 +14,11 @@ trait Estate extends Map[String, Seq[ASG]] {
   def -(key: String) = throw new UnsupportedOperationException
   def +[B1 >: Seq[ASG]](kv: (String, B1)) = throw new UnsupportedOperationException
   def asgs: Seq[ASG] = values.flatten.toSeq
+  def lastUpdated: Option[DateTime]
 }
 
-case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue]) extends Estate {
+case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue], lastUpdateTime: DateTime)
+    extends Estate {
   lazy val stageMap = asgs.groupBy(_.stage)
   def get(key: String) = stageMap.get(key)
   def iterator = stageMap.iterator
@@ -23,6 +26,8 @@ case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue]) exte
   lazy val stageNames = stageMap.keys.toSeq.sorted.sortWith((a, _) => if (a == "PROD") true else false)
 
   def populated = true
+
+  def lastUpdated = Some(lastUpdateTime)
 }
 
 case object PendingEstate extends Estate {
@@ -31,6 +36,7 @@ case object PendingEstate extends Estate {
   def stageNames = Nil
   def populated = false
   def queues = Nil
+  def lastUpdated = None
 }
 
 object Estate {
@@ -49,7 +55,7 @@ object Estate {
       asgs <- Future.traverse(groups.getAutoScalingGroups.toSeq)(ASG(_))
       queueResult <- queuesFuture
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue(_))
-    } yield PopulatedEstate(asgs, queues)
+    } yield PopulatedEstate(asgs, queues, DateTime.now)
   }
   def apply() = estateAgent()
 }
