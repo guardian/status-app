@@ -99,7 +99,7 @@ object ASG {
   val log = Logger[ASG](classOf[ASG])
 
   def apply(asg: AutoScalingGroup)(implicit conn: AmazonConnection): Future[ASG] =  {
-    log.info(s"Retrieveing details for ${asg.getAutoScalingGroupName}")
+    log.info(s"Retrieving details for ${asg.getAutoScalingGroupName}")
     val instanceStates = Future.sequence((asg.getLoadBalancerNames.headOption map (ELB(_))).toSeq)
 
     val recentActivity = for {

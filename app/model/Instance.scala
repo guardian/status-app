@@ -111,7 +111,7 @@ object Instance {
       if (tags("Role").contains("elasticsearch")) new ElasticSearchInstance(dns)
       else new StandardWebApp(dns, Config.managementPort.getOrElse(9000))
 
-    log.debug(s"Retrieveing version of instance with tags: $tags")
+    log.debug(s"Retrieving version of instance with tags: $tags")
     specifics.version map { v =>
       Instance(i, v, specifics.usefulUrls)
     }
