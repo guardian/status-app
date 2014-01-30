@@ -4,6 +4,10 @@
 
 @main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/graph.js", "assets/js/settings.js")) {
 
+    <script type="text/jsx" src="@routes.Assets.at("components/asg.js")">
+    </script>
+    <div id="asg"></div>
+
     <div data-spy="affix" data-offset-top="150" class="settings">
         <button type="button" class="btn btn-default glyphicon glyphicon-wrench pull-left"
         data-toggle="modal" data-target="#config"></button>
@@ -24,7 +28,15 @@
         @for(column <- estate(stage).grouped(math.max(estate(stage).size / 3, 1))) {
             <div class="col-lg-4 hidden-md">
             @for(asg <- column) {
-                <div data-ajax-refresh="/asg/@asg.name" class="panel panel-default" style="overflow: hidden"></div>
+                <div id="@{asg.name}" class="panel panel-default" style="overflow: hidden">
+                    <script type="text/jsx">
+                        /** @@jsx React.DOM */
+                        React.renderComponent(
+                            <AutoScalingGroup name="@{asg.name}" />,
+                            document.getElementById('@{asg.name}')
+                        );
+                    </script>
+                </div>
             }
             </div>
         }

@@ -3,6 +3,8 @@ package controllers
 import play.api.mvc._
 import model._
 import java.text.DecimalFormat
+import play.api.libs.json.{JsString, Json, Writes}
+import lib.UptimeDisplay
 
 object Application extends Controller {
 
@@ -28,12 +30,37 @@ object Application extends Controller {
   }
 
   def asg(asg: String) = Authenticated { implicit req =>
-    if (Estate().populated)
-      Ok(views.html.snippets.renderASG(
-        Estate().asgs.find(_.name == asg).get
-      ))
-    else
-      Ok(views.html.loading())
+    implicit val memberWrites = new Writes[ClusterMember] {
+      def writes(m: ClusterMember) = Json.obj(
+        "id" -> m.id,
+        "goodorbad" -> m.goodorbad,
+        "lifecycleState" -> m.lifecycleState,
+        "uptime" -> m.instance.uptime,
+        "version" -> JsString(m.instance.version.getOrElse("?"))
+      )
+    }
+
+    implicit val asgWrites = new Writes[ASG] {
+      def writes(asg: ASG) = Json.obj(
+        "members" -> asg.members
+      )
+    }
+
+    if (req.contentType == Some("text/javascript")) {
+      if (Estate().populated)
+        Ok(Json.toJson(
+          Estate().asgs.find(_.name == asg).get
+        ))
+      else
+        Ok("")
+    } else {
+      if (Estate().populated)
+        Ok(views.html.snippets.renderASG(
+          Estate().asgs.find(_.name == asg).get
+        ))
+      else
+        Ok(views.html.loading())
+    }
   }
 
   def queue(queue: String) = Authenticated { implicit req =>
