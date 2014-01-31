@@ -1,4 +1,4 @@
-@(stage: String, estate: model.Estate, totalSunkCost: Float)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User], money: java.text.DecimalFormat)
+ @(stage: String, estate: model.Estate, totalSunkCost: Float)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User], money: java.text.DecimalFormat)
 
 @import model._
 
@@ -43,7 +43,15 @@
         @for(column <- estate(stage).grouped(math.max(estate(stage).size / 2, 1))) {
             <div class="col-md-6 visible-md">
             @for(asg <- column) {
-                <div data-ajax-refresh="/asg/@asg.name" class="panel panel-default" style="overflow: hidden"></div>
+                <div id="@{asg.name}" class="panel panel-default" style="overflow: hidden">
+                    <script type="text/jsx">
+                        /** @@jsx React.DOM */
+                        React.renderComponent(
+                            <AutoScalingGroup name="@{asg.name}" />,
+                            document.getElementById('@{asg.name}')
+                        );
+                    </script>
+                </div>
             }
             </div>
         }

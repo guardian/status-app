@@ -2,14 +2,16 @@
 var AutoScalingGroup = React.createClass({
     getInitialState: function() {
         return {
-            members: []
+            members: [],
+            recentActivity: []
         }
     },
 
     updateFromServer: function() {
         $.ajax({url: '/asg/' + this.props.name, contentType: "text/javascript", success: function(result) {
             this.setState({
-                members: result.members
+                members: result.members,
+                recentActivity: result.recentActivity
             })}.bind(this)
         });
         setTimeout(this.updateFromServer, 5000)
@@ -21,20 +23,73 @@ var AutoScalingGroup = React.createClass({
 
     render: function() {
         return (
-            <table className="table table-condensed">
-                <thead>
-                    <th>Instance</th>
-                    <th>AutoScaling</th>
-                    <th>Uptime</th>
-                    <th>Version</th>
-                </thead>
-                <tbody>
-                {this.state.members.map(function(m) {
-                    return <ClusterMember member={m} key={m.id}/>
-                })}
-                </tbody>
-            </table>
+            <div>
+                <table className="table table-condensed">
+                    <thead>
+                        <th>Instance</th>
+                        <th>AutoScaling</th>
+                        <th>Uptime</th>
+                        <th>Version</th>
+                    </thead>
+                    <tbody>
+                    {this.state.members.map(function(m) {
+                        return <ClusterMember member={m} key={m.id} />
+                    })}
+                    </tbody>
+                </table>
+                <RecentActivity asgName={this.props.name} activities={this.state.recentActivity} />
+            </div>
          );
+    }
+});
+
+var RecentActivity = React.createClass({
+
+    toggle: function() {
+        this.setState({collapsed: !this.state.collapsed})
+    },
+
+    getInitialState: function() {
+        return {
+            collapsed: true
+        }
+    },
+
+    render: function() {
+
+        if (this.props.activities.length === 0) {
+            return (<div></div>)
+        }
+        return (
+            <div id={this.props.asgName + "-activity"} className="accordion panel-footer">
+                <div className="accordion-group">
+                    <div className="accordion-heading">
+                        <a className="accordion-toggle" onClick={this.toggle}>
+                            <small>Recent activity</small>
+                        </a>
+                    </div>
+                    {this.state.collapsed ? '' :
+                    <div>
+                        <div className="accordion-inner">
+                            <small>
+                            {this.props.activities.map(function(a) {
+                                return <ScalingActivity age={a.age} cause={a.cause} />
+                            })}
+                            </small>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+        )
+    }
+});
+
+var ScalingActivity = React.createClass({
+    render: function() {
+        return (
+            <p><strong>{this.props.age}</strong>{this.props.cause}</p>
+        );
     }
 });
 

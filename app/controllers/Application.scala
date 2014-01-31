@@ -40,9 +40,17 @@ object Application extends Controller {
       )
     }
 
+    implicit val scalingActionWrites = new Writes[ScalingAction] {
+      override def writes(a: ScalingAction) = Json.obj(
+        "age" -> a.age,
+        "cause" -> a.cause
+      )
+    }
+
     implicit val asgWrites = new Writes[ASG] {
       def writes(asg: ASG) = Json.obj(
-        "members" -> asg.members
+        "members" -> asg.members,
+        "recentActivity" -> asg.recentActivity
       )
     }
 
