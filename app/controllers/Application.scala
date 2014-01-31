@@ -49,6 +49,7 @@ object Application extends Controller {
 
     implicit val asgWrites = new Writes[ASG] {
       def writes(asg: ASG) = Json.obj(
+        "appName" -> asg.appName,
         "members" -> asg.members,
         "recentActivity" -> asg.recentActivity
       )

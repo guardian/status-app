@@ -2,6 +2,7 @@
 var AutoScalingGroup = React.createClass({
     getInitialState: function() {
         return {
+            appName: "",
             members: [],
             recentActivity: []
         }
@@ -10,6 +11,7 @@ var AutoScalingGroup = React.createClass({
     updateFromServer: function() {
         $.ajax({url: '/asg/' + this.props.name, contentType: "text/javascript", success: function(result) {
             this.setState({
+                appName: result.appName,
                 members: result.members,
                 recentActivity: result.recentActivity
             })}.bind(this)
@@ -24,21 +26,51 @@ var AutoScalingGroup = React.createClass({
     render: function() {
         return (
             <div>
-                <table className="table table-condensed">
-                    <thead>
-                        <th>Instance</th>
-                        <th>AutoScaling</th>
-                        <th>Uptime</th>
-                        <th>Version</th>
-                    </thead>
-                    <tbody>
-                    {this.state.members.map(function(m) {
-                        return <ClusterMember member={m} key={m.id} />
-                    })}
-                    </tbody>
-                </table>
+                <ClusterTitle name={this.props.name} appName={this.state.appName} />
+                <ClusterMembers members={this.state.members} />
                 <RecentActivity asgName={this.props.name} activities={this.state.recentActivity} />
             </div>
+        );
+    }
+});
+
+var ClusterTitle = React.createClass({
+    render: function() {
+        return(
+            <div className="panel-heading">
+                <h4 className="panel-title">
+                    <div className="pull-right">
+                        <button id={this.props.name + "-copy"} data-clipboard-text={this.props.name}
+                        className="clipboard" title="Copy ASG name to clipboard">
+                            <img src="/assets/images/ios7-copy-outline.png" height="16px"/>
+                        </button>
+                    </div>
+                    {this.props.appName}
+                </h4>
+            </div>
+        )
+    },
+    componentDidMount: function() {
+        new ZeroClipboard(document.getElementById(this.props.name + "-copy"))
+    }
+});
+
+var ClusterMembers = React.createClass({
+    render: function() {
+        return (
+            <table className="table table-condensed">
+                <thead>
+                    <th>Instance</th>
+                    <th>AutoScaling</th>
+                    <th>Uptime</th>
+                    <th>Version</th>
+                </thead>
+                <tbody>
+                {this.props.members.map(function(m) {
+                    return <ClusterMember member={m} key={m.id} />
+                })}
+                </tbody>
+            </table>
          );
     }
 });
@@ -61,25 +93,21 @@ var RecentActivity = React.createClass({
             return (<div></div>)
         }
         return (
-            <div id={this.props.asgName + "-activity"} className="accordion panel-footer">
-                <div className="accordion-group">
-                    <div className="accordion-heading">
-                        <a className="accordion-toggle" onClick={this.toggle}>
-                            <small>Recent activity</small>
-                        </a>
-                    </div>
-                    {this.state.collapsed ? '' :
-                    <div>
-                        <div className="accordion-inner">
-                            <small>
-                            {this.props.activities.map(function(a) {
-                                return <ScalingActivity age={a.age} cause={a.cause} />
-                            })}
-                            </small>
-                        </div>
-                    </div>
-                    }
+            <div id={this.props.asgName + "-activity"} className="panel-footer">
+                <div>
+                    <a onClick={this.toggle}>
+                        <small>Recent activity</small>
+                    </a>
                 </div>
+                {this.state.collapsed ? '' :
+                <div>
+                    <small>
+                    {this.props.activities.map(function(a) {
+                        return <ScalingActivity age={a.age} cause={a.cause} />
+                    })}
+                    </small>
+                </div>
+                }
             </div>
         )
     }

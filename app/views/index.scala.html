@@ -4,9 +4,7 @@
 
 @main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/graph.js", "assets/js/settings.js")) {
 
-    <script type="text/jsx" src="@routes.Assets.at("components/asg.js")">
-    </script>
-    <div id="asg"></div>
+    <script type="text/jsx" src="@routes.Assets.at("components/asg.js")"></script>
 
     <div data-spy="affix" data-offset-top="150" class="settings">
         <button type="button" class="btn btn-default glyphicon glyphicon-wrench pull-left"
