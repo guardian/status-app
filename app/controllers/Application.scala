@@ -5,6 +5,7 @@ import model._
 import java.text.DecimalFormat
 import play.api.libs.json.{JsString, Json, Writes}
 import lib.UptimeDisplay
+import com.amazonaws.services.cloudwatch.model.Datapoint
 
 object Application extends Controller {
 
@@ -47,11 +48,28 @@ object Application extends Controller {
       )
     }
 
+    implicit val datapointWrites = new Writes[Datapoint]{
+      override def writes(d: Datapoint) = Json.obj(
+        "x" -> d.getTimestamp.getTime,
+        "y" -> d.getAverage.toInt
+      )
+    }
+
+    implicit val elbWrites = new Writes[ELB] {
+      override def writes(elb: ELB) = Json.obj(
+        "name" -> elb.name,
+        "latency" -> elb.latency.map(d => new Datapoint().withTimestamp(d.getTimestamp).withAverage(d.getAverage * 1000)),
+        "active" -> elb.active
+      )
+    }
+
     implicit val asgWrites = new Writes[ASG] {
       def writes(asg: ASG) = Json.obj(
         "appName" -> asg.appName,
         "members" -> asg.members,
-        "recentActivity" -> asg.recentActivity
+        "recentActivity" -> asg.recentActivity,
+        "averageCPU" -> asg.averageCPU,
+        "elb" -> asg.elb
       )
     }
 

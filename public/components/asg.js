@@ -4,17 +4,15 @@ var AutoScalingGroup = React.createClass({
         return {
             appName: "",
             members: [],
-            recentActivity: []
+            recentActivity: [],
+            averageCPU: []
         }
     },
 
     updateFromServer: function() {
         $.ajax({url: '/asg/' + this.props.name, contentType: "text/javascript", success: function(result) {
-            this.setState({
-                appName: result.appName,
-                members: result.members,
-                recentActivity: result.recentActivity
-            })}.bind(this)
+            this.setState(result)
+        }.bind(this)
         });
         setTimeout(this.updateFromServer, 5000)
     },
@@ -23,11 +21,24 @@ var AutoScalingGroup = React.createClass({
         this.updateFromServer()
     },
 
+    componentDidUpdate: function() {
+        statsSpark('#' + this.props.name + '-stats',
+            this.state.averageCPU,
+        '%')
+        if (this.state.elb && this.state.elb.active) {
+            statsSpark('#' + this.state.elb.name + '-stats',
+                this.state.elb.latency,
+            'ms')
+        }
+    },
+
     render: function() {
         return (
             <div>
                 <ClusterTitle name={this.props.name} appName={this.state.appName} />
+                {this.state.elb && this.state.elb.active ? <svg id={this.state.elb.name + "-stats"} className="sparkline stats"></svg> : ''}
                 <ClusterMembers members={this.state.members} />
+                <svg id={this.props.name + "-stats"} className="sparkline stats"></svg>
                 <RecentActivity asgName={this.props.name} activities={this.state.recentActivity} />
             </div>
         );
