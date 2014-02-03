@@ -34,7 +34,9 @@
 
     @for(elb <- asg.elb) {
         @if(elb.active) {
-            <svg id="@elb.name-stats" class="sparkline stats"></svg>
+            <a href="https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D05!E07!ET6!MN4!NS2!PD1!SS3!ST0!VA-PT3H~60~AWS%25252FELB~Average~Latency~LoadBalancerName~P0D~@{elb.name}">
+                <svg id="@elb.name-stats" class="sparkline stats"></svg>
+            </a>
         }
     }
 
@@ -51,7 +53,9 @@
     }
 
 </table>
-<svg id="@asg.name-stats" class="sparkline stats"></svg>
+<a href="https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D03!E06!ET7!MN5!NS2!PD1!SS4!ST0!VA-PT3H~60~AWS%252FEC2~AutoScalingGroupName~Average~CPUUtilization~@{asg.name}~P0D">
+    <svg id="@asg.name-stats" class="sparkline stats"></svg>
+</a>
 <script>
     $(function() {
         statsSpark('#@asg.name-stats',
