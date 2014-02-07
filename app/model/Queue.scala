@@ -11,9 +11,7 @@ import play.api.Logger
 case class Queue(name: String, url: String, approxQueueLength: Seq[Datapoint])
 
 object Queue {
-  val log = Logger[Queue](classOf[Queue])
-
-  def apply(url: String)(implicit conn: AmazonConnection, context: ExecutionContext): Future[Queue] = {
+  def from(url: String)(implicit conn: AmazonConnection, context: ExecutionContext): Future[Queue] = {
     val name = url.split("/").last
     for{
       stats <- AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()

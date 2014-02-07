@@ -2,9 +2,13 @@
 
 @import model._
 
-@main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/graph.js", "assets/js/settings.js")) {
+@main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/settings.js")) {
 
+    <script src="@routes.Assets.at("js/graph.js")"></script>
+     <script src='@routes.Assets.at("nvd3/d3.v3.js")'></script>
+     <script src='@routes.Assets.at("nvd3/nv.d3.min.js")'></script>
     <script type="text/jsx" src="@routes.Assets.at("components/asg.js")"></script>
+    <script src="@routes.Assets.at("js/components/queue.js")"></script>
 
     <div data-spy="affix" data-offset-top="150" class="settings">
         <button type="button" class="btn btn-default glyphicon glyphicon-wrench pull-left"
@@ -15,8 +19,13 @@
             <div class="col-sm-12">
             <ul class="list-group">
             @for(queue <- estate.queues) {
-                <li id="@queue.name" class="list-group-item list-group-item-condensed queue"
-                    data-ajax-refresh="/queue/@queue.name"></li>
+                <li id="@{queue.name}-container" class="list-group-item list-group-item-condensed queue"></li>
+                <script>
+                    React.renderComponent(
+                        Queue({name: "@{queue.name}"}),
+                        document.getElementById('@{queue.name}-container')
+                    );
+                </script>
             }
             </ul>
             </div>

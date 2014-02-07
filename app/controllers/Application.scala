@@ -11,6 +11,13 @@ object Application extends Controller {
 
   implicit val moneyFormat = new DecimalFormat("#,###")
 
+  implicit val datapointWrites = new Writes[Datapoint]{
+    override def writes(d: Datapoint) = Json.obj(
+      "x" -> d.getTimestamp.getTime,
+      "y" -> d.getAverage.toInt
+    )
+  }
+
   def index = Authenticated { implicit req =>
     Estate().stageNames.headOption map (stage =>
       Redirect(routes.Application.stage(stage))
@@ -45,13 +52,6 @@ object Application extends Controller {
       override def writes(a: ScalingAction) = Json.obj(
         "age" -> a.age,
         "cause" -> a.cause
-      )
-    }
-
-    implicit val datapointWrites = new Writes[Datapoint]{
-      override def writes(d: Datapoint) = Json.obj(
-        "x" -> d.getTimestamp.getTime,
-        "y" -> d.getAverage.toInt
       )
     }
 
@@ -91,12 +91,23 @@ object Application extends Controller {
   }
 
   def queue(queue: String) = Authenticated { implicit req =>
-    if (Estate().populated)
-      Ok(views.html.snippets.queue(
-        Estate().queues.find(_.name == queue).get
-      ))
-    else
-      Ok(views.html.loading())
+    implicit val queueWrites = Json.writes[Queue]
+
+    if (req.contentType == Some("text/javascript")) {
+      if (Estate().populated)
+        Ok(Json.toJson(
+          Estate().queues.find(_.name == queue).get
+        ))
+      else
+        Ok("")
+    } else {
+      if (Estate().populated)
+        Ok(views.html.snippets.queue(
+          Estate().queues.find(_.name == queue).get
+        ))
+      else
+        Ok(views.html.loading())
+    }
   }
 
   def instance(id: String) = Authenticated { implicit req =>

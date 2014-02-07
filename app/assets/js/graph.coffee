@@ -12,6 +12,8 @@ statsSpark = (containerSelector, data, formatSuffix = '') ->
       .datum(data)
       .call(chart)
 
+#    chart.update()
+
     chart
   )
 
@@ -29,6 +31,9 @@ statsBar = (containerId, data) ->
         .height(containerParent.height())
         .margin({right: 45})
         .color(() -> '#333333')
+
+#      d3.select(containerId)
+#        .html(null)
 
       d3.select(containerId)
         .datum(data)
