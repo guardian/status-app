@@ -6,10 +6,13 @@ import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricS
 import org.joda.time.DateTime
 
 import collection.convert.wrapAsScala._
+import play.api.Logger
 
 case class Queue(name: String, url: String, approxQueueLength: Seq[Datapoint])
 
 object Queue {
+  val log = Logger[Queue](classOf[Queue])
+
   def apply(url: String)(implicit conn: AmazonConnection, context: ExecutionContext): Future[Queue] = {
     val name = url.split("/").last
     for{

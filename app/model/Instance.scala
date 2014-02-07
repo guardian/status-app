@@ -11,8 +11,36 @@ import play.api.libs.ws.Response
 import scala.Some
 import play.api.Logger
 import scala.util.Try
+import java.util.Date
+import java.net.ConnectException
 
-case class Instance(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) {
+trait Instance {
+  def id: String
+  def publicDns: String
+  def publicIp: String
+  def privateDns: String
+  def privateIp: String
+  def instanceType: String
+
+  def availabilityZone: String
+
+  def cost: BigDecimal
+  def approxMonthlyCost: BigDecimal
+  def costingType: EC2CostingType
+
+  def uptime: String
+  def launched: Date
+
+  def tags: Map[String, String]
+  def stage: String
+  def app: String
+
+  def version: Option[String]
+
+  def usefulUrls: Seq[(String, String)]
+}
+
+case class EC2Instance(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) extends Instance {
   def id = awsInstance.getInstanceId
   def publicDns = awsInstance.getPublicDnsName
   def publicIp = awsInstance.getPublicIpAddress
@@ -23,9 +51,7 @@ case class Instance(awsInstance: AwsEc2Instance, version: Option[String], useful
   def availabilityZone = awsInstance.getPlacement.getAvailabilityZone
 
   def cost = Try(AWSCost(costingType)).getOrElse(BigDecimal(0))
-
   def approxMonthlyCost = cost * 24 * 30
-
   def costingType = EC2CostingType(instanceType, availabilityZone)
 
   def launched = awsInstance.getLaunchTime
@@ -74,7 +100,11 @@ trait AppSpecifics {
   def usefulUrls: Seq[(String, String)]
   def versionUrl: String
   def versionExtractor: Response => Option[String]
-  def version = WS.url(versionUrl).withTimeout(2000).get() map (versionExtractor) recover {
+  def version = WS.url(versionUrl).withTimeout(200).get() map (versionExtractor) recover {
+    case _: ConnectException => {
+      log.error(s"Couldn't retrieve $versionUrl")
+      None
+    }
     case e => {
       log.error(s"Couldn't retrieve $versionUrl", e)
       None
@@ -88,10 +118,16 @@ object Instance {
   val log = Logger[Instance](classOf[Instance])
 
   private def uncachedGet(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
-    for {
+    log.info(id)
+    (for {
       result <- AWS.futureOf(awsConn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(id))
       i <- (result.getReservations flatMap (_.getInstances) map (Instance(_))).head
-    } yield i
+    } yield i) recover {
+      case e => {
+        log.error(s"Unable to retrieve details for instance: $id")
+        UnknownInstance(id)
+      }
+    }
   }
 
   def get(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
@@ -113,7 +149,53 @@ object Instance {
 
     log.debug(s"Retrieving version of instance with tags: $tags")
     specifics.version map { v =>
-      Instance(i, v, specifics.usefulUrls)
+      EC2Instance(i, v, specifics.usefulUrls)
     }
   }
+}
+
+case class ManagementEndpoint(protocol:String, port:Int, path:String, url:String, format:String, source:String)
+object ManagementEndpoint {
+  val KeyValue = """([^=]*)=(.*)""".r
+  def fromTag(dnsName:String, tag:Option[String]): Option[Seq[ManagementEndpoint]] = {
+    tag match {
+      case Some("none") => None
+      case Some(tagContent) =>
+        Some(tagContent.split(";").filterNot(_.isEmpty).map{ endpoint =>
+          val params = endpoint.split(",").filterNot(_.isEmpty).flatMap {
+            case KeyValue(key,value) => Some(key -> value)
+            case _ => None
+          }.toMap
+          fromMap(dnsName, params)
+        })
+      case None => Some(Seq(fromMap(dnsName)))
+    }
+  }
+  def fromMap(dnsName:String, map:Map[String,String] = Map.empty):ManagementEndpoint = {
+    val protocol = map.getOrElse("protocol","http")
+    val port = map.get("port").map(_.toInt).getOrElse(18080)
+    val path = map.getOrElse("path","/management")
+    val url = s"$protocol://$dnsName:$port$path"
+    val source: String = if (map.isEmpty) "convention" else "tag"
+    ManagementEndpoint(protocol, port, path, url, map.getOrElse("format", "gu"), source)
+  }
+}
+
+case class UnknownInstance(id: String) extends Instance{
+  def app = "???"
+  def stage = "???"
+  def uptime = "???"
+  def cost = BigDecimal(0)
+  def approxMonthlyCost = BigDecimal(0)
+  def availabilityZone = "???"
+  def instanceType = "???"
+  def privateIp = "???"
+  def privateDns = "???"
+  def publicIp = "???"
+  def publicDns = "???"
+  def costingType = EC2CostingType("", "")
+  def version = None
+  def launched = new Date()
+  def usefulUrls = Nil
+  def tags = Map.empty
 }

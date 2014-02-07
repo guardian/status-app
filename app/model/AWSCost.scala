@@ -105,9 +105,7 @@ object AWSCost {
           JsSuccess(OnDemandPrices(Map(regions: _*)))
         }
       }
-      val prices = Json.parse(response.body.dropWhile(_ != '{').takeWhile(_ != ')')).as[OnDemandPrices]
-      logger.info("Prices are: "+prices)
-      prices
+      Json.parse(response.body.dropWhile(_ != '{').takeWhile(_ != ')')).as[OnDemandPrices]
     })
 
     f

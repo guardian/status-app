@@ -52,7 +52,8 @@ object Estate {
 
     for {
       groups <- groupsFuture
-      asgs <- Future.traverse(groups.getAutoScalingGroups.toSeq)(ASG(_))
+      asgs <- Future.traverse(
+        groups.getAutoScalingGroups.toSeq)(ASG(_))
       queueResult <- queuesFuture
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue(_))
     } yield PopulatedEstate(asgs, queues, DateTime.now)
