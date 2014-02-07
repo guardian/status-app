@@ -81,8 +81,7 @@ case class ElasticSearchInstance(publicDns: String) extends AppSpecifics {
   }
 }
 
-case class StandardWebApp(publicDns: String, port: Int = 8080) extends AppSpecifics {
-  lazy val versionUrl = s"http://$publicDns:$port/management/manifest"
+case class StandardWebApp(versionUrl: String) extends AppSpecifics {
 
   def usefulUrls = List(
     "manifest" -> versionUrl
@@ -143,9 +142,11 @@ object Instance {
     val tags = i.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
     val dns = i.getPublicDnsName
 
+    val managementEndpoint = ManagementEndpoint.fromTag(dns, tags.get("Management"))
+
     val specifics =
       if (tags("Role").contains("elasticsearch")) new ElasticSearchInstance(dns)
-      else new StandardWebApp(dns, Config.managementPort.getOrElse(9000))
+      else new StandardWebApp(managementEndpoint.get.url + "/manifest")
 
     log.debug(s"Retrieving version of instance with tags: $tags")
     specifics.version map { v =>
@@ -157,23 +158,23 @@ object Instance {
 case class ManagementEndpoint(protocol:String, port:Int, path:String, url:String, format:String, source:String)
 object ManagementEndpoint {
   val KeyValue = """([^=]*)=(.*)""".r
-  def fromTag(dnsName:String, tag:Option[String]): Option[Seq[ManagementEndpoint]] = {
+  def fromTag(dnsName:String, tag:Option[String]): Option[ManagementEndpoint] = {
     tag match {
       case Some("none") => None
       case Some(tagContent) =>
-        Some(tagContent.split(";").filterNot(_.isEmpty).map{ endpoint =>
-          val params = endpoint.split(",").filterNot(_.isEmpty).flatMap {
+        Some({
+          val params = tagContent.split(",").filterNot(_.isEmpty).flatMap {
             case KeyValue(key,value) => Some(key -> value)
             case _ => None
           }.toMap
           fromMap(dnsName, params)
         })
-      case None => Some(Seq(fromMap(dnsName)))
+      case None => Some(fromMap(dnsName))
     }
   }
   def fromMap(dnsName:String, map:Map[String,String] = Map.empty):ManagementEndpoint = {
     val protocol = map.getOrElse("protocol","http")
-    val port = map.get("port").map(_.toInt).getOrElse(18080)
+    val port = map.get("port").map(_.toInt).orElse(Config.managementPort).getOrElse(9000)
     val path = map.getOrElse("path","/management")
     val url = s"$protocol://$dnsName:$port$path"
     val source: String = if (map.isEmpty) "convention" else "tag"
