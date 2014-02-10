@@ -19,6 +19,6 @@ object Queue {
         .withMetricName("ApproximateNumberOfMessagesVisible").withNamespace("AWS/SQS").withPeriod(60).withStatistics("Average")
         .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
       )
-    } yield Queue(name, url, stats.getDatapoints)
+    } yield Queue(name, url, stats.getDatapoints.sortBy(_.getTimestamp))
   }
 }
