@@ -43,6 +43,7 @@ AutoScalingGroup = React.createClass
         })
       (ClusterMembers {
         members: this.state.members
+        elb: this.state.elb
       })
       (svg {
         id: this.props.name + "-stats"
@@ -80,17 +81,25 @@ ClusterTitle = React.createClass
 
 ClusterMembers = React.createClass
   render: () ->
+    hasELB = this.props.elb?
     (table { className: "table table-condensed" }, [
       (thead {}, [
-        (th {}, ["Instance"])
-        (th {}, ["AutoScaling"])
-        (th {}, ["Uptime"])
-        (th {}, ["Version"])
+        (tr {}, [
+          (th {}, ["Instance"])
+          (th {}, ["AutoScaling"])
+          if (hasELB)
+            (th {}, ["ELB"])
+          else
+
+          (th {}, ["Uptime"])
+          (th {}, ["Version"])
+        ])
       ])
       (tbody {}, [
         this.props.members.map((m) -> (ClusterMember {
           member: m
           key: m.id
+          hasELB: hasELB
         }))
       ])
     ])
@@ -136,11 +145,13 @@ ScalingActivity = React.createClass
 
 ClusterMember = React.createClass
   render: () ->
+    hasELB = this.props.hasELB
     (tr { className: this.props.member.goodorbad }, [
       (td {}, [
         (a { href: this.props.url }, [this.props.member.id])
       ])
       (td {}, this.props.member.lifecycleState )
+      if (hasELB) then (td { title: this.props.member.description }, this.props.member.state )
       (td {}, this.props.member.uptime)
       (td {}, this.props.member.version)
     ])

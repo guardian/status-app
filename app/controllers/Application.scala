@@ -43,6 +43,8 @@ object Application extends Controller {
         "id" -> m.id,
         "goodorbad" -> m.goodorbad,
         "lifecycleState" -> m.lifecycleState,
+        "state" -> m.state,
+        "description" -> m.description,
         "uptime" -> m.instance.uptime,
         "version" -> JsString(m.instance.version.getOrElse("?"))
       )
