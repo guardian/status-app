@@ -80,6 +80,10 @@ BarChart = React.createClass
     d3.scale.linear().range([0,20]).domain([d3.min([d3.min(@props.points, (d) -> d.y), 0]), d3.max(@props.points, (d) -> d.y)])
 
   componentDidMount: () ->
+    @deriveWidth()
+    window.addEventListener('resize', @deriveWidth)
+
+  deriveWidth: () ->
     @setState({
       width: @getDOMNode().querySelector('svg').offsetWidth
     })
