@@ -86,7 +86,6 @@ BarChart = React.createClass
 
   showToolTip: (datum) ->
     @setState({
-      width: @state.width
       renderToolTip: true
       hoverDatum: datum
     })
