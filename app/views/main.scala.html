@@ -49,10 +49,6 @@
         @content
 
         <script src='@routes.Assets.at("bootstrap-3.0.0/js/bootstrap.min.js")'></script>
-        <script src='@routes.Assets.at("zeroclipboard/ZeroClipboard.min.js")'></script>
-        <script>
-            ZeroClipboard.setDefaults( { moviePath: '@routes.Assets.at("zeroclipboard/ZeroClipboard.swf")' } );
-        </script>
 
         @for(script <- scripts) {
           <script src="@script"></script>

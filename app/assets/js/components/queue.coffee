@@ -49,7 +49,7 @@ BarChart = React.createClass
             }) for datum in @props.points
           )
         ])
-      ]),
+      ])
       (div {
         style: { textAlign: 'right' }
       }, if (@props.points.length > 0) then [d3.format(',')(@props.points[@props.points.length - 1].y)])

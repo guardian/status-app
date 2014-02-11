@@ -7,7 +7,11 @@
     <script src="@routes.Assets.at("js/graph.js")"></script>
      <script src='@routes.Assets.at("nvd3/d3.v3.js")'></script>
      <script src='@routes.Assets.at("nvd3/nv.d3.min.js")'></script>
-    <script type="text/jsx" src="@routes.Assets.at("components/asg.js")"></script>
+     <script src='@routes.Assets.at("zeroclipboard/ZeroClipboard.min.js")'></script>
+     <script>
+        ZeroClipboard.setDefaults( { moviePath: '@routes.Assets.at("zeroclipboard/ZeroClipboard.swf")' } );
+     </script>
+    <script src="@routes.Assets.at("js/components/asg.js")"></script>
     <script src="@routes.Assets.at("js/components/queue.js")"></script>
 
     <div data-spy="affix" data-offset-top="150" class="settings">
@@ -36,10 +40,9 @@
             <div class="col-lg-4 hidden-md">
             @for(asg <- column) {
                 <div id="@{asg.name}" class="panel panel-default" style="overflow: hidden">
-                    <script type="text/jsx">
-                        /** @@jsx React.DOM */
+                    <script>
                         React.renderComponent(
-                            <AutoScalingGroup name="@{asg.name}" />,
+                            AutoScalingGroup({ name: "@{asg.name}" }),
                             document.getElementById('@{asg.name}')
                         );
                     </script>
