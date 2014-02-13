@@ -10,10 +10,15 @@ import collection.JavaConversions._
 import scala.util.{Random, Try}
 import play.api.Logger
 import play.api.libs.ws.WS
-import play.api.libs.json.{JsObject, JsValue}
+import play.api.libs.json._
 import controllers.routes
 import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricStatisticsRequest}
 import org.joda.time.DateTime
+import model.WebAppASG
+import scala.Some
+import model.ElasticSearchASG
+import model.ClusterMember
+import play.api.libs.json.JsObject
 
 case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
                      members: Seq[ClusterMember], averageCPU: Seq[Datapoint])
@@ -144,6 +149,50 @@ object ASG {
       ) getOrElse
         WebAppASG(asg, states.headOption, activities, members, averageCPU)
     }
+  }
+
+  implicit val datapointWrites = new Writes[Datapoint]{
+    override def writes(d: Datapoint) = Json.obj(
+      "x" -> d.getTimestamp.getTime,
+      "y" -> d.getAverage.toInt
+    )
+  }
+
+  implicit val memberWrites = new Writes[ClusterMember] {
+    def writes(m: ClusterMember) = Json.obj(
+      "id" -> m.id,
+      "goodorbad" -> m.goodorbad,
+      "lifecycleState" -> m.lifecycleState,
+      "state" -> m.state,
+      "description" -> m.description,
+      "uptime" -> m.instance.uptime,
+      "version" -> JsString(m.instance.version.getOrElse("?"))
+    )
+  }
+
+  implicit val scalingActionWrites = new Writes[ScalingAction] {
+    override def writes(a: ScalingAction) = Json.obj(
+      "age" -> a.age,
+      "cause" -> a.cause
+    )
+  }
+
+  implicit val elbWrites = new Writes[ELB] {
+    override def writes(elb: ELB) = Json.obj(
+      "name" -> elb.name,
+      "latency" -> elb.latency.map(d => new Datapoint().withTimestamp(d.getTimestamp).withAverage(d.getAverage * 1000)),
+      "active" -> elb.active
+    )
+  }
+
+  val writes = new Writes[ASG] {
+    def writes(asg: ASG) = Json.obj(
+      "appName" -> asg.appName,
+      "members" -> asg.members,
+      "recentActivity" -> asg.recentActivity,
+      "averageCPU" -> asg.averageCPU,
+      "elb" -> asg.elb
+    )
   }
 }
 

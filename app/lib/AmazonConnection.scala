@@ -50,4 +50,6 @@ object AWS {
   }
 
   lazy val connection = new AmazonConnection(Config.credentials, Config.clientConfiguration)
+
+
 }

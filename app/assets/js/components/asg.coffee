@@ -1,4 +1,4 @@
-{div, span, h4, p, img, a, svg, g, table, thead, tbody, th, tr, td, small, strong, button} = React.DOM
+{div, span, h4, p, img, a, svg, g, path, circle, text, table, thead, tbody, th, tr, td, small, strong, button} = React.DOM
 
 AutoScalingGroup = React.createClass
   getInitialState: () -> {
@@ -49,11 +49,64 @@ AutoScalingGroup = React.createClass
         id: this.props.name + "-stats"
         className: "sparkline stats"
       })
+      (SparkLine { points: @state.averageCPU })
       (RecentActivity {
         asgName: this.props.name
         activities: this.state.recentActivity
       })
     ])
+
+SparkLine = React.createClass
+  render: () ->
+    points = this.props.points
+    if (points.length > 0)
+      (svg { className: "sparkline stats"}, [
+        (g { className: "nvd3 nv-wrap nv-sparklineplus"}, [
+          (g { className: "nv-sparklineWrap" }, [
+            (g { className: "nvd3 nv-wrap nv-sparkline"},
+              [(path {
+                d : "M#{@x()(points[0].x)},#{@y()(points[0].y)}" + ("L#{@x()(p.x)},#{@y()(p.y)}" for p in points).join('')
+                stroke: "black"
+              }, [])
+              (circle {
+                cx: @x()(points[points.length - 1].x)
+                cy: @y()(points[points.length - 1].y)
+                r: 2
+                fill: "black"
+              })]
+            )
+          (text {
+            x: @state.width - 45
+            y: @y()(points[points.length - 1].y) + 7
+            style: {
+              fontSize: '1em'
+            }
+          }, points[points.length - 1].y + "%")
+          ])
+        ])
+      ])
+    else
+      (div {}, ["No data"])
+
+  getInitialState: () -> {
+    width: 10
+  }
+
+  deriveWidth: () ->
+    @setState({
+      width: @getDOMNode().offsetWidth
+    })
+
+  componentDidMount: () ->
+    @deriveWidth()
+    window.addEventListener('resize', @deriveWidth)
+
+  x: () ->
+    d3.time.scale().range([0, @state.width - 50]).domain(d3.extent(@props.points, (d) -> d.x))
+
+  y: () ->
+    d3.scale.linear().range([20,0]).domain(d3.extent(@props.points, (d) -> d.y))
+
 
 ClusterTitle = React.createClass
   render: () ->

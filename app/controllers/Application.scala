@@ -38,42 +38,8 @@ object Application extends Controller {
   }
 
   def asg(asg: String) = Authenticated { implicit req =>
-    implicit val memberWrites = new Writes[ClusterMember] {
-      def writes(m: ClusterMember) = Json.obj(
-        "id" -> m.id,
-        "goodorbad" -> m.goodorbad,
-        "lifecycleState" -> m.lifecycleState,
-        "state" -> m.state,
-        "description" -> m.description,
-        "uptime" -> m.instance.uptime,
-        "version" -> JsString(m.instance.version.getOrElse("?"))
-      )
-    }
 
-    implicit val scalingActionWrites = new Writes[ScalingAction] {
-      override def writes(a: ScalingAction) = Json.obj(
-        "age" -> a.age,
-        "cause" -> a.cause
-      )
-    }
-
-    implicit val elbWrites = new Writes[ELB] {
-      override def writes(elb: ELB) = Json.obj(
-        "name" -> elb.name,
-        "latency" -> elb.latency.map(d => new Datapoint().withTimestamp(d.getTimestamp).withAverage(d.getAverage * 1000)),
-        "active" -> elb.active
-      )
-    }
-
-    implicit val asgWrites = new Writes[ASG] {
-      def writes(asg: ASG) = Json.obj(
-        "appName" -> asg.appName,
-        "members" -> asg.members,
-        "recentActivity" -> asg.recentActivity,
-        "averageCPU" -> asg.averageCPU,
-        "elb" -> asg.elb
-      )
-    }
+    implicit val asgWrites = ASG.writes
 
     if (req.contentType == Some("text/javascript")) {
       if (Estate().populated)
