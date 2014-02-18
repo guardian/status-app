@@ -42,7 +42,7 @@ BarChart = React.createClass
           (g {className: 'nv-bars'},
             (rect {
               x: @x()(datum.x)
-              y: 20 - @y()(datum.y)
+              y: 22 - @y()(datum.y)
               height: @y()(datum.y) + 1
               width: @rectWidth()
               onMouseEnter: @showToolTip.bind(this, datum)

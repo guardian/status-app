@@ -13245,9 +13245,16 @@ var contentKey = null;
  */
 function getTextContentAccessor() {
   if (!contentKey && ExecutionEnvironment.canUseDOM) {
-    contentKey = 'innerText' in document.createElement('div') ?
-      'innerText' :
-      'textContent';
+//    contentKey = 'innerText' in document.createElement('div') ?
+//      'innerText' :
+//      'textContent';
+      // Monkey patch of https://github.com/facebook/react/pull/808
+      // https://github.com/facebook/react/commit/4764585
+      // Prefer textContent to innerText because many browsers support both but
+      // SVG <text> elements don't support innerText even when <div> does.
+      contentKey = 'textContent' in document.createElement('div') ?
+          'textContent' :
+          'innerText';
   }
   return contentKey;
 }

@@ -1,4 +1,4 @@
-{div, span, h4, p, img, a, svg, g, path, circle, text, table, thead, tbody, th, tr, td, small, strong, button} = React.DOM
+{div, span, h4, p, img, a, svg, g, path, circle, line, rect, text, table, thead, tbody, th, tr, td, small, strong, button} = React.DOM
 
 AutoScalingGroup = React.createClass
   getInitialState: () -> {
@@ -19,16 +19,7 @@ AutoScalingGroup = React.createClass
     setTimeout(this.updateFromServer, 5000)
 
   componentDidMount: () ->
-    this.updateFromServer()
-
-  componentDidUpdate: () ->
-    statsSpark('#' + this.props.name + '-stats',
-      this.state.averageCPU,
-      '%')
-    if (this.state.elb && this.state.elb.active)
-      statsSpark('#' + this.state.elb.name + '-stats',
-        this.state.elb.latency,
-        'ms')
+    @updateFromServer()
 
   render: () ->
     (div {}, [
@@ -37,19 +28,20 @@ AutoScalingGroup = React.createClass
         appName: this.state.appName
       })
       if this.state.elb && this.state.elb.active
-        (svg {
-          id: this.state.elb.name + "-stats"
-          className: "sparkline stats"
+        (SparkLine {
+          points: @state.elb.latency
+          unit: 'ms'
+          height: 40
         })
       (ClusterMembers {
         members: this.state.members
         elb: this.state.elb
       })
-      (svg {
-        id: this.props.name + "-stats"
-        className: "sparkline stats"
+      (SparkLine {
+        points: @state.averageCPU
+        unit: '%'
+        height: 40
       })
-      (SparkLine { points: @state.averageCPU })
       (RecentActivity {
         asgName: this.props.name
         activities: this.state.recentActivity
@@ -60,10 +52,28 @@ SparkLine = React.createClass
   render: () ->
     points = this.props.points
     if (points.length > 0)
-      (svg { className: "sparkline stats"}, [
-        (g { className: "nvd3 nv-wrap nv-sparklineplus"}, [
-          (g { className: "nv-sparklineWrap" }, [
-            (g { className: "nvd3 nv-wrap nv-sparkline"},
+      (svg {
+        className: "sparkline stats"
+
+      }, [
+        (g {
+          className: "nvd3 nv-wrap nv-sparklineplus"
+        }, [
+          (rect {
+            x: 0
+            y: 0
+            height: @props.height
+            width: @state.width
+            fill: 'white'
+            onMouseMove: @calculateActivePoint
+            onMouseLeave: @disableDetail
+          })
+          (g {
+            className: "nv-sparklineWrap"
+          }, [
+            (g {
+                className: "nvd3 nv-wrap nv-sparkline"
+              },
               [(path {
                 d : "M#{@x()(points[0].x)},#{@y()(points[0].y)}" + ("L#{@x()(p.x)},#{@y()(p.y)}" for p in points).join('')
                 stroke: "black"
@@ -73,16 +83,47 @@ SparkLine = React.createClass
                 cy: @y()(points[points.length - 1].y)
                 r: 2
                 fill: "black"
-              })]
+              })
+              ]
             )
-          (text {
-            x: @state.width - 45
-            y: @y()(points[points.length - 1].y) + 7
-            style: {
-              fontSize: '1em'
-            }
-          }, points[points.length - 1].y + "%")
+            (text {
+              x: @state.width - 45
+              y: @y()(points[points.length - 1].y) + 10
+              style: {
+                fontSize: '1em'
+                fontWeight: 'normal'
+              }
+            }, points[points.length - 1].y + @props.unit)
           ])
+        if @state.showDetail then (g { className: 'nv-hoverValue' }, [
+          (line {
+            x1: @x()(@state.detailPoint.x)
+            x2: @x()(@state.detailPoint.x)
+            y1: 0
+            y2: @props.height
+            stroke: 'black'
+          })
+          (text {
+            x: @x()(@state.detailPoint.x) - 3
+            y: 0
+            style: {
+              stroke: 'black'
+              textAnchor: 'end'
+              alignmentBaseline: 'hanging'
+              strokeWidth: 0
+            }
+          }, d3.time.format('%H:%M')(new Date(@state.detailPoint.x)))
+          (text {
+            x: @x()(@state.detailPoint.x) + 3
+            y: 0
+            style: {
+              stroke: 'black'
+              textAnchor: 'start'
+              alignmentBaseline: 'hanging'
+              strokeWidth: 0
+            }
+          }, "" + @state.detailPoint.y + @props.unit)
+        ])
         ])
       ])
     else
@@ -90,7 +131,25 @@ SparkLine = React.createClass
 
   getInitialState: () -> {
     width: 10
+    showDetail: false
   }
+
+  calculateActivePoint: (e) ->
+    dt = @x().invert(e.clientX - @getDOMNode().getBoundingClientRect().left).getTime()
+    lessThan = (point for point in @props.points when point.x < dt)
+    biggestLessThan = lessThan[lessThan.length - 1]
+    smallestGreaterThan = (point for point in @props.points when point.x > dt)[0]
+    nearestPoint =
+      if !smallestGreaterThan? || (biggestLessThan? && dt - biggestLessThan.x <= smallestGreaterThan.x)
+        biggestLessThan
+      else
+        smallestGreaterThan
+    @setState({
+      detailPoint: nearestPoint
+      showDetail: true
+    })
+
+  disableDetail: () -> @setState({ showDetail: false })
 
   deriveWidth: () ->
     @setState({
@@ -105,7 +164,7 @@ SparkLine = React.createClass
     d3.time.scale().range([0, @state.width - 50]).domain(d3.extent(@props.points, (d) -> d.x))
 
   y: () ->
-    d3.scale.linear().range([20,0]).domain(d3.extent(@props.points, (d) -> d.y))
+    d3.scale.linear().range([@props.height,10]).domain(d3.extent(@props.points, (d) -> d.y))
 
 
 ClusterTitle = React.createClass
