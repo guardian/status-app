@@ -188,7 +188,6 @@ ClusterTitle = React.createClass
           (button {
             id: this.props.name + "-copy"
             'data-clipboard-text': this.props.name
-            className: "clipboard"
             title: "Copy ASG name to clipboard"
           }, [
             (img {
