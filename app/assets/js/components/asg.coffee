@@ -1,19 +1,16 @@
 {div, span, h4, p, img, a, svg, g, path, circle, line, rect, text, table, thead, tbody, th, tr, td, small, strong, button} = React.DOM
 
-AutoScalingGroup = React.createClass
+Stage = React.createClass
   getInitialState: () -> {
-    appName: "",
-    members: [],
-    recentActivity: [],
-    averageCPU: []
+    asgs: []
   }
 
   updateFromServer: () ->
     $.ajax({
-      url: '/asg/' + this.props.name
-      contentType: "text/javascript"
+      url: '/' + this.props.name
+      contentType: "application/json"
       success: ((result) ->
-        @setState(result)
+        @setState({ asgs: result })
       ).bind(this)
     })
     setTimeout(this.updateFromServer, 5000)
@@ -22,29 +19,45 @@ AutoScalingGroup = React.createClass
     @updateFromServer()
 
   render: () ->
-    (div {}, [
+    (div {}, [(AutoScalingGroup { group: asg }) for asg in @state.asgs])
+
+AutoScalingGroup = React.createClass
+  getInitialState: () -> {
+    appName: "",
+    members: [],
+    recentActivity: [],
+    averageCPU: []
+  }
+
+  render: () ->
+    (div {
+      className: "panel panel-default asg"
+      style: {
+        overflow: 'hidden'
+      }
+    }, [
       (ClusterTitle {
-        name: this.props.name
-        appName: this.state.appName
+        name: this.props.group.name
+        appName: this.props.group.appName
       })
-      if this.state.elb && this.state.elb.active
+      if this.props.group.elb && this.props.group.elb.active
         (SparkLine {
-          points: @state.elb.latency
+          points: @props.group.elb.latency
           unit: 'ms'
           height: 40
         })
       (ClusterMembers {
-        members: this.state.members
+        members: this.props.group.members
         elb: this.state.elb
       })
       (SparkLine {
-        points: @state.averageCPU
+        points: @props.group.averageCPU
         unit: '%'
         height: 40
       })
       (RecentActivity {
-        asgName: this.props.name
-        activities: this.state.recentActivity
+        asgName: this.props.group.name
+        activities: this.props.group.recentActivity
       })
     ])
 
@@ -268,4 +281,4 @@ ClusterMember = React.createClass
       (td {}, this.props.member.version)
     ])
 
-window.AutoScalingGroup = AutoScalingGroup
+window.Stage = Stage

@@ -19,7 +19,6 @@
     </div>
     <div class="container cluster-status">
         <div class="row queues">
-            <div class="col-sm-12">
             <ul class="list-group">
             @for(queue <- estate.queues) {
                 <li id="@{queue.name}-container" class="list-group-item list-group-item-condensed queue"></li>
@@ -31,39 +30,12 @@
                 </script>
             }
             </ul>
-            </div>
         </div>
 
-        <div class="row">
-        @for(column <- estate(stage).grouped(math.max(estate(stage).size / 3, 1))) {
-            <div class="col-lg-4 hidden-md">
-            @for(asg <- column) {
-                <div id="@{asg.name}" class="panel panel-default" style="overflow: hidden">
-                    <script>
-                        React.renderComponent(
-                            AutoScalingGroup({ name: "@{asg.name}" }),
-                            document.getElementById('@{asg.name}')
-                        );
-                    </script>
-                </div>
-            }
-            </div>
-        }
-        @for(column <- estate(stage).grouped(math.max(estate(stage).size / 2, 1))) {
-            <div class="col-md-6 visible-md">
-            @for(asg <- column) {
-                <div id="@{asg.name}" class="panel panel-default" style="overflow: hidden">
-                    <script type="text/jsx">
-                        /** @@jsx React.DOM */
-                        React.renderComponent(
-                            <AutoScalingGroup name="@{asg.name}" />,
-                            document.getElementById('@{asg.name}')
-                        );
-                    </script>
-                </div>
-            }
-            </div>
-        }
+        <div id="stage" class="row" style="-webkit-column-width: 300px">
+            <script>
+                React.renderComponent(Stage({ name: "@stage" }), document.getElementById("stage"))
+            </script>
         </div>
         <div class="row">
             <div class="well">
