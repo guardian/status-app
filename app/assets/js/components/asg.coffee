@@ -226,6 +226,7 @@ ClusterMembers = React.createClass
           member: m
           key: m.id
           hasELB: hasELB
+          url: m.url
         }))
       ])
     ])

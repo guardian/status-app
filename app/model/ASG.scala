@@ -166,7 +166,8 @@ object ASG {
       "state" -> m.state,
       "description" -> m.description,
       "uptime" -> m.instance.uptime,
-      "version" -> JsString(m.instance.version.getOrElse("?"))
+      "version" -> JsString(m.instance.version.getOrElse("?")),
+      "url" -> routes.Application.instance(m.id).url
     )
   }
 
