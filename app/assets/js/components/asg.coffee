@@ -83,32 +83,28 @@ SparkLine = React.createClass
             onMouseLeave: @disableDetail
           })
           (g {
-            className: "nv-sparklineWrap"
-          }, [
-            (g {
-                className: "nvd3 nv-wrap nv-sparkline"
-              },
-              [(path {
-                d : "M#{@x()(points[0].x)},#{@y()(points[0].y)}" + ("L#{@x()(p.x)},#{@y()(p.y)}" for p in points).join('')
-                stroke: "black"
-              }, [])
-              (circle {
-                cx: @x()(points[points.length - 1].x)
-                cy: @y()(points[points.length - 1].y)
-                r: 2
-                fill: "black"
-              })
-              ]
-            )
-            (text {
-              x: @state.width - 45
-              y: @y()(points[points.length - 1].y) + 10
-              style: {
-                fontSize: '1em'
-                fontWeight: 'normal'
-              }
-            }, points[points.length - 1].y + @props.unit)
-          ])
+              className: "nvd3 nv-wrap nv-sparkline"
+            },
+            [(path {
+              d : "M#{@x()(points[0].x)},#{@y()(points[0].y)}" + ("L#{@x()(p.x)},#{@y()(p.y)}" for p in points).join('')
+              stroke: "black"
+            }, [])
+            (circle {
+              cx: @x()(points[points.length - 1].x)
+              cy: @y()(points[points.length - 1].y)
+              r: 2
+              fill: "black"
+            })
+            ]
+          )
+          (text {
+            x: @state.width - 45
+            y: @y()(points[points.length - 1].y) + 10
+            style: {
+              fontSize: '1em'
+              fontWeight: 'normal'
+            }
+          }, points[points.length - 1].y + @props.unit)
         if @state.showDetail then (g { className: 'nv-hoverValue' }, [
           (line {
             x1: @x()(@state.detailPoint.x)
@@ -178,7 +174,7 @@ SparkLine = React.createClass
     d3.time.scale().range([0, @state.width - 50]).domain(d3.extent(@props.points, (d) -> d.x))
 
   y: () ->
-    d3.scale.linear().range([@props.height,10]).domain(d3.extent(@props.points, (d) -> d.y))
+    d3.scale.linear().range([@props.height,11]).domain(d3.extent(@props.points, (d) -> d.y))
 
 
 ClusterTitle = React.createClass
