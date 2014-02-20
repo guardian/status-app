@@ -39,6 +39,7 @@ AutoScalingGroup = React.createClass
       (ClusterTitle {
         name: this.props.group.name
         appName: this.props.group.appName
+        approxMonthlyCost: @props.group.approxMonthlyCost
       })
       if this.props.group.elb && this.props.group.elb.active
         (SparkLine {
@@ -135,7 +136,7 @@ SparkLine = React.createClass
               alignmentBaseline: 'hanging'
               strokeWidth: 0
             }
-          }, "" + @state.detailPoint.y + @props.unit)
+          }, "" + d3.format(' ,')(@state.detailPoint.y) + @props.unit)
         ])
         ])
       ])
@@ -197,6 +198,7 @@ ClusterTitle = React.createClass
           ])
         ])
         this.props.appName
+        (small {}, " (~$#{d3.format(',.0f')(@props.approxMonthlyCost)}/month)")
       ])
     ])
 
