@@ -49,7 +49,7 @@ AutoScalingGroup = React.createClass
         })
       (ClusterMembers {
         members: this.props.group.members
-        elb: this.state.elb
+        elb: this.props.group.elb
       })
       (SparkLine {
         points: @props.group.averageCPU
