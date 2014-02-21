@@ -18,18 +18,13 @@
         data-toggle="modal" data-target="#config"></button>
     </div>
     <div class="container cluster-status">
-        <div class="row queues">
-            <ul class="list-group">
-            @for(queue <- estate.queues) {
-                <li id="@{queue.name}-container" class="list-group-item list-group-item-condensed queue"></li>
-                <script>
-                    React.renderComponent(
-                        Queue({name: "@{queue.name}"}),
-                        document.getElementById('@{queue.name}-container')
-                    );
-                </script>
-            }
-            </ul>
+        <div id="queues">
+            <script>
+                React.renderComponent(
+                    Queues({}),
+                    document.getElementById('queues')
+                );
+            </script>
         </div>
 
         <div id="stage" class="row">

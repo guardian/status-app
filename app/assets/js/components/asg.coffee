@@ -174,7 +174,7 @@ SparkLine = React.createClass
     d3.time.scale().range([0, @state.width - 50]).domain(d3.extent(@props.points, (d) -> d.x))
 
   y: () ->
-    d3.scale.linear().range([@props.height,11]).domain(d3.extent(@props.points, (d) -> d.y))
+    d3.scale.linear().range([@props.height,12]).domain(d3.extent(@props.points, (d) -> d.y))
 
 
 ClusterTitle = React.createClass

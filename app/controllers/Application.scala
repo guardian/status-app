@@ -44,45 +44,12 @@ object Application extends Controller {
       Ok(views.html.loading())
   }
 
-  def asg(asg: String) = Authenticated { implicit req =>
-
-    implicit val asgWrites = ASG.writes
-
-    if (req.contentType == Some("text/javascript")) {
-      if (Estate().populated)
-        Ok(Json.toJson(
-          Estate().asgs.find(_.name == asg).get
-        ))
-      else
-        Ok("")
-    } else {
-      if (Estate().populated)
-        Ok(views.html.snippets.renderASG(
-          Estate().asgs.find(_.name == asg).get
-        ))
-      else
-        Ok(views.html.loading())
-    }
-  }
-
-  def queue(queue: String) = Authenticated { implicit req =>
+  def queues = Authenticated {
     implicit val queueWrites = Json.writes[Queue]
 
-    if (req.contentType == Some("text/javascript")) {
-      if (Estate().populated)
-        Ok(Json.toJson(
-          Estate().queues.find(_.name == queue).get
-        ))
-      else
-        Ok("")
-    } else {
-      if (Estate().populated)
-        Ok(views.html.snippets.queue(
-          Estate().queues.find(_.name == queue).get
-        ))
-      else
-        Ok(views.html.loading())
-    }
+    Ok(Json.toJson(
+      Estate().queues
+    ))
   }
 
   def instance(id: String) = Authenticated { implicit req =>

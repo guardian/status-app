@@ -1,29 +1,35 @@
-{div, span, h4, svg, g, rect} = React.DOM
-Queue = React.createClass
+{div, ul, li, span, h4, svg, g, rect} = React.DOM
+
+Queues = React.createClass
   render: () ->
-    (div {className: 'row'}, [
-      (h4 {className: 'col-md-3 queue-condensed'}, @props.name),
-      (BarChart {
-        points: @state.approxQueueLength
-      })
+    (div { className: "row" }, [
+      (ul { className: "list-group" }, [(Queue { q: q }) for q in @state.queues when localStorage.getItem(q.name) != 'off'])
     ])
 
-  getInitialState: () -> {
-    approxQueueLength: []
-  }
+  getInitialState: () -> { queues: [] }
 
   updateFromServer: () ->
     $.ajax({
-      url: '/queue/' + @props.name
-      contentType: "text/javascript"
+      url: '/queues'
       success: ((result) ->
-        @setState(result)
+        @setState({ queues: result })
       ).bind(this)
     })
     setTimeout(@updateFromServer, 5000)
 
   componentDidMount: () ->
     @updateFromServer()
+
+Queue = React.createClass
+  render: () ->
+    (li {className: 'list-group-item list-group-item-condensed queue'}, [
+      (div {className: 'row'}, [
+        (h4 {className: 'col-md-3 queue-condensed'}, @props.q.name),
+        (BarChart {
+          points: @props.q.approxQueueLength
+        })
+      ])
+    ])
 
 BarChart = React.createClass
   render: () ->
@@ -71,7 +77,7 @@ BarChart = React.createClass
   }
 
   rectWidth: () ->
-    (@state.width / @props.points.length) - 1
+    Math.max((@state.width / @props.points.length) - 1, 0)
 
   x: () ->
     d3.time.scale().range([0, @state.width - @rectWidth()]).domain(d3.extent(@props.points, (d) -> d.x))
@@ -99,6 +105,6 @@ BarChart = React.createClass
       renderToolTip: false
     })
 
-window.Queue = Queue
+window.Queues = Queues
 
 
