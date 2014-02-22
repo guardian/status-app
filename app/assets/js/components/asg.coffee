@@ -42,20 +42,28 @@ AutoScalingGroup = React.createClass
         approxMonthlyCost: @props.group.approxMonthlyCost
       })
       if this.props.group.elb && this.props.group.elb.active
-        (SparkLine {
-          points: @props.group.elb.latency
-          unit: 'ms'
-          height: 40
-        })
+        (a {
+          href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D05!E07!ET6!MN4!NS2!PD1!SS3!ST0!VA-PT3H~60~AWS%25252FELB~Average~Latency~LoadBalancerName~P0D~#{@props.group.elb.name}"
+        }, [
+          (SparkLine {
+            points: @props.group.elb.latency
+            unit: 'ms'
+            height: 40
+          })
+        ])
       (ClusterMembers {
         members: this.props.group.members
         elb: this.props.group.elb
       })
-      (SparkLine {
-        points: @props.group.averageCPU
-        unit: '%'
-        height: 40
-      })
+      (a {
+        href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D03!E06!ET7!MN5!NS2!PD1!SS4!ST0!VA-PT3H~60~AWS%252FEC2~AutoScalingGroupName~Average~CPUUtilization~#{@props.group.name}~P0D"
+      }, [
+        (SparkLine {
+          points: @props.group.averageCPU
+          unit: '%'
+          height: 40
+        })
+      ])
       (RecentActivity {
         asgName: this.props.group.name
         activities: this.props.group.recentActivity
