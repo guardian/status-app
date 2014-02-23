@@ -16,6 +16,10 @@ Stage = React.createClass
     setTimeout(this.updateFromServer, 5000)
 
   componentDidMount: () ->
+    [].forEach.call(document.querySelectorAll('.server-rendered'), (n) ->
+      n.parentNode.removeChild(n)
+    )
+
     @updateFromServer()
 
   render: () ->
