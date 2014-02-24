@@ -44,6 +44,7 @@ AutoScalingGroup = React.createClass
         name: this.props.group.name
         appName: this.props.group.appName
         approxMonthlyCost: @props.group.approxMonthlyCost
+        moreDetailsLink: @props.group.moreDetailsLink
       })
       if this.props.group.elb && this.props.group.elb.active
         (a {
@@ -205,7 +206,7 @@ ClusterTitle = React.createClass
             })
           ])
         ])
-        this.props.appName
+        if @props.moreDetailsLink? then (a { href: @props.moreDetailsLink }, @props.appName) else @props.appName
         (small {}, " (~$#{d3.format(',.0f')(@props.approxMonthlyCost)}/month)")
       ])
     ])

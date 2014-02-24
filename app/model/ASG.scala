@@ -194,7 +194,8 @@ object ASG {
       "recentActivity" -> asg.recentActivity,
       "averageCPU" -> asg.averageCPU,
       "elb" -> asg.elb,
-      "approxMonthlyCost" -> asg.approxMonthlyCost
+      "approxMonthlyCost" -> asg.approxMonthlyCost,
+      "moreDetailsLink" -> asg.moreDetailsLink
     )
   }
 }
