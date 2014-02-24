@@ -274,7 +274,7 @@ RecentActivity = React.createClass
 
 ScalingActivity = React.createClass
   render: () ->
-    (p {}, [
+    (React.DOM.p {}, [
       (strong {}, [this.props.age])
       this.props.cause
     ])
