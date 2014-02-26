@@ -16,9 +16,8 @@ Stage = React.createClass
     setTimeout(this.updateFromServer, 5000)
 
   componentDidMount: () ->
-    [].forEach.call(document.querySelectorAll('.server-rendered'), (n) ->
-      n.parentNode.removeChild(n)
-    )
+    for node in @getDOMNode().parentNode.childNodes when node != @getDOMNode()
+      @getDOMNode().parentNode.removeChild(node)
 
     @updateFromServer()
 
@@ -46,7 +45,12 @@ AutoScalingGroup = React.createClass
         approxMonthlyCost: @props.group.approxMonthlyCost
         moreDetailsLink: @props.group.moreDetailsLink
       })
-      if this.props.group.elb && this.props.group.elb.active
+      if @props.group.suspendedActivities?.length > 0
+        (div { className: 'panel-body alert-info' }, [
+          (strong {}, "Suspended activities")
+          ": #{@props.group.suspendedActivities.join(',')}"
+        ])
+      if @props.group.elb && @props.group.elb.active
         (a {
           href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D05!E07!ET6!MN4!NS2!PD1!SS3!ST0!VA-PT3H~60~AWS%25252FELB~Average~Latency~LoadBalancerName~P0D~#{@props.group.elb.name}"
         }, [

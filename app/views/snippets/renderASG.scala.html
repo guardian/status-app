@@ -1,5 +1,5 @@
 @(asg: model.ASG)(implicit money: java.text.DecimalFormat)
-<div class="asg panel panel-default server-rendered">
+<div class="asg panel panel-default">
     <div class="panel-heading">
         <h4 class="panel-title">
             @for(link <- asg.moreDetailsLink) {<a href="@link">}@asg.appName @for(link <- asg.moreDetailsLink) {</a>}
