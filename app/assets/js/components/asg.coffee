@@ -20,9 +20,29 @@ Stage = React.createClass
       @getDOMNode().parentNode.removeChild(node)
 
     @updateFromServer()
+    @deriveCols()
+    window.addEventListener('resize', @deriveCols)
+
+  deriveCols: () ->
+    @setState({
+      twoCol: window.innerWidth > 767 and window.innerWidth < 1200
+    })
 
   render: () ->
-    (div {}, [(AutoScalingGroup { group: asg }) for asg in @state.asgs])
+    asgs = @state.asgs
+    chunkSize = (numChunks) ->
+      asgs.length / numChunks
+    if (@state.twoCol)
+      (div {}, [
+        (div { className: 'col-sm-6' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(0, chunkSize(2))])
+        (div { className: 'col-sm-6' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(chunkSize(2))])
+      ])
+    else
+      (div {}, [
+        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(0, chunkSize(3))])
+        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(chunkSize(3), 2 * chunkSize(3))])
+        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(2 * chunkSize(3))])
+      ])
 
 AutoScalingGroup = React.createClass
   getInitialState: () -> {
@@ -186,6 +206,9 @@ SparkLine = React.createClass
   componentDidMount: () ->
     @deriveWidth()
     window.addEventListener('resize', @deriveWidth)
+
+  componentWillUnmount: () ->
+    window.removeEventListener('resize', @deriveWidth)
 
   x: () ->
     d3.time.scale().range([0, @state.width - 50]).domain(d3.extent(@props.points, (d) -> d.x))
