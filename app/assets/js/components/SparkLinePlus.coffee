@@ -1,30 +1,28 @@
 {svg, g, path, circle, line, rect, text, div} = React.DOM
 
-SparkLinePlus = React.createClass
+SparklinePlus = React.createClass
   render: () ->
-    points = this.props.points
+    points = @props.points
     if (points.length > 0)
       (svg {
-        className: "sparkline stats"
+        className: "sparkline-plus"
+        style: { height: @props.height }
       }, [
-        (g {
-          className: "nvd3 nv-wrap nv-sparklineplus"
-        }, [
+        (g {}, [
           (rect {
             x: 0
             y: 0
-            height: @props.height
+            height: @sparklineHeight()
             width: @state.width
             fill: 'white'
             onMouseMove: @calculateActivePoint
             onMouseLeave: @disableDetail
           })
-          (g {
-              className: "nvd3 nv-wrap nv-sparkline"
-            },
+          (g {},
             [(path {
               d : "M#{@x()(points[0].x)},#{@y()(points[0].y)}" + ("L#{@x()(p.x)},#{@y()(p.y)}" for p in points).join('')
               stroke: "black"
+              fill: 'none'
             }, [])
              (circle {
                cx: @x()(points[points.length - 1].x)
@@ -39,9 +37,9 @@ SparkLinePlus = React.createClass
             y: @y()(points[points.length - 1].y) + 10
             style: {
               fontSize: '1em'
-              fontWeight: 'normal'
             }
           }, points[points.length - 1].y + @props.unit)
+
           if @state.showDetail then (g { className: 'nv-hoverValue' }, [
             (line {
               x1: @x()(@state.detailPoint.x)
@@ -54,20 +52,16 @@ SparkLinePlus = React.createClass
               x: @x()(@state.detailPoint.x) - 3
               y: 0
               style: {
-                stroke: 'black'
                 textAnchor: 'end'
                 alignmentBaseline: 'hanging'
-                strokeWidth: 0
               }
             }, d3.time.format('%H:%M')(new Date(@state.detailPoint.x)))
             (text {
               x: @x()(@state.detailPoint.x) + 3
               y: 0
               style: {
-                stroke: 'black'
                 textAnchor: 'start'
                 alignmentBaseline: 'hanging'
-                strokeWidth: 0
               }
             }, "" + d3.format(' ,')(@state.detailPoint.y) + @props.unit)
           ])
@@ -114,6 +108,9 @@ SparkLinePlus = React.createClass
     d3.time.scale().range([0, @state.width - 50]).domain(d3.extent(@props.points, (d) -> d.x))
 
   y: () ->
-    d3.scale.linear().range([@props.height,12]).domain(d3.extent(@props.points, (d) -> d.y))
+    d3.scale.linear().range([@sparklineHeight(),12]).domain(d3.extent(@props.points, (d) -> d.y))
 
-window.SparkLinePlus = SparkLinePlus
+  sparklineHeight: () ->
+    @props.height - 10
+
+window.SparklinePlus = SparklinePlus

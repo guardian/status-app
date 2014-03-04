@@ -74,10 +74,10 @@ AutoScalingGroup = React.createClass
         (a {
           href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D05!E07!ET6!MN4!NS2!PD1!SS3!ST0!VA-PT3H~60~AWS%25252FELB~Average~Latency~LoadBalancerName~P0D~#{@props.group.elb.name}"
         }, [
-          (SparkLinePlus {
+          (SparklinePlus {
             points: @props.group.elb.latency
             unit: 'ms'
-            height: 40
+            height: 50
           })
         ])
       (ClusterMembers {
@@ -87,10 +87,10 @@ AutoScalingGroup = React.createClass
       (a {
         href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D03!E06!ET7!MN5!NS2!PD1!SS4!ST0!VA-PT3H~60~AWS%252FEC2~AutoScalingGroupName~Average~CPUUtilization~#{@props.group.name}~P0D"
       }, [
-        (SparkLinePlus {
+        (SparklinePlus {
           points: @props.group.averageCPU
           unit: '%'
-          height: 40
+          height: 50
         })
       ])
       (RecentActivity {
