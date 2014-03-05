@@ -12,26 +12,24 @@ SparklinePlus = React.createClass
           (rect {
             x: 0
             y: 0
-            height: @sparklineHeight()
+            height: @props.height
             width: @state.width
             fill: 'white'
             onMouseMove: @calculateActivePoint
             onMouseLeave: @disableDetail
           })
-          (g {},
-            [(path {
-              d : "M#{@x()(points[0].x)},#{@y()(points[0].y)}" + ("L#{@x()(p.x)},#{@y()(p.y)}" for p in points).join('')
-              stroke: "black"
-              fill: 'none'
-            }, [])
-             (circle {
-               cx: @x()(points[points.length - 1].x)
-               cy: @y()(points[points.length - 1].y)
-               r: 2
-               fill: "black"
-             })
-            ]
-          )
+          (Sparkline {
+            points: points
+            x: @x
+            y: @y
+            stroke: "black"
+          })
+          (circle {
+            cx: @x()(points[points.length - 1].x)
+            cy: @y()(points[points.length - 1].y)
+            r: 2
+            fill: "black"
+          })
           (text {
             x: @state.width - 45
             y: @y()(points[points.length - 1].y) + 10
@@ -40,31 +38,14 @@ SparklinePlus = React.createClass
             }
           }, points[points.length - 1].y + @props.unit)
 
-          if @state.showDetail then (g { className: 'nv-hoverValue' }, [
-            (line {
-              x1: @x()(@state.detailPoint.x)
-              x2: @x()(@state.detailPoint.x)
-              y1: 0
-              y2: @props.height
-              stroke: 'black'
+          if @state.showDetail
+            HoverDetail({
+              detailPoint: @state.detailPoint
+              x: @x
+              y: @y
+              height: @props.height
+              unit: @props.unit
             })
-            (text {
-              x: @x()(@state.detailPoint.x) - 3
-              y: 0
-              style: {
-                textAnchor: 'end'
-                alignmentBaseline: 'hanging'
-              }
-            }, d3.time.format('%H:%M')(new Date(@state.detailPoint.x)))
-            (text {
-              x: @x()(@state.detailPoint.x) + 3
-              y: 0
-              style: {
-                textAnchor: 'start'
-                alignmentBaseline: 'hanging'
-              }
-            }, "" + d3.format(' ,')(@state.detailPoint.y) + @props.unit)
-          ])
         ])
       ])
     else
@@ -112,5 +93,39 @@ SparklinePlus = React.createClass
 
   sparklineHeight: () ->
     @props.height - 10
+
+Sparkline = React.createClass
+  render: () -> @transferPropsTo(path {
+    d : "M#{@props.x()(@props.points[0].x)},#{@props.y()(@props.points[0].y)}" +
+      ("L#{@props.x()(p.x)},#{@props.y()(p.y)}" for p in @props.points).join('')
+    fill: 'none'
+  })
+
+HoverDetail = React.createClass
+  render: () -> (g {}, [
+    (line {
+      x1: @props.x()(@props.detailPoint.x)
+      x2: @props.x()(@props.detailPoint.x)
+      y1: 0
+      y2: @props.height
+      stroke: 'black'
+    })
+    (text {
+      x: @props.x()(@props.detailPoint.x) - 3
+      y: 0
+      style: {
+        textAnchor: 'end'
+        alignmentBaseline: 'hanging'
+      }
+    }, d3.time.format('%H:%M')(new Date(@props.detailPoint.x)))
+    (text {
+      x: @props.x()(@props.detailPoint.x) + 3
+      y: 0
+      style: {
+        textAnchor: 'start'
+        alignmentBaseline: 'hanging'
+      }
+    }, "" + d3.format(' ,')(@props.detailPoint.y) + @props.unit)
+  ])
 
 window.SparklinePlus = SparklinePlus
