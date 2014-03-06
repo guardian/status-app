@@ -39,21 +39,15 @@ BarChart = React.createClass
     }, [
       (svg {
         className: 'queue-stats col-md-11'
-        id: @props.name
-        style: {
-          overflow: 'visible'
-        }
       }, [
-        (g {className: 'nvd3  nv-wrap'}, [
-          (g {className: 'nv-bars'},
-            (rect {
-              x: @x()(datum.x)
-              y: 20 - @y()(datum.y)
-              height: @y()(datum.y) + 1
-              width: @rectWidth()
-              onMouseEnter: @showToolTip.bind(this, datum)
-            }) for datum in @props.points
-          )
+        (g {}, [
+          (rect {
+            x: @x()(datum.x)
+            y: 20 - @y()(datum.y)
+            height: @y()(datum.y) + 1
+            width: @rectWidth()
+            onMouseEnter: @showToolTip.bind(this, datum)
+          }) for datum in @props.points
         ])
       ])
       (div {
