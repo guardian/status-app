@@ -2,8 +2,8 @@
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description" : "status-app",
     "Parameters" : {
-        "Name": {
-            "Description": "The name given to the autoscaling group",
+        "Stack": {
+            "Description": "Applied directly as a tag",
             "Type": "String"
         },
         "KeyName" : {
@@ -11,7 +11,7 @@
             "Type" : "String"
         },
         "Stage": {
-            "Description" : "Instances are tagged with this as their Stage",
+            "Description" : "Applied directly as a tag",
             "Type" : "String",
             "Default" : "PROD"
         },
@@ -20,7 +20,7 @@
             "Type" : "String"
         },
         "ManagementPort": {
-            "Description": "Port used to retrieve version information from web-apps",
+            "Description": "Default port used to retrieve version information from web-apps",
             "Type": "Number",
             "Default": "9000"
         },
@@ -112,8 +112,11 @@
                 "HealthCheckGracePeriod" : 300,
                 "LoadBalancerNames" : [ { "Ref": "LoadBalancer" }],
                 "Tags" : [
+                    { "Key" : "Stack", "Value" : { "Ref" : "Stack" }, "PropagateAtLaunch" : "true" },
+                    { "Key" : "App", "Value" : "status-app", "PropagateAtLaunch" : "true" },
                     { "Key" : "Stage", "Value" : { "Ref" : "Stage" }, "PropagateAtLaunch" : "true"  },
-                    { "Key" : "Role", "Value" : { "Ref" : "Name" }, "PropagateAtLaunch" : "true"  }
+                    { "Key" : "Management", "Value" : "port=9000", "PropagateAtLaunch" : "true" },
+                    { "Key" : "Role", "Value" : { "Fn::Join": ["-", [{ "Ref" : "Stack" }, "status-app"]]}, "PropagateAtLaunch" : "true"  }
                 ]
             }
         },
