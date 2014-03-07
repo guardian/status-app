@@ -11,9 +11,7 @@ import play.api.Logger
 case class Queue(name: String, url: String, approxQueueLength: Seq[Datapoint])
 
 object Queue {
-  val log = Logger[Queue](classOf[Queue])
-
-  def apply(url: String)(implicit conn: AmazonConnection, context: ExecutionContext): Future[Queue] = {
+  def from(url: String)(implicit conn: AmazonConnection, context: ExecutionContext): Future[Queue] = {
     val name = url.split("/").last
     for{
       stats <- AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
@@ -21,6 +19,6 @@ object Queue {
         .withMetricName("ApproximateNumberOfMessagesVisible").withNamespace("AWS/SQS").withPeriod(60).withStatistics("Average")
         .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
       )
-    } yield Queue(name, url, stats.getDatapoints)
+    } yield Queue(name, url, stats.getDatapoints.sortBy(_.getTimestamp))
   }
 }

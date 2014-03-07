@@ -55,7 +55,7 @@ object Estate {
       asgs <- Future.traverse(
         groups.getAutoScalingGroups.toSeq)(ASG(_))
       queueResult <- queuesFuture
-      queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue(_))
+      queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from(_))
     } yield PopulatedEstate(asgs, queues, DateTime.now)
   }
   def apply() = estateAgent()

@@ -1,93 +1,42 @@
 @(asg: model.ASG)(implicit money: java.text.DecimalFormat)
-<div class="panel-heading">
-    <h4 class="panel-title">
-        <div class="pull-right">
-            <button id="@{asg.name}-copy" data-clipboard-text="@{asg.name}"
-                style="position: relative; top: -3px; left: 5px" title="Copy ASG name to clipboard">
-                <img src="/assets/images/ios7-copy-outline.png" height="16px"/>
-            </button>
-            <script>new ZeroClipboard( $("#@{asg.name}-copy") );</script>
-        </div>
-        @for(link <- asg.moreDetailsLink) {<a href="@link">}@asg.appName @for(link <- asg.moreDetailsLink) {</a>}
-        <small>(~ $@money.format(asg.approxMonthlyCost)/month)</small>
-    </h4>
-</div>
-
-@if(!asg.suspendedActivities.isEmpty) {
-    <div class="alert alert-warning panel-body">
-        <strong>Warning!</strong> The following autoscaling activities are currently
-        suspended: @asg.suspendedActivities.mkString(", ")
+<div class="asg panel panel-default">
+    <div class="panel-heading">
+        <h4 class="panel-title">
+            @for(link <- asg.moreDetailsLink) {<a href="@link">}@asg.appName @for(link <- asg.moreDetailsLink) {</a>}
+            <small>(~ $@money.format(asg.approxMonthlyCost)/month)</small>
+        </h4>
     </div>
-}
 
-<table class="table table-condensed">
-
-    <thead>
-        <th>Instance</th>
-        <th>AutoScaling</th>
-        @if(asg.hasElb) {
-            <th>ELB</th>
-        }
-        <th>Uptime</th>
-        <th>Version</th>
-    </thead>
-
-    @for(elb <- asg.elb) {
-        @if(elb.active) {
-            <a href="https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D05!E07!ET6!MN4!NS2!PD1!SS3!ST0!VA-PT3H~60~AWS%25252FELB~Average~Latency~LoadBalancerName~P0D~@{elb.name}">
-                <svg id="@elb.name-stats" class="sparkline stats"></svg>
-            </a>
-        }
+    @if(!asg.suspendedActivities.isEmpty) {
+        <div class="alert alert-warning panel-body">
+            <strong>Warning!</strong> The following autoscaling activities are currently
+            suspended: @asg.suspendedActivities.mkString(", ")
+        </div>
     }
 
-    @for(member <- asg.members) {
-        <tr class="@member.goodorbad">
-            <td><a href="@routes.Application.instance(member.id)">@member.id</a></td>
-            <td>@member.lifecycleState</td>
+    <table class="table table-condensed">
+
+        <thead>
+            <th>Instance</th>
+            <th>AutoScaling</th>
             @if(asg.hasElb) {
-                <td title="@member.description">@member.state<br>@member.description</td>
+                <th>ELB</th>
             }
-            <td>@member.instance.uptime</td>
-            <td>@member.instance.version.getOrElse("?")</td>
-        </tr>
-    }
+            <th>Uptime</th>
+            <th>Version</th>
+        </thead>
 
-</table>
-<a href="https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D03!E06!ET7!MN5!NS2!PD1!SS4!ST0!VA-PT3H~60~AWS%252FEC2~AutoScalingGroupName~Average~CPUUtilization~@{asg.name}~P0D">
-    <svg id="@asg.name-stats" class="sparkline stats"></svg>
-</a>
-<script>
-    $(function() {
-        statsSpark('#@asg.name-stats',
-            [@for(point <-  asg.averageCPU) { {x: @point.getTimestamp.getTime, y: @point.getAverage },}],
-            '%')
-        @for(elb <- asg.elb) {
-            @if(elb.active) {
-                statsSpark('#@elb.name-stats',
-                    [@for(point <-  elb.latency) { {x: @point.getTimestamp.getTime, y: @{point.getAverage * 1000} },}],
-                'ms')
-            }
+        @for(member <- asg.members) {
+            <tr class="@member.goodorbad">
+                <td><a href="@routes.Application.instance(member.id)">@member.id</a></td>
+                <td>@member.lifecycleState</td>
+                @if(asg.hasElb) {
+                    <td title="@member.description">@member.state<br>@member.description</td>
+                }
+                <td>@member.instance.uptime</td>
+                <td>@member.instance.version.getOrElse("?")</td>
+            </tr>
         }
-    })
-</script>
 
-@if(!asg.recentActivity.isEmpty) {
-    <div id="@asg.name-activity" class="accordion panel-footer">
-        <div class="accordion-group">
-            <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#@asg.name-activity" href="#@asg.name-activity-details">
-                    <small>Recent activity</small>
-                </a>
-            </div>
-            <div id="@asg.name-activity-details" class="accordion-body collapse">
-                <div class="accordion-inner">
-                    <small>
-                    @for(action <- asg.recentActivity.take(3)) {
-                        <p><strong>@action.age</strong> @action.cause</p>
-                    }
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
-}
+    </table>
+</div>

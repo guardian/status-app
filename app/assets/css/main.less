@@ -2,6 +2,9 @@
     .pending {
         background-color: gainsboro;
     }
+  @media (min-width: 600px) {
+    margin-left: 50px;
+  }
 }
 
 .table>tbody>tr>td {
@@ -26,26 +29,33 @@
   margin: 10%;
 }
 
-.alert.panel-body {
+.alert-info.panel-body {
+  padding: 5px 8px;
   margin-bottom: 0px;
 }
 .panel .table-condensed {
   font-size: 90%;
 }
 
-svg.stats {
+svg.sparkline-plus {
   width: 100%;
-  height: 50px;
-}
-svg.stats .nvd3.nv-sparklineplus .nv-currentValue {
-  font-weight: normal;
-  font-size: 100%;
+
+  text {
+    stroke: black;
+    stroke-width: 0;
+  }
 }
 svg.queue-stats {
-  width: 100%;
-  height: 20px;
+  height: 21px;
+
+  rect {
+    fill-opacity: 0.5
+  }
+  rect:hover {
+    fill-opacity: 0.75
+  }
 }
-.queues .list-group {
+#queues .list-group {
   margin: 10px 0;
 }
 .queue-condensed {
@@ -65,4 +75,13 @@ svg.queue-stats {
 }
 table {
   border-top: 1px solid lightgrey;
+}
+.clipboard {
+  position: relative;
+  top: -3px;
+  left: 5px;
+}
+
+.asg {
+  overflow: hidden;
 }

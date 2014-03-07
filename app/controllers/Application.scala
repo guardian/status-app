@@ -3,10 +3,20 @@ package controllers
 import play.api.mvc._
 import model._
 import java.text.DecimalFormat
+import play.api.libs.json.{JsString, Json, Writes}
+import lib.UptimeDisplay
+import com.amazonaws.services.cloudwatch.model.Datapoint
 
 object Application extends Controller {
 
   implicit val moneyFormat = new DecimalFormat("#,###")
+
+  implicit val datapointWrites = new Writes[Datapoint]{
+    override def writes(d: Datapoint) = Json.obj(
+      "x" -> d.getTimestamp.getTime,
+      "y" -> d.getAverage.toInt
+    )
+  }
 
   def index = Authenticated { implicit req =>
     Estate().stageNames.headOption map (stage =>
@@ -14,6 +24,13 @@ object Application extends Controller {
     ) getOrElse (
       Ok(views.html.loading())
     )
+  }
+
+  def stageJson(stage: String) = Authenticated {
+    import ASG.writes
+    Ok(Json.toJson(
+      Estate()(stage)
+    ))
   }
 
   def stage(stage: String) = Authenticated { implicit req =>
@@ -27,22 +44,12 @@ object Application extends Controller {
       Ok(views.html.loading())
   }
 
-  def asg(asg: String) = Authenticated { implicit req =>
-    if (Estate().populated)
-      Ok(views.html.snippets.renderASG(
-        Estate().asgs.find(_.name == asg).get
-      ))
-    else
-      Ok(views.html.loading())
-  }
+  def queues = Authenticated {
+    implicit val queueWrites = Json.writes[Queue]
 
-  def queue(queue: String) = Authenticated { implicit req =>
-    if (Estate().populated)
-      Ok(views.html.snippets.queue(
-        Estate().queues.find(_.name == queue).get
-      ))
-    else
-      Ok(views.html.loading())
+    Ok(Json.toJson(
+      Estate().queues
+    ))
   }
 
   def instance(id: String) = Authenticated { implicit req =>
