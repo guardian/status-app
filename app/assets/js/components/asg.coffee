@@ -7,8 +7,7 @@ Stage = React.createClass
 
   updateFromServer: () ->
     $.ajax({
-      url: '/' + this.props.name
-      contentType: "application/json"
+      url: "/#{this.props.name}.json"
       success: ((result) ->
         @setState({ asgs: result })
       ).bind(this)

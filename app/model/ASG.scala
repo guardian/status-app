@@ -186,7 +186,7 @@ object ASG {
     )
   }
 
-  val writes = new Writes[ASG] {
+  implicit val writes = new Writes[ASG] {
     def writes(asg: ASG) = Json.obj(
       "name" -> asg.name,
       "appName" -> asg.appName,

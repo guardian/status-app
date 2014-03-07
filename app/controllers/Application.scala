@@ -26,20 +26,20 @@ object Application extends Controller {
     )
   }
 
+  def stageJson(stage: String) = Authenticated {
+    import ASG.writes
+    Ok(Json.toJson(
+      Estate()(stage)
+    ))
+  }
+
   def stage(stage: String) = Authenticated { implicit req =>
     if (Estate().populated)
-      if (req.contentType == Some("application/json")) {
-        implicit val asgWrites = ASG.writes
-
-        Ok(Json.toJson(
-          Estate()(stage)
-        ))
-      } else
-        Ok(views.html.index(
-          stage,
-          Estate(),
-          AWSCost.totalSunkCost
-        ))
+      Ok(views.html.index(
+        stage,
+        Estate(),
+        AWSCost.totalSunkCost
+      ))
     else
       Ok(views.html.loading())
   }
