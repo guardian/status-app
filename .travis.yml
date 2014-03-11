@@ -1,7 +1,8 @@
 language: scala
 script: 
 - sbt clean test play-artifact
-before_script: 
+before_script:
+- gem install --version 0.8.9 faraday
 - gem install travis-artifacts
 after_success: 
 - travis-artifacts upload --path target/artifacts.zip --target-path artifacts/$TRAVIS_BUILD_NUMBER
