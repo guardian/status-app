@@ -22,7 +22,7 @@ object Config {
 
   lazy val managementPort = configuration.getInt("managementPort")
 
-  def clientConfiguration() = {
+  def clientConfiguration = {
     val client = new ClientConfiguration()
     if (proxyHost.isDefined) client.setProxyHost(proxyHost.get)
     if (proxyPort.isDefined) client.setProxyPort(proxyPort.get)

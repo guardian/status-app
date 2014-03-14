@@ -99,15 +99,13 @@ trait AppSpecifics {
   def usefulUrls: Seq[(String, String)]
   def versionUrl: String
   def versionExtractor: Response => Option[String]
-  def version = WS.url(versionUrl).withTimeout(200).get() map (versionExtractor) recover {
-    case _: ConnectException => {
+  def version = WS.url(versionUrl).withRequestTimeout(200).get() map versionExtractor recover {
+    case _: ConnectException =>
       log.error(s"Couldn't retrieve $versionUrl")
       None
-    }
-    case e => {
+    case e =>
       log.error(s"Couldn't retrieve $versionUrl", e)
       None
-    }
   }
 }
 
@@ -122,15 +120,14 @@ object Instance {
       result <- AWS.futureOf(awsConn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(id))
       i <- (result.getReservations flatMap (_.getInstances) map (Instance(_))).head
     } yield i) recover {
-      case e => {
+      case e =>
         log.error(s"Unable to retrieve details for instance: $id")
         UnknownInstance(id)
-      }
     }
   }
 
   def get(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
-    Cache.getAs[Instance](id) map (Future.successful(_)) getOrElse {
+    Cache.getAs[Instance](id) map Future.successful getOrElse {
       uncachedGet(id) map { i =>
         Cache.set(id, i, 30)
         i

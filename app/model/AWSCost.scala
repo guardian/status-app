@@ -2,7 +2,6 @@ package model
 
 import play.api.libs.ws.WS
 import play.api.libs.json._
-import controllers.Application
 import collection.convert.wrapAsScala._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -27,7 +26,7 @@ object AWSCost {
     val reservationCount: Int = reservations.map(_.count).sum
     val reservationRate: Double = reservationCount match {
       case 0 => 0
-      case resCount => (reservations.map(_.hourlyCost).sum) / resCount
+      case resCount => reservations.map(_.hourlyCost).sum / resCount
     }
 
     ((totalInstances - reservationCount) * onDemandRate + reservationCount * reservationRate) / totalInstances
@@ -65,8 +64,8 @@ object AWSCost {
       reservations <- AWS.futureOf(awsConnection.ec2.describeReservedInstancesAsync, new DescribeReservedInstancesRequest())
     } yield {
       val reservs = reservations.getReservedInstances map { r =>
-        (EC2CostingType(r.getInstanceType ,r.getAvailabilityZone) ->
-          Reservation(r.getInstanceCount, r.getFixedPrice, r.getRecurringCharges.head.getAmount))
+        EC2CostingType(r.getInstanceType, r.getAvailabilityZone) ->
+          Reservation(r.getInstanceCount, r.getFixedPrice, r.getRecurringCharges.head.getAmount)
       }
       reservs.foreach{ res => logger.info("Reservation: "+res)}
       reservs.groupBy { case (costType, _) => costType } mapValues (_ map { case (_, res) => res })
@@ -76,21 +75,21 @@ object AWSCost {
   lazy val costsAgent = ScheduledAgent[OnDemandPrices](0.seconds, 30.minutes, OnDemandPrices(Map())) {
     // There isn't a proper API for this at time of writing, but handily the
     logger.info("Starting costsAgent")
-    val f = (WS.url("http://aws-assets-pricing-prod.s3.amazonaws.com/pricing/ec2/linux-od.js").withTimeout(2000).get map { response =>
+    val f = WS.url("http://aws-assets-pricing-prod.s3.amazonaws.com/pricing/ec2/linux-od.js").withRequestTimeout(2000).get map { response =>
       logger.info("Fetched cost data")
       implicit object BigDecimalReads extends Reads[BigDecimal]{
-        def reads(json: JsValue) = JsSuccess(Try { BigDecimal(json.as[String]) } getOrElse (BigDecimal(0)) )
+        def reads(json: JsValue) = JsSuccess(Try { BigDecimal(json.as[String]) } getOrElse BigDecimal(0) )
       }
       implicit object RegionPricesReads extends Reads[RegionPrices] {
         def reads(json: JsValue) = {
           val JsArray(typeGroups) = json
           val typeToCost = for {
             group <- typeGroups
-            JsArray(size) = (group \ "sizes")
+            JsArray(size) = group \ "sizes"
             s <- size
           } yield {
-            val JsArray(c) = (s \ "valueColumns")
-            ((s \ "size").as[String] -> (c.head \ "prices" \ "USD").as[BigDecimal])
+            val JsArray(c) = s \ "valueColumns"
+            (s \ "size").as[String] -> (c.head \ "prices" \ "USD").as[BigDecimal]
           }
 
           JsSuccess(RegionPrices(Map(typeToCost: _*)))
@@ -98,15 +97,15 @@ object AWSCost {
       }
       implicit object OnDemandPricesReads extends Reads[OnDemandPrices] {
         def reads(json: JsValue) = {
-          val JsArray(regionsJs) = (json \ "config" \ "regions")
+          val JsArray(regionsJs) = json \ "config" \ "regions"
           val regions = regionsJs.map { r =>
-            ((r \ "region").as[String] -> (r \ "instanceTypes").as[RegionPrices])
+            (r \ "region").as[String] -> (r \ "instanceTypes").as[RegionPrices]
           }
           JsSuccess(OnDemandPrices(Map(regions: _*)))
         }
       }
       Json.parse(response.body.dropWhile(_ != '{').takeWhile(_ != ')')).as[OnDemandPrices]
-    })
+    }
 
     f
   }
