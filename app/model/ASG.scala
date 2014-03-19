@@ -14,10 +14,7 @@ import play.api.libs.json._
 import controllers.routes
 import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricStatisticsRequest}
 import org.joda.time.DateTime
-import model.WebAppASG
 import scala.Some
-import model.ElasticSearchASG
-import model.ClusterMember
 import play.api.libs.json.JsObject
 
 case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
