@@ -99,7 +99,7 @@ trait AppSpecifics {
   def usefulUrls: Seq[(String, String)]
   def versionUrl: String
   def versionExtractor: Response => Option[String]
-  def version = WS.url(versionUrl).withTimeout(200).get() map (versionExtractor) recover {
+  def version = WS.url(versionUrl).withRequestTimeout(200).get() map (versionExtractor) recover {
     case _: ConnectException => {
       log.error(s"Couldn't retrieve $versionUrl")
       None
