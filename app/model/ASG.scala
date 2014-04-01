@@ -30,6 +30,7 @@ case class ElasticSearchASG(asg: AutoScalingGroup, elb: Option[ELB], recentActiv
       case JsObject(indexes) => indexes.toList map {
         case (k, v) => Index(k, v)
       }
+      case _ => Nil
     }).sortBy(_.name)
   }
 

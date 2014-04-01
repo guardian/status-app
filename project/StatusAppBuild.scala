@@ -8,11 +8,11 @@ import com.typesafe.sbt.packager.Keys._
 
 object StatusAppBuild extends Build {
 
-  val awsSdk = "com.amazonaws" % "aws-java-sdk" % "1.4.3"
+  val awsSdk = "com.amazonaws" % "aws-java-sdk" % "1.7.2"
 
   val statusAppDependencies = Seq(
     awsSdk,
-    "com.typesafe.akka" %% "akka-agent" % "2.1.0",
+    "com.typesafe.akka" %% "akka-agent" % "2.2.4",
     cache
   )
 
@@ -24,7 +24,7 @@ object StatusAppBuild extends Build {
     resolvers ++= Seq(Classpaths.typesafeReleases),
     scalacOptions ++= List("-feature"),
 
-    scalaVersion := "2.10.2",
+    scalaVersion := "2.10.3",
 
     sourceGenerators in Compile <+= buildInfo,
     buildInfoKeys := Seq[BuildInfoKey](
