@@ -1,6 +1,9 @@
 {
+    "defaultStacks":[
+        "ophan"
+    ],
     "packages":{
-        "ophan-status-app":{
+        "status-app":{
             "type":"autoscaling",
             "data":{
                 "bucket": "ophan-dist"
@@ -9,7 +12,7 @@
     },
     "recipes":{
         "default":{
-            "actionsBeforeApp": ["ophan-status-app.uploadArtifacts"]
+            "actionsBeforeApp": ["status-app.uploadArtifacts", "status-app.deploy"]
         }
     }
 }
