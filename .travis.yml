@@ -5,7 +5,7 @@ before_script:
 - gem install --version 0.8.9 faraday
 - gem install travis-artifacts
 after_success: 
-- travis-artifacts upload --path target/artifacts.zip --target-path artifacts/$TRAVIS_BUILD_NUMBER
+- travis-artifacts upload --path target/artifacts.zip --target-path artifacts/$TRAVIS_REPO_SLUG/$TRAVIS_BUILD_NUMBER
 env: 
   global: 
   - ARTIFACTS_AWS_REGION=eu-west-1
