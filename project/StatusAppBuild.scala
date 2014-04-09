@@ -38,7 +38,7 @@ object StatusAppBuild extends Build {
       BuildInfoKey.constant("buildTime", System.currentTimeMillis)
     ),
 
-    magentaPackageName := "ophan-status-app",
+    magentaPackageName := "status-app",
 
     buildInfoPackage := "controllers"
   )
