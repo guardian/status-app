@@ -31,7 +31,8 @@ object StatusAppBuild extends Build {
       libraryDependencies in Compile,
       name,
       version,
-      BuildInfoKey.constant("buildNumber", Option(System.getenv("BUILD_NUMBER")) getOrElse "DEV"),
+      BuildInfoKey.constant("buildNumber", Option(System.getenv("BUILD_NUMBER")) orElse
+        Option(System.getenv("TRAVIS_BUILD_NUMBER")) getOrElse "DEV"),
       // so this next one is constant to avoid it always recompiling on dev machines.
       // we only really care about build time on teamcity, when a constant based on when
       // it was loaded is just fine
