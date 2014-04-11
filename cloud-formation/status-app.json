@@ -140,9 +140,9 @@
 
                         "adduser --system --home /status --disabled-password status",
 
-                        "wget https://s3-eu-west-1.amazonaws.com/ophan-dist/PROD/ophan-status-app/status-app.conf --directory-prefix=/etc/init",
+                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com/ophan-dist", { "Ref" : "Stack" }, { "Ref" : "Stage" },  "status-app/status-app.conf --directory-prefix=/etc/init"]]},
 
-                        "wget https://s3-eu-west-1.amazonaws.com/ophan-dist/PROD/ophan-status-app/status-app-1.0.zip --directory-prefix=/status",
+                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com/ophan-dist", { "Ref" : "Stack" }, { "Ref" : "Stage" },  "status-app/status-app-1.0.zip --directory-prefix=/status"]]},
 
                         "unzip -d /status /status/status-app-1.0.zip",
 
@@ -170,7 +170,9 @@
                     { "IpProtocol": "tcp", "FromPort": "22",   "ToPort": "22",   "CidrIp": "0.0.0.0/0" },
                     { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",   "CidrIp": "77.91.248.0/21" },
                     { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",
-                        "SourceSecurityGroupName": "amazon-elb-sg", "SourceSecurityGroupOwnerId": "amazon-elb" }
+                        "SourceSecurityGroupName": "amazon-elb-sg", "SourceSecurityGroupOwnerId": "amazon-elb" },
+                    { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",
+                        "SourceSecurityGroupName": { "Ref" : "StatusAppSecurityGroup" } }
                 ]
             }
         },
