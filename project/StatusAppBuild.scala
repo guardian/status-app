@@ -8,7 +8,7 @@ import com.typesafe.sbt.packager.Keys._
 
 object StatusAppBuild extends Build {
 
-  val awsSdk = "com.amazonaws" % "aws-java-sdk" % "1.7.2"
+  val awsSdk = "com.amazonaws" % "aws-java-sdk" % "1.7.6"
 
   val statusAppDependencies = Seq(
     awsSdk,
@@ -22,9 +22,15 @@ object StatusAppBuild extends Build {
     .settings(
 
     resolvers ++= Seq(Classpaths.typesafeReleases),
-    scalacOptions ++= List("-feature"),
+    scalacOptions ++= List("-feature", "-deprecation"),
 
-    scalaVersion := "2.10.3",
+    scalaVersion := "2.10.4",
+
+    // see https://groups.google.com/forum/#!topic/sbt-dev/YqDzRZohZ_k
+    // this enables a better way of tracking dependencies available in sbt 0.13.2 which should mean
+    // that the incremental compiler does a better job of just compiling chanages that
+    // impact other things
+    incOptions := incOptions.value.withNameHashing(nameHashing = true),
 
     sourceGenerators in Compile <+= buildInfo,
     buildInfoKeys := Seq[BuildInfoKey](
