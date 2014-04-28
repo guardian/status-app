@@ -1,3 +1,4 @@
+import com.typesafe.sbt.web.SbtWeb
 import sbt._
 import sbt.Keys._
 import play.Project._
@@ -13,18 +14,21 @@ object StatusAppBuild extends Build {
   val statusAppDependencies = Seq(
     awsSdk,
     "com.typesafe.akka" %% "akka-agent" % "2.2.4",
-    cache
+    cache,
+    ws
   )
 
-  lazy val statusApp = play.Project("status-app", "1.0", statusAppDependencies, path = file("."))
+  lazy val statusApp = Project("status-app", file(".")).addPlugins(play.PlayScala).addPlugins(SbtWeb)
     .settings(buildInfoSettings: _*)
     .settings(playArtifactDistSettings: _*)
     .settings(
 
+    libraryDependencies ++= statusAppDependencies,
+
     resolvers ++= Seq(Classpaths.typesafeReleases),
-    scalacOptions ++= List("-feature", "-deprecation"),
 
     scalaVersion := "2.10.4",
+    scalacOptions ++= List("-feature", "-deprecation"),
 
     // see https://groups.google.com/forum/#!topic/sbt-dev/YqDzRZohZ_k
     // this enables a better way of tracking dependencies available in sbt 0.13.2 which should mean

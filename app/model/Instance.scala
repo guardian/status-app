@@ -105,6 +105,8 @@ case class StandardWebApp(versionUrl: String) extends AppSpecifics {
 }
 
 trait AppSpecifics {
+  import play.api.Play.current
+
   val log = Logger[AppSpecifics](classOf[AppSpecifics])
 
   def usefulUrls: Seq[(String, String)]
