@@ -15,7 +15,10 @@ object StatusAppBuild extends Build {
     awsSdk,
     "com.typesafe.akka" %% "akka-agent" % "2.2.4",
     cache,
-    ws
+    ws,
+    "org.webjars" % "react" % "0.10.0",
+    "org.webjars" % "bootstrap" % "3.1.1",
+    "org.webjars" % "d3js" % "3.4.4-1"
   )
 
   lazy val statusApp = Project("status-app", file(".")).addPlugins(play.PlayScala).addPlugins(SbtWeb)
