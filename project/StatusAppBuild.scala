@@ -18,7 +18,8 @@ object StatusAppBuild extends Build {
     ws,
     "org.webjars" % "react" % "0.10.0",
     "org.webjars" % "bootstrap" % "3.1.1",
-    "org.webjars" % "d3js" % "3.4.4-1"
+    "org.webjars" % "d3js" % "3.4.4-1",
+    "org.webjars" % "zeroclipboard" % "1.3.5"
   )
 
   lazy val statusApp = Project("status-app", file(".")).addPlugins(play.PlayScala).addPlugins(SbtWeb)
