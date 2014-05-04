@@ -6,6 +6,8 @@ import scala.concurrent.Future
 import controllers.Application
 import com.amazonaws.services.sqs.model.ListQueuesRequest
 import org.joda.time.DateTime
+import com.amazonaws.services.cloudformation.model.{Stack, DescribeStacksResult}
+import com.amazonaws.services.cloudformation
 
 trait Estate extends Map[String, Seq[ASG]] {
   def populated: Boolean
@@ -20,7 +22,7 @@ trait Estate extends Map[String, Seq[ASG]] {
 case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue], lastUpdateTime: DateTime)
     extends Estate {
   lazy val stageMap = asgs.groupBy(_.stage)
-  def get(key: String) = stageMap.get(key)
+  def get(key: String) = stageMap.get(key).map(_.sortBy(_.stack))
   def iterator = stageMap.iterator
 
   lazy val stageNames = stageMap.keys.toSeq.sorted.sortWith((a, _) => if (a == "PROD") true else false)

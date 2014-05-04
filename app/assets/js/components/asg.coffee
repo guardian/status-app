@@ -48,7 +48,8 @@ AutoScalingGroup = React.createClass
     appName: "",
     members: [],
     recentActivity: [],
-    averageCPU: []
+    averageCPU: [],
+    stack: ""
   }
 
   render: () ->
@@ -63,6 +64,7 @@ AutoScalingGroup = React.createClass
         appName: this.props.group.appName
         approxMonthlyCost: @props.group.approxMonthlyCost
         moreDetailsLink: @props.group.moreDetailsLink
+        stack: this.props.group.stack
       })
       if @props.group.suspendedActivities?.length > 0
         (div { className: 'panel-body alert-info' }, [
@@ -114,6 +116,7 @@ ClusterTitle = React.createClass
             })
           ])
         ])
+        if @props.stack!="?" then @props.stack + " "
         if @props.moreDetailsLink? then (a { href: @props.moreDetailsLink }, @props.appName) else @props.appName
         (small {}, " (~$#{d3.format(',.0f')(@props.approxMonthlyCost)}/month)")
       ])
