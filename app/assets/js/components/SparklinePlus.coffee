@@ -75,7 +75,7 @@ SparklinePlus = React.createClass
 
   deriveWidth: () ->
     @setState({
-      width: @getDOMNode().offsetWidth
+      width: @getDOMNode().parentNode.offsetWidth
     })
 
   componentDidMount: () ->
@@ -95,10 +95,11 @@ SparklinePlus = React.createClass
     @props.height - 10
 
 Sparkline = React.createClass
-  render: () -> @transferPropsTo(path {
+  render: () -> (path {
     d : "M#{@props.x()(@props.points[0].x)},#{@props.y()(@props.points[0].y)}" +
       ("L#{@props.x()(p.x)},#{@props.y()(p.y)}" for p in @props.points).join('')
     fill: 'none'
+    stroke: @props.stroke
   })
 
 HoverDetail = React.createClass
