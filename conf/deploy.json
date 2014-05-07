@@ -1,7 +1,6 @@
 {
     "defaultStacks":[
-        "ophan",
-        "content-api"
+        "ophan"
     ],
     "packages":{
         "status-app":{
@@ -14,6 +13,9 @@
     "recipes":{
         "default":{
             "actionsBeforeApp": ["status-app.uploadArtifacts", "status-app.deploy"]
+        },
+        "deployOnly": {
+            "actionsBeforeApp": ["status-app.deploy"]
         }
     }
 }
