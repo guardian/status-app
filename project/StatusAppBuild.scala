@@ -12,7 +12,7 @@ object StatusAppBuild extends Build {
 
   val statusAppDependencies = Seq(
     awsSdk,
-    "com.typesafe.akka" %% "akka-agent" % "2.2.4",
+    "com.typesafe.akka" %% "akka-agent" % "2.3.2",
     cache,
     ws,
     "org.webjars" % "react" % "0.10.0",
@@ -30,7 +30,7 @@ object StatusAppBuild extends Build {
 
     resolvers ++= Seq(Classpaths.typesafeReleases),
 
-    scalaVersion := "2.10.4",
+    scalaVersion := "2.11.0",
     scalacOptions ++= List("-feature", "-deprecation"),
 
     // see https://groups.google.com/forum/#!topic/sbt-dev/YqDzRZohZ_k
