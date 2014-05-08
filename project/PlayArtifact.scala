@@ -1,6 +1,5 @@
 import sbt._
 import sbt.Keys._
-import play.Project._
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.Keys._
 

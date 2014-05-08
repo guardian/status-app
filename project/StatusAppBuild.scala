@@ -1,11 +1,10 @@
-import com.typesafe.sbt.web.SbtWeb
 import sbt._
 import sbt.Keys._
-import play.Project._
 import sbtbuildinfo.Plugin._
 import PlayArtifact._
-import com.typesafe.sbt.SbtNativePackager._
-import com.typesafe.sbt.packager.Keys._
+import play.Play.autoImport._
+import PlayKeys._
+import com.typesafe.sbt.web._
 
 object StatusAppBuild extends Build {
 
@@ -22,7 +21,7 @@ object StatusAppBuild extends Build {
     "org.webjars" % "zeroclipboard" % "1.3.5"
   )
 
-  lazy val statusApp = Project("status-app", file(".")).addPlugins(play.PlayScala).addPlugins(SbtWeb)
+  lazy val statusApp = Project("status-app", file(".")).enablePlugins(play.PlayScala).enablePlugins(SbtWeb)
     .settings(buildInfoSettings: _*)
     .settings(playArtifactDistSettings: _*)
     .settings(
