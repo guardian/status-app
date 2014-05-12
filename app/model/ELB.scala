@@ -2,6 +2,7 @@ package model
 
 import com.amazonaws.services.elasticloadbalancing.model.{DescribeInstanceHealthRequest, InstanceState}
 import lib.{AmazonConnection, AWS}
+import com.amazonaws.services.cloudwatch.model.Statistic._
 
 import collection.convert.wrapAsScala._
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,24 +25,25 @@ case class ELB(name: String, instanceStates: List[InstanceState], latency: Seq[D
 object ELB {
   import ExecutionContext.Implicits.global
 
-  def avgLatency(lbName: String)(implicit conn: AmazonConnection) =
+  def latency(lbName: String)(implicit conn: AmazonConnection) =
     AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
       .withDimensions(new Dimension().withName("LoadBalancerName").withValue(lbName))
-      .withMetricName("Latency").withNamespace("AWS/ELB").withPeriod(60).withStatistics("Average")
+      .withMetricName("Latency").withNamespace("AWS/ELB").withPeriod(60)
+      .withStatistics(Average, Maximum)
       .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
     )
 
   def requestCount(lbName: String)(implicit conn: AmazonConnection) =
     AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
       .withDimensions(new Dimension().withName("LoadBalancerName").withValue(lbName))
-      .withMetricName("RequestCount").withNamespace("AWS/ELB").withPeriod(60).withStatistics("Sum")
+      .withMetricName("RequestCount").withNamespace("AWS/ELB").withPeriod(60).withStatistics(Sum)
       .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
     )
 
   def apply(lbName: String)(implicit conn: AmazonConnection): Future[ELB] = for {
     elbHealths <- AWS.futureOf(conn.elb.describeInstanceHealthAsync, new DescribeInstanceHealthRequest(lbName))
-    avgLatency <- avgLatency(lbName)
+    latency <- latency(lbName)
     requestCount <- requestCount(lbName)
   } yield ELB(lbName, elbHealths.getInstanceStates.toList,
-      avgLatency.getDatapoints.sortBy(_.getTimestamp), requestCount.getDatapoints.sortBy(_.getTimestamp))
+      latency.getDatapoints.sortBy(_.getTimestamp), requestCount.getDatapoints.sortBy(_.getTimestamp))
 }

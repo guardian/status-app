@@ -6,7 +6,8 @@ import play.api.libs.concurrent.Akka
 import concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
+import play.Logger
 
 object ScheduledAgent {
   import play.api.Play.current
@@ -23,9 +24,10 @@ class ScheduledAgent[T](initialDelay: FiniteDuration, frequency: FiniteDuration,
   val agent = Agent[T](initialValue)
 
   val agentSchedule = system.scheduler.schedule(initialDelay, frequency) {
-    for {
-      resultFuture <- Try { block }
-    } resultFuture foreach (result => agent send result)
+    block.onComplete {
+      case Failure(e) => Logger.warn("scheduled agent failed", e)
+      case Success(result) => agent send result
+    }
   }
 
   def get(): T = agent()
