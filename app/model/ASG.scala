@@ -68,6 +68,7 @@ trait ASG {
   lazy val tags = asg.getTags.map(t => t.getKey -> t.getValue).toMap
 
   lazy val stage = tags.get("Stage").getOrElse("?")
+  lazy val stack = tags.get("Stack").getOrElse("?")
   lazy val appName = (tags get "Role") orElse (tags get "App") getOrElse "?"
 
   lazy val hasElb = elb.isDefined
@@ -187,6 +188,7 @@ object ASG {
     def writes(asg: ASG) = Json.obj(
       "name" -> asg.name,
       "appName" -> asg.appName,
+      "stack" -> asg.stack,
       "members" -> asg.members,
       "recentActivity" -> asg.recentActivity,
       "averageCPU" -> asg.averageCPU,

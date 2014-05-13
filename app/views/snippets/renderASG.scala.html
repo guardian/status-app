@@ -3,6 +3,7 @@
     <div class="panel-heading">
         <h4 class="panel-title">
             @for(link <- asg.moreDetailsLink) {<a href="@link">}@asg.appName @for(link <- asg.moreDetailsLink) {</a>}
+            @asg.stack
             <small>(~ $@money.format(asg.approxMonthlyCost)/month)</small>
         </h4>
     </div>
