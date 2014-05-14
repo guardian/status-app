@@ -2,8 +2,8 @@
 <div class="asg panel panel-default">
     <div class="panel-heading">
         <h4 class="panel-title">
-            @for(link <- asg.moreDetailsLink) {<a href="@link">}@asg.appName @for(link <- asg.moreDetailsLink) {</a>}
-            <small>(~ $@money.format(asg.approxMonthlyCost)/month)</small>
+            @asg.app
+            @for(cost <- asg.approxMonthlyCost){<small>(~ $@money.format(cost)/month)</small>}
         </h4>
     </div>
 
@@ -19,7 +19,7 @@
         <thead>
             <th>Instance</th>
             <th>AutoScaling</th>
-            @if(asg.hasElb) {
+            @for(_ <- asg.elb) {
                 <th>ELB</th>
             }
             <th>Uptime</th>
@@ -30,7 +30,7 @@
             <tr class="@member.goodorbad">
                 <td><a href="@routes.Application.instance(member.id)">@member.id</a></td>
                 <td>@member.lifecycleState</td>
-                @if(asg.hasElb) {
+                @for(_ <- asg.elb) {
                     <td title="@member.description">@member.state<br>@member.description</td>
                 }
                 <td>@member.instance.uptime</td>

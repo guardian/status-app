@@ -13,6 +13,9 @@ import scala.util.{Success, Failure}
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClient
 import com.amazonaws.regions.{Regions, Region}
 import com.amazonaws.services.sqs.AmazonSQSAsyncClient
+import play.api.libs.json.{Json, Writes}
+import com.amazonaws.services.cloudwatch.model.Datapoint
+import model.ScalingAction
 
 class AmazonConnection(credentials: Option[AWSCredentials], clientConfig: ClientConfiguration) {
   val credentialsProvider =  new AWSCredentialsProvider() {
@@ -51,5 +54,20 @@ object AWS {
 
   lazy val connection = new AmazonConnection(Config.credentials, Config.clientConfiguration)
 
+  object Writes {
+    implicit val datapointWrites = new Writes[Datapoint] {
+      override def writes(d: Datapoint) = Json.obj(
+        "time" -> d.getTimestamp.getTime,
+        "average" -> Option(d.getAverage).map(_.toInt),
+        "maximum" -> Option(d.getMaximum).map(_.toInt)
+      )
+    }
 
+    implicit val scalingActionWrites = new Writes[ScalingAction] {
+      override def writes(a: ScalingAction) = Json.obj(
+        "age" -> a.age,
+        "cause" -> a.cause
+      )
+    }
+  }
 }

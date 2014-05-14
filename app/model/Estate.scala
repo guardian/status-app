@@ -6,24 +6,43 @@ import scala.concurrent.Future
 import controllers.Application
 import com.amazonaws.services.sqs.model.ListQueuesRequest
 import org.joda.time.DateTime
+import play.api.libs.json.Json
 
-trait Estate extends Map[String, Seq[ASG]] {
+trait Estate extends Map[String, Stage] {
   def populated: Boolean
   def stageNames: Iterable[String]
   def queues: Seq[Queue]
   def -(key: String) = throw new UnsupportedOperationException
-  def +[B1 >: Seq[ASG]](kv: (String, B1)) = throw new UnsupportedOperationException
-  def asgs: Seq[ASG] = values.flatten.toSeq
+  def +[B1 >: Stage](kv: (String, B1)) = throw new UnsupportedOperationException
+  def asgs: Seq[ASG] = values.flatMap(_.asgs).toSeq
   def lastUpdated: Option[DateTime]
+}
+
+case class Stack(name: String, asgs: Seq[ASG])
+object Stack {
+  implicit val writes = Json.writes[Stack]
+}
+case class Stage(stacks: Seq[Stack]) {
+  def asgs: Seq[ASG] = stacks.flatMap(_.asgs)
+}
+object Stage {
+  implicit val writes = Json.writes[Stage]
 }
 
 case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue], lastUpdateTime: DateTime)
     extends Estate {
-  lazy val stageMap = asgs.groupBy(_.stage)
-  def get(key: String) = stageMap.get(key)
-  def iterator = stageMap.iterator
+  lazy val stacks = asgs.groupBy(asg =>
+    (asg.stage.getOrElse("unkown"), asg.stack.getOrElse("unknown"))
+  ).toSeq.map { case ((stage, name), asgs) => stage -> Stack(name, asgs) }
 
-  lazy val stageNames = stageMap.keys.toSeq.sorted.sortWith((a, _) => if (a == "PROD") true else false)
+  lazy val stages = stacks.foldLeft(Map.empty[String, Seq[Stack]].withDefaultValue(Seq[Stack]())){
+    case (map, (stage, stack)) => map.updated(stage, map(stage) :+ stack)
+  } mapValues (stacks => Stage(stacks.sortBy(_.name)))
+
+  def get(key: String) = stages.get(key)
+  def iterator = stages.iterator
+
+  lazy val stageNames = stages.keys.toSeq.sorted.sortWith((a, _) => if (a == "PROD") true else false)
 
   def populated = true
 
@@ -52,10 +71,9 @@ object Estate {
 
     for {
       groups <- groupsFuture
-      asgs <- Future.traverse(
-        groups.getAutoScalingGroups.toSeq)(ASG(_))
+      asgs <- Future.traverse(groups.getAutoScalingGroups.toSeq)(ASG.from)
       queueResult <- queuesFuture
-      queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from(_))
+      queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
     } yield PopulatedEstate(asgs, queues, DateTime.now)
   }
   def apply() = estateAgent()

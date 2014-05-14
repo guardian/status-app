@@ -1,15 +1,17 @@
-{div, span, h4, p, img, a, table, thead, tbody, th, tr, td, small, strong, button} = React.DOM
+{div, span, h4, p, img, a, table, thead, tbody, th, tr, td, small, strong, button, ul, li} = React.DOM
 
 Stage = React.createClass
   getInitialState: () -> {
-    asgs: []
+    stacks: []
+    activeStack: { name: '', asgs: [] }
   }
 
   updateFromServer: () ->
     $.ajax({
       url: "/#{@props.name}.json"
       success: ((result) ->
-        @setState({ asgs: result })
+        @setState({ stacks: result.stacks })
+        if (@state.activeStack.name == '') then @setState({ activeStack: result.stacks[0] })
       ).bind(this)
     })
     setTimeout(@updateFromServer, 5000)
@@ -19,6 +21,30 @@ Stage = React.createClass
       @getDOMNode().parentNode.removeChild(node)
 
     @updateFromServer()
+
+  render: () ->
+    (div {}, [
+      if (@state.stacks.length > 1)
+        (div { className: 'col-xs-12'},
+          (ul { className: 'nav nav-pills stacks' }, [
+            (li { className: if (stack.name == @state.activeStack.name ) then 'active' }, (a {
+              href: '#'
+              onClick: @markActive.bind(this, stack)
+            }, stack.name )) for stack in @state.stacks
+          ])
+        )
+      (Stack { name: @state.activeStack.name, asgs: @state.activeStack.asgs })
+    ])
+
+  markActive: (stack) ->
+    @setState({ activeStack: stack })
+
+Stack = React.createClass
+  getInitialState: () -> {
+    twoCol: false
+  }
+
+  componentDidMount: () ->
     @deriveCols()
     window.addEventListener('resize', @deriveCols)
 
@@ -28,24 +54,24 @@ Stage = React.createClass
     })
 
   render: () ->
-    asgs = @state.asgs
+    asgs = @props.asgs
     chunkSize = (numChunks) ->
       asgs.length / numChunks
     if (@state.twoCol)
       (div {}, [
-        (div { className: 'col-sm-6' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(0, chunkSize(2))])
-        (div { className: 'col-sm-6' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(chunkSize(2))])
+        (div { className: 'col-sm-6' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(0, chunkSize(2))])
+        (div { className: 'col-sm-6' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(chunkSize(2))])
       ])
     else
       (div {}, [
-        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(0, chunkSize(3))])
-        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(chunkSize(3), 2 * chunkSize(3))])
-        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @state.asgs.slice(2 * chunkSize(3))])
+        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(0, chunkSize(3))])
+        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(chunkSize(3), 2 * chunkSize(3))])
+        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(2 * chunkSize(3))])
       ])
 
 AutoScalingGroup = React.createClass
   getInitialState: () -> {
-    appName: "",
+    app: "",
     members: [],
     recentActivity: []
   }
@@ -59,7 +85,7 @@ AutoScalingGroup = React.createClass
     }, [
       (ClusterTitle {
         name: @props.group.name
-        appName: @props.group.appName
+        app: @props.group.app
         approxMonthlyCost: @props.group.approxMonthlyCost
         moreDetailsLink: @props.group.moreDetailsLink
       })
@@ -113,7 +139,8 @@ ClusterTitle = React.createClass
             })
           ])
         ])
-        if @props.moreDetailsLink? then (a { href: @props.moreDetailsLink }, @props.appName) else @props.appName
+
+        if @props.moreDetailsLink? then (a { href: @props.moreDetailsLink }, @props.app) else @props.app
         (small {}, " (~$#{d3.format(',.0f')(@props.approxMonthlyCost)}/month)")
       ])
     ])
@@ -191,7 +218,7 @@ ClusterMember = React.createClass
     hasELB = @props.hasELB
     (tr { className: @props.member.goodorbad }, [
       (td {}, [
-        (a { href: @props.url }, [@props.member.id])
+        (a { href: "/instance/#{@props.member.id}" }, [@props.member.id])
       ])
       (td {}, @props.member.lifecycleState )
       if (hasELB) then (td { title: @props.member.description }, @props.member.state )

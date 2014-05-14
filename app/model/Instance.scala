@@ -13,55 +13,66 @@ import play.api.Logger
 import scala.util.Try
 import java.util.Date
 import java.net.ConnectException
+import play.api.libs.json.Json
 
-trait Instance {
-  def id: String
-  def publicDns: String
-  def publicIp: String
-  def privateDns: String
-  def privateIp: String
-  def instanceType: String
+case class Instance(
+  id: String,
+  publicDns: String,
+  publicIp: String,
+  privateDns: String,
+  privateIp: String,
+  instanceType: String,
 
-  def availabilityZone: String
+  availabilityZone: String,
 
-  def cost: BigDecimal
-  def approxMonthlyCost: BigDecimal
-  def costingType: EC2CostingType
+  cost: Option[BigDecimal],
+  approxMonthlyCost: Option[BigDecimal],
+  costingType: EC2CostingType,
 
-  def uptime: String
-  def launched: Date
+  uptime: String,
+  launched: Date,
 
-  def tags: Map[String, String]
-  def stage: String
-  def app: String
+  tags: Map[String, String],
+  stage: String,
+  app: String,
 
-  def version: Option[String]
+  version: Option[String],
 
-  def usefulUrls: Seq[(String, String)]
-}
+  usefulUrls: Map[String, String]
+)
 
-case class EC2Instance(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) extends Instance {
-  def id = awsInstance.getInstanceId
-  def publicDns = awsInstance.getPublicDnsName
-  def publicIp = awsInstance.getPublicIpAddress
-  def privateDns = awsInstance.getPrivateDnsName
-  def privateIp = awsInstance.getPrivateIpAddress
-  def instanceType = awsInstance.getInstanceType
+object EC2Instance {
+  def apply(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) = {
+    val tags = awsInstance.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
+    val costingType = EC2CostingType(awsInstance.getInstanceType, awsInstance.getPlacement.getAvailabilityZone)
+    val cost = Try(AWSCost(costingType)).toOption
+    Instance(
+      id = awsInstance.getInstanceId,
+      publicDns = awsInstance.getPublicDnsName,
+      publicIp = awsInstance.getPublicIpAddress,
+      privateDns = awsInstance.getPrivateDnsName,
+      privateIp = awsInstance.getPrivateIpAddress,
+      instanceType = awsInstance.getInstanceType,
 
-  def availabilityZone = awsInstance.getPlacement.getAvailabilityZone
+      availabilityZone = awsInstance.getPlacement.getAvailabilityZone,
 
-  def cost = Try(AWSCost(costingType)).getOrElse(BigDecimal(0))
-  def approxMonthlyCost = cost * 24 * 30
-  def costingType = EC2CostingType(instanceType, availabilityZone)
+      cost = cost,
+      approxMonthlyCost = cost map (_ * 24 * 30),
+      costingType = costingType,
 
-  def launched = awsInstance.getLaunchTime
+      launched = awsInstance.getLaunchTime,
 
-  def uptime = UptimeDisplay.print(launched)
+      uptime = UptimeDisplay.print(awsInstance.getLaunchTime),
 
-  lazy val tags = awsInstance.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
+      tags = tags,
 
-  lazy val stage = tags("Stage")
-  lazy val app = tags("Role")
+      stage = tags("Stage"),
+      app = tags("App"),
+
+      version = version,
+      usefulUrls = usefulUrls.toMap
+    )
+  }
 }
 
 case class ElasticSearchInstance(publicDns: String) extends AppSpecifics {
@@ -114,13 +125,14 @@ trait AppSpecifics {
 object Instance {
   import play.api.Play.current
 
+  implicit val instanceWrites = Json.writes[Instance]
+
   val log = Logger[Instance](classOf[Instance])
 
   private def uncachedGet(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
-    log.info(id)
     (for {
       result <- AWS.futureOf(awsConn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(id))
-      i <- (result.getReservations flatMap (_.getInstances) map (Instance(_))).head
+      i <- (result.getReservations flatMap (_.getInstances) map (Instance.from(_))).head
     } yield i) recover {
       case e => {
         log.error(s"Unable to retrieve details for instance: $id")
@@ -138,7 +150,7 @@ object Instance {
     }
   }
 
-  def apply(i: AwsEc2Instance): Future[Instance] = {
+  def from(i: AwsEc2Instance): Future[Instance] = {
     val tags = i.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
     val dns = i.getPublicDnsName
 
@@ -168,21 +180,24 @@ object ManagementEndpoint {
   }
 }
 
-case class UnknownInstance(id: String) extends Instance{
-  def app = "???"
-  def stage = "???"
-  def uptime = "???"
-  def cost = BigDecimal(0)
-  def approxMonthlyCost = BigDecimal(0)
-  def availabilityZone = "???"
-  def instanceType = "???"
-  def privateIp = "???"
-  def privateDns = "???"
-  def publicIp = "???"
-  def publicDns = "???"
-  def costingType = EC2CostingType("", "")
-  def version = None
-  def launched = new Date()
-  def usefulUrls = Nil
-  def tags = Map.empty
+object UnknownInstance {
+  def apply(id: String) = Instance(
+    id = id,
+    app = "???",
+    stage = "???",
+    uptime = "???",
+    cost = None,
+    approxMonthlyCost = None,
+    availabilityZone = "???",
+    instanceType = "???",
+    privateIp = "???",
+    privateDns = "???",
+    publicIp = "???",
+    publicDns = "???",
+    costingType = EC2CostingType("", ""),
+    version = None,
+    launched = new Date(),
+    usefulUrls = Map.empty,
+    tags = Map.empty
+  )
 }
