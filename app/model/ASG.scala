@@ -18,11 +18,11 @@ import org.joda.time.DateTime
 import play.api.libs.json.JsObject
 
 case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
-                     members: Seq[ClusterMember], cpu: Seq[Datapoint])
+                     members: Seq[ASGMember], cpu: Seq[Datapoint])
   extends ASG
 
 case class ElasticSearchASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
-                            members: Seq[ClusterMember], cpu: Seq[Datapoint], esStats: JsValue)
+                            members: Seq[ASGMember], cpu: Seq[Datapoint], esStats: JsValue)
   extends ASG {
   override def moreDetailsLink = Some(routes.Application.es(name).url)
 
@@ -59,17 +59,19 @@ object Index {
 }
 
 trait ASG {
-  val asg: AutoScalingGroup
-  val elb: Option[ELB]
-  val recentActivity: Seq[ScalingAction]
-  val members: Seq[ClusterMember]
-  val cpu: Seq[Datapoint]
+
+  def asg: AutoScalingGroup
+  def elb: Option[ELB]
+  def recentActivity: Seq[ScalingAction]
+  def members: Seq[ASGMember]
+  def cpu: Seq[Datapoint]
 
   lazy val name = asg.getAutoScalingGroupName
   lazy val tags = asg.getTags.map(t => t.getKey -> t.getValue).toMap
 
-  lazy val stage = tags.get("Stage").getOrElse("?")
-  lazy val appName = (tags get "Role") orElse (tags get "App") getOrElse "?"
+  lazy val stage = tags.get("Stage") getOrElse "Unknown"
+  lazy val appName = (tags get "App") orElse (tags get "Role") getOrElse "Unknown"
+  lazy val stack = tags.get("Stack")
 
   lazy val hasElb = elb.isDefined
 
@@ -81,29 +83,12 @@ trait ASG {
   def moreDetailsLink: Option[String] = None
 }
 
-case class ClusterMember(asgInfo: AwsAsgInstance, elbInfo: Option[ELB#Member], instance: Instance) {
-  def id = asgInfo.getInstanceId
-  def healthStatus = asgInfo.getHealthStatus
-  def lifecycleState = asgInfo.getLifecycleState
-
-  def state = elbInfo.map(_.state)
-  def description = elbInfo.flatMap(_.description)
-  def reasonCode = elbInfo.flatMap(_.reasonCode)
-
-  def goodorbad = (healthStatus, lifecycleState, state) match {
-    case (_, "Pending", _) | (_, "Terminating", _) => "pending"
-    case ("Healthy", "InService", Some("InService")) => "success"
-    case ("Healthy", "InService", None) => "success"
-    case _ => "danger"
-  }
-}
-
 object ASG {
   val log = Logger[ASG](classOf[ASG])
 
   def apply(asg: AutoScalingGroup)(implicit conn: AmazonConnection): Future[ASG] =  {
     log.info(s"Retrieving details for ${asg.getAutoScalingGroupName}")
-    val instanceStates = Future.sequence((asg.getLoadBalancerNames.headOption map (ELB(_))).toSeq)
+    val instanceStates = Future.sequence((asg.getLoadBalancerNames.headOption map (ELB.forName(_))).toSeq)
 
     val recentActivity = for {
       actions <- ScalingAction.forGroup(asg.getAutoScalingGroupName)
@@ -115,7 +100,7 @@ object ASG {
         val membersOfElb = elb.headOption.map(_.members).getOrElse(Nil)
         for {
           i <- Instance.get(m.getInstanceId)
-        } yield new ClusterMember(m, membersOfElb.find(_.id == m.getInstanceId), i)
+        } yield ASGMember.from(m, membersOfElb.find(_.id == m.getInstanceId), i)
       })
     } yield members
 
@@ -150,41 +135,9 @@ object ASG {
     }
   }
 
-  implicit val datapointWrites = new Writes[Datapoint]{
-    override def writes(d: Datapoint) = Json.obj(
-      "time" -> d.getTimestamp.getTime,
-      "average" -> Option(d.getAverage).map(_.toInt),
-      "maximum" -> Option(d.getMaximum).map(_.toInt)
-    )
-  }
+  import AWS.Writes._
 
-  implicit val memberWrites = new Writes[ClusterMember] {
-    def writes(m: ClusterMember) = Json.obj(
-      "id" -> m.id,
-      "goodorbad" -> m.goodorbad,
-      "lifecycleState" -> m.lifecycleState,
-      "state" -> m.state,
-      "description" -> m.description,
-      "uptime" -> m.instance.uptime,
-      "version" -> JsString(m.instance.version.getOrElse("?")),
-      "url" -> routes.Application.instance(m.id).url
-    )
-  }
-
-  implicit val scalingActionWrites = new Writes[ScalingAction] {
-    override def writes(a: ScalingAction) = Json.obj(
-      "age" -> a.age,
-      "cause" -> a.cause
-    )
-  }
-
-  implicit val elbWrites = new Writes[ELB] {
-    override def writes(elb: ELB) = Json.obj(
-      "name" -> elb.name,
-      "latency" -> elb.latency.map(d => new Datapoint().withTimestamp(d.getTimestamp).withAverage(d.getAverage * 1000)),
-      "active" -> elb.active
-    )
-  }
+  implicit val memberWrites = Json.writes[ASGMember]
 
   implicit val writes = new Writes[ASG] {
     def writes(asg: ASG) = Json.obj(

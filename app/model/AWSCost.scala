@@ -54,7 +54,7 @@ object AWSCost {
     for {
       reservations <- AWS.futureOf(awsConnection.ec2.describeInstancesAsync, new DescribeInstancesRequest())
       instances <- Future.sequence (
-        reservations.getReservations flatMap (_.getInstances) map (Instance(_))
+        reservations.getReservations flatMap (_.getInstances) map (Instance.from(_))
       )
     } yield instances.groupBy(_.costingType).mapValues(_.size)
   }
@@ -139,6 +139,9 @@ case class OnDemandPrices(regions: Map[String, RegionPrices])
 case class RegionPrices(instanceTypes: Map[String, BigDecimal])
 
 case class EC2CostingType(instanceType: String, zone: String)
+object EC2CostingType {
+  implicit val writes = Json.writes[EC2CostingType]
+}
 case class Reservation(count: Int, fixedPrice: Float, hourlyRate: Double) {
   def hourlyCost = count * hourlyRate
   def sunkCost = count * fixedPrice
