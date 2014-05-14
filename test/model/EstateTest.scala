@@ -9,10 +9,10 @@ class EstateTest extends Specification {
   "Estate stages" should {
     "be sorted with PROD first" in {
       val estate = PopulatedEstate(Seq(
-        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "TEST"))), None, Seq(), Seq(), Seq()),
-        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "PROD"))), None, Seq(), Seq(), Seq()),
-        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "CODE"))), None, Seq(), Seq(), Seq()),
-        WebAppASG(new AutoScalingGroup().withTags(Seq(tag("Stage" -> "QA"))), None, Seq(), Seq(), Seq())
+        asg("TEST"),
+        asg("PROD"),
+        asg("CODE"),
+        asg("QA")
       ), Seq(), DateTime.now)
       estate.stageNames should contain(exactly("PROD", "CODE", "QA", "TEST"))
     }
@@ -22,4 +22,8 @@ class EstateTest extends Specification {
     val (key, value) = keyValue
     new TagDescription().withKey(key).withValue(value)
   }
+
+  def asg(stage: String) = ASG(
+    "name", Some(stage), None, None, None, Nil, Nil, Nil, Nil, None
+  )
 }
