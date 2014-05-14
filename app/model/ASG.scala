@@ -13,15 +13,16 @@ import play.api.libs.ws.WS
 import play.api.libs.json._
 import controllers.routes
 import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricStatisticsRequest}
+import com.amazonaws.services.cloudwatch.model.Statistic._
 import org.joda.time.DateTime
 import play.api.libs.json.JsObject
 
 case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
-                     members: Seq[ClusterMember], averageCPU: Seq[Datapoint])
+                     members: Seq[ClusterMember], cpu: Seq[Datapoint])
   extends ASG
 
 case class ElasticSearchASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
-                            members: Seq[ClusterMember], averageCPU: Seq[Datapoint], esStats: JsValue)
+                            members: Seq[ClusterMember], cpu: Seq[Datapoint], esStats: JsValue)
   extends ASG {
   override def moreDetailsLink = Some(routes.Application.es(name).url)
 
@@ -62,7 +63,7 @@ trait ASG {
   val elb: Option[ELB]
   val recentActivity: Seq[ScalingAction]
   val members: Seq[ClusterMember]
-  val averageCPU: Seq[Datapoint]
+  val cpu: Seq[Datapoint]
 
   lazy val name = asg.getAutoScalingGroupName
   lazy val tags = asg.getTags.map(t => t.getKey -> t.getValue).toMap
@@ -129,7 +130,8 @@ object ASG {
 
     val stats = AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
       .withDimensions(new Dimension().withName("AutoScalingGroupName").withValue(asg.getAutoScalingGroupName))
-      .withMetricName("CPUUtilization").withNamespace("AWS/EC2").withPeriod(60).withStatistics("Average")
+      .withMetricName("CPUUtilization").withNamespace("AWS/EC2").withPeriod(60)
+      .withStatistics(Maximum, Average)
       .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
     )
 
@@ -140,18 +142,19 @@ object ASG {
       asgStats <- stats
       esStats <- elasticsSeachStats recover { case _ => None }
     } yield {
-      val averageCPU = asgStats.getDatapoints.sortBy(_.getTimestamp)
+      val maxCPU = asgStats.getDatapoints.sortBy(_.getTimestamp)
       esStats map (
-        ElasticSearchASG(asg, states.headOption, activities, members, averageCPU, _)
+        ElasticSearchASG(asg, states.headOption, activities, members, maxCPU, _)
       ) getOrElse
-        WebAppASG(asg, states.headOption, activities, members, averageCPU)
+        WebAppASG(asg, states.headOption, activities, members, maxCPU)
     }
   }
 
   implicit val datapointWrites = new Writes[Datapoint]{
     override def writes(d: Datapoint) = Json.obj(
-      "x" -> d.getTimestamp.getTime,
-      "y" -> d.getAverage.toInt
+      "time" -> d.getTimestamp.getTime,
+      "average" -> Option(d.getAverage).map(_.toInt),
+      "maximum" -> Option(d.getMaximum).map(_.toInt)
     )
   }
 
@@ -189,7 +192,7 @@ object ASG {
       "appName" -> asg.appName,
       "members" -> asg.members,
       "recentActivity" -> asg.recentActivity,
-      "averageCPU" -> asg.averageCPU,
+      "cpu" -> asg.cpu,
       "elb" -> asg.elb,
       "approxMonthlyCost" -> asg.approxMonthlyCost,
       "moreDetailsLink" -> asg.moreDetailsLink,
