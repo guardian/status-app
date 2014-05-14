@@ -8,19 +8,10 @@ import collection.convert.wrapAsScala._
 import scala.concurrent.{ExecutionContext, Future}
 import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricStatisticsRequest}
 import org.joda.time.DateTime
+import play.api.libs.json.Json
 
-case class ELB(name: String, instanceStates: List[InstanceState], latency: Seq[Datapoint], requestCount: Seq[Datapoint]) {
-  lazy val members = instanceStates.map(new Member(_))
-
-  lazy val active = requestCount.nonEmpty && requestCount.map(_.getSum).max > 10
-
-  class Member(instanceState: InstanceState) {
-    def id = instanceState.getInstanceId
-    def state = instanceState.getState
-    def description = Option(instanceState.getDescription).filter(_ != "N/A")
-    def reasonCode = Option(instanceState.getReasonCode).filter(_ != "N/A")
-  }
-}
+case class ELB(name: String, members: List[ELBMember], latency: Seq[Datapoint], active: Boolean)
+case class ELBMember(id: String, state: String, description: Option[String], reasonCode: Option[String])
 
 object ELB {
   import ExecutionContext.Implicits.global
@@ -40,10 +31,25 @@ object ELB {
       .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
     )
 
-  def apply(lbName: String)(implicit conn: AmazonConnection): Future[ELB] = for {
+  def forName(lbName: String)(implicit conn: AmazonConnection): Future[ELB] = for {
     elbHealths <- AWS.futureOf(conn.elb.describeInstanceHealthAsync, new DescribeInstanceHealthRequest(lbName))
     latency <- latency(lbName)
     requestCount <- requestCount(lbName)
-  } yield ELB(lbName, elbHealths.getInstanceStates.toList,
-      latency.getDatapoints.sortBy(_.getTimestamp), requestCount.getDatapoints.sortBy(_.getTimestamp))
+  } yield {
+    val members = elbHealths.getInstanceStates.toList.map(i => ELBMember(
+      i.getInstanceId, i.getState,
+      Option(i.getDescription).filter(_ != "N/A"),
+      Option(i.getReasonCode).filter(_ != "N/A")
+    ))
+    val active = requestCount.getDatapoints.nonEmpty && requestCount.getDatapoints.map(_.getSum).max > 10
+    val latencyInMs = latency.getDatapoints.sortBy(_.getTimestamp).map(p =>
+      new Datapoint().withTimestamp(p.getTimestamp).withAverage(p.getAverage * 1000)
+    )
+
+    ELB(lbName, members, latencyInMs, active)
+  }
+
+  import AWS.Writes._
+  implicit val elbMemberWrites = Json.writes[ELBMember]
+  implicit val elbWrites = Json.writes[ELB]
 }
