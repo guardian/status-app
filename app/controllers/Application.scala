@@ -60,15 +60,6 @@ object Application extends Controller {
     instance.headOption map (i => Ok(views.html.instance(i.instance))) getOrElse NotFound
   }
 
-  def es(name: String) = Authenticated { implicit req =>
-    (for {
-      asg <- Estate().asgs if asg.name == name
-    } yield asg match {
-      case a: ElasticSearchASG => Ok(views.html.elasticsearch(a))
-      case _ => NotFound
-    }).headOption getOrElse Ok(views.html.loading())
-  }
-
   def void = Action {
     NotFound
   }

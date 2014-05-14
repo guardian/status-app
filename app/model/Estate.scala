@@ -19,7 +19,7 @@ trait Estate extends Map[String, Seq[ASG]] {
 
 case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue], lastUpdateTime: DateTime)
     extends Estate {
-  lazy val stageMap = asgs.groupBy(_.stage)
+  lazy val stageMap = asgs.groupBy(_.stage.getOrElse("Unknown"))
   def get(key: String) = stageMap.get(key)
   def iterator = stageMap.iterator
 
@@ -52,10 +52,9 @@ object Estate {
 
     for {
       groups <- groupsFuture
-      asgs <- Future.traverse(
-        groups.getAutoScalingGroups.toSeq)(ASG(_))
+      asgs <- Future.traverse(groups.getAutoScalingGroups.toSeq)(ASG.from)
       queueResult <- queuesFuture
-      queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from(_))
+      queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
     } yield PopulatedEstate(asgs, queues, DateTime.now)
   }
   def apply() = estateAgent()

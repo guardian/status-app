@@ -25,8 +25,8 @@ case class Instance(
 
   availabilityZone: String,
 
-  cost: BigDecimal,
-  approxMonthlyCost: BigDecimal,
+  cost: Option[BigDecimal],
+  approxMonthlyCost: Option[BigDecimal],
   costingType: EC2CostingType,
 
   uptime: String,
@@ -45,7 +45,7 @@ object EC2Instance {
   def apply(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) = {
     val tags = awsInstance.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
     val costingType = EC2CostingType(awsInstance.getInstanceType, awsInstance.getPlacement.getAvailabilityZone)
-    val cost = Try(AWSCost(costingType)).getOrElse(BigDecimal(0))
+    val cost = Try(AWSCost(costingType)).toOption
     Instance(
       id = awsInstance.getInstanceId,
       publicDns = awsInstance.getPublicDnsName,
@@ -57,7 +57,7 @@ object EC2Instance {
       availabilityZone = awsInstance.getPlacement.getAvailabilityZone,
 
       cost = cost,
-      approxMonthlyCost = cost * 24 * 30,
+      approxMonthlyCost = cost map (_ * 24 * 30),
       costingType = costingType,
 
       launched = awsInstance.getLaunchTime,
@@ -130,7 +130,6 @@ object Instance {
   val log = Logger[Instance](classOf[Instance])
 
   private def uncachedGet(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
-    log.info(id)
     (for {
       result <- AWS.futureOf(awsConn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(id))
       i <- (result.getReservations flatMap (_.getInstances) map (Instance.from(_))).head
@@ -201,8 +200,8 @@ object UnknownInstance {
     app = "???",
     stage = "???",
     uptime = "???",
-    cost = BigDecimal(0),
-    approxMonthlyCost = BigDecimal(0),
+    cost = None,
+    approxMonthlyCost = None,
     availabilityZone = "???",
     instanceType = "???",
     privateIp = "???",

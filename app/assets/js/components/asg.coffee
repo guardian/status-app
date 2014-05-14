@@ -45,7 +45,7 @@ Stage = React.createClass
 
 AutoScalingGroup = React.createClass
   getInitialState: () -> {
-    appName: "",
+    app: "",
     members: [],
     recentActivity: []
   }
@@ -59,9 +59,8 @@ AutoScalingGroup = React.createClass
     }, [
       (ClusterTitle {
         name: @props.group.name
-        appName: @props.group.appName
+        app: @props.group.app
         approxMonthlyCost: @props.group.approxMonthlyCost
-        moreDetailsLink: @props.group.moreDetailsLink
       })
       if @props.group.suspendedActivities?.length > 0
         (div { className: 'panel-body alert-info' }, [
@@ -113,7 +112,7 @@ ClusterTitle = React.createClass
             })
           ])
         ])
-        if @props.moreDetailsLink? then (a { href: @props.moreDetailsLink }, @props.appName) else @props.appName
+        @props.app
         (small {}, " (~$#{d3.format(',.0f')(@props.approxMonthlyCost)}/month)")
       ])
     ])
@@ -191,7 +190,7 @@ ClusterMember = React.createClass
     hasELB = @props.hasELB
     (tr { className: @props.member.goodorbad }, [
       (td {}, [
-        (a { href: @props.url }, [@props.member.id])
+        (a { href: "/instance/#{@props.member.id}" }, [@props.member.id])
       ])
       (td {}, @props.member.lifecycleState )
       if (hasELB) then (td { title: @props.member.description }, @props.member.state )

@@ -1,11 +1,14 @@
 package model
 
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
+import play.api.libs.json.Json
 
 case class ASGMember(id: String, description: Option[String], uptime: String, version: Option[String],
                      state: Option[String], lifecycleState: String, goodorbad: String, instance: Instance)
 
 object ASGMember {
+  implicit val memberWrites = Json.writes[ASGMember]
+
   def from(asgInfo: AwsAsgInstance, elbInfo: Option[ELBMember], instance: Instance): ASGMember = {
     def healthStatus = asgInfo.getHealthStatus
     def lifecycleState = asgInfo.getLifecycleState
