@@ -10,7 +10,7 @@ How do I run it?
 
 The simplest way to run it is to use the [Cloud Formation scripts](cloud-formation/). 
 
-If you're tagging your auto-scaling groups with a 'Role' and 'Stage', you should then
+If you're tagging your auto-scaling groups according to the [Guardian conventions](https://github.com/guardian/prism/wiki/Tagging-conventions-for-AWS-and-Openstack), you should then
 have something to see. Note that these Cloud Formation templates require the creation 
 of new IAM resources.
 
