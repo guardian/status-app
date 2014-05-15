@@ -21,15 +21,6 @@ case class WebAppASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Se
                      members: Seq[ClusterMember], cpu: Seq[Datapoint])
   extends ASG
 
-case class ElasticSearchASG(asg: AutoScalingGroup, elb: Option[ELB], recentActivity: Seq[ScalingAction],
-                            members: Seq[ClusterMember], cpu: Seq[Datapoint], esStats: JsValue)
-  extends ASG {
-  override def moreDetailsLink = Some(routes.Application.es(name).url)
-
-  lazy val elasticSearchStats = ElasticsearchStatsGroups.parse(esStats)
-}
-
-
 trait ASG {
   val asg: AutoScalingGroup
   val elb: Option[ELB]
@@ -50,7 +41,9 @@ trait ASG {
   lazy val approxMonthlyCost =
     Try(members.map(_.instance.approxMonthlyCost).sum).getOrElse(BigDecimal(0))
 
-  def moreDetailsLink: Option[String] = None
+  def moreDetailsLink: Option[String] = ManagementTag(tags.get("Management")).flatMap { t =>
+    if (t.format == Some("elasticsearch")) Some(routes.Application.es(name).url) else None
+  }
 }
 
 case class ClusterMember(asgInfo: AwsAsgInstance, elbInfo: Option[ELB#Member], instance: Instance) {
@@ -91,15 +84,6 @@ object ASG {
       })
     } yield members
 
-    val elasticsSeachStats = if (asg.getTags.exists(t => t.getKey == "Role" && t.getValue.contains("elasticsearch")))
-      for {
-        members <- clusterMembers
-        stats  <- FutureOption(
-          (Random.shuffle(members).headOption map (m => WS.url(s"http://${m.instance.publicDns}:9200/_nodes/stats?groups=_all").get))
-        )
-      } yield stats map (_.json)
-    else Future.successful(None)
-
     val stats = AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
       .withDimensions(new Dimension().withName("AutoScalingGroupName").withValue(asg.getAutoScalingGroupName))
       .withMetricName("CPUUtilization").withNamespace("AWS/EC2").withPeriod(60)
@@ -112,13 +96,9 @@ object ASG {
       activities <- recentActivity
       members <- clusterMembers
       asgStats <- stats
-      esStats <- elasticsSeachStats recover { case _ => None }
     } yield {
       val maxCPU = asgStats.getDatapoints.sortBy(_.getTimestamp)
-      esStats map (
-        ElasticSearchASG(asg, states.headOption, activities, members, maxCPU, _)
-      ) getOrElse
-        WebAppASG(asg, states.headOption, activities, members, maxCPU)
+      WebAppASG(asg, states.headOption, activities, members, maxCPU)
     }
   }
 

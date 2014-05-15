@@ -155,30 +155,16 @@ object Instance {
   }
 }
 
-case class ManagementEndpoint(protocol:String, port:Int, path:String, url:String, format:String, source:String)
+case class ManagementEndpoint(dnsName:String, tag: ManagementTag) {
+  val port = tag.port.orElse(Config.managementPort).getOrElse(9000)
+  val protocol = tag.protocol getOrElse "http"
+  val path = tag.path getOrElse "/management"
+  def url: String = s"""$protocol://$dnsName:$port$path"""
+}
+
 object ManagementEndpoint {
-  val KeyValue = """([^=]*)=(.*)""".r
   def fromTag(dnsName:String, tag:Option[String]): Option[ManagementEndpoint] = {
-    tag match {
-      case Some("none") => None
-      case Some(tagContent) =>
-        Some({
-          val params = tagContent.split(",").filterNot(_.isEmpty).flatMap {
-            case KeyValue(key,value) => Some(key -> value)
-            case _ => None
-          }.toMap
-          fromMap(dnsName, params)
-        })
-      case None => Some(fromMap(dnsName))
-    }
-  }
-  def fromMap(dnsName:String, map:Map[String,String] = Map.empty):ManagementEndpoint = {
-    val protocol = map.getOrElse("protocol","http")
-    val port = map.get("port").map(_.toInt).orElse(Config.managementPort).getOrElse(9000)
-    val path = map.getOrElse("path","/management")
-    val url = s"$protocol://$dnsName:$port$path"
-    val source: String = if (map.isEmpty) "convention" else "tag"
-    ManagementEndpoint(protocol, port, path, url, map.getOrElse("format", "gu"), source)
+    ManagementTag(tag) map (ManagementEndpoint(dnsName, _))
   }
 }
 
