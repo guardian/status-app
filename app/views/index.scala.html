@@ -28,7 +28,7 @@
         </div>
 
         <div id="stage" class="row">
-            @for(asg <- estate(stage)) {
+            @for(asg <- estate(stage).asgs) {
                 @snippets.renderASG(asg)
             }
             <script>
@@ -37,9 +37,9 @@
         </div>
         <div class="row">
             <div class="well">
-                Approximate total monthly cost for all ASGs: $@money.format(estate(stage).map(_.approxMonthlyCost).sum)
+                Approximate total monthly cost for all ASGs: $@money.format(estate(stage).asgs.flatMap(_.approxMonthlyCost).sum)
                 @if(estate.size > 1) {
-                  (for all stages: $@money.format(estate.values.flatMap(_.map(_.approxMonthlyCost)).sum))
+                  (for all stages: $@money.format(estate.values.flatMap(_.asgs.flatMap(_.approxMonthlyCost)).sum))
                 }
                 @if(totalSunkCost > 0) { (total sunk cost: $@money.format(totalSunkCost)) }
             </div>
