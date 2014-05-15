@@ -6,6 +6,9 @@ import java.text.DecimalFormat
 import play.api.libs.json.{JsString, Json, Writes}
 import lib.UptimeDisplay
 import com.amazonaws.services.cloudwatch.model.Datapoint
+import scala.util.Random
+import play.api.libs.ws.WS
+import scala.concurrent.Future
 
 object Application extends Controller {
 
@@ -60,13 +63,14 @@ object Application extends Controller {
     instance.headOption map (i => Ok(views.html.instance(i.instance))) getOrElse NotFound
   }
 
-  def es(name: String) = Authenticated { implicit req =>
+  def es(name: String) = Authenticated.async { implicit req =>
+    import scala.concurrent.ExecutionContext.Implicits.global
     (for {
       asg <- Estate().asgs if asg.name == name
-    } yield asg match {
-      case a: ElasticSearchASG => Ok(views.html.elasticsearch(a))
-      case _ => NotFound
-    }).headOption getOrElse Ok(views.html.loading())
+      stats <- Random.shuffle(asg.members).headOption map (m => WS.url(s"http://${m.instance.publicDns}:9200/_nodes/stats?groups=_all").get())
+    } yield stats map { r =>
+      Ok(views.html.elasticsearch(ElasticsearchStatsGroups.parse(r.json)))
+    }).headOption.getOrElse(Future.successful(NotFound))
   }
 
   def void = Action {
