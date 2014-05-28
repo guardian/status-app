@@ -2,16 +2,22 @@
 
 Stage = React.createClass
   getInitialState: () -> {
-    stacks: []
-    activeStack: { name: '', asgs: [] }
+    stacks: null
+    stackNames: []
+    activeStack: null
   }
 
   updateFromServer: () ->
     $.ajax({
       url: "/#{@props.name}.json"
       success: ((result) ->
-        @setState({ stacks: result.stacks })
-        if (@state.activeStack.name == '') then @setState({ activeStack: result.stacks[0] })
+        stackNames = (name for name, _ of result)
+        @setState({
+          stacks: result
+          stackNames: stackNames
+        })
+        if (@state.activeStack == null)
+          @setState({ activeStack: stackNames[0] })
       ).bind(this)
     })
     setTimeout(@updateFromServer, 5000)
@@ -24,20 +30,20 @@ Stage = React.createClass
 
   render: () ->
     (div {}, [
-      if (@state.stacks.length > 1)
+      if (@state.stackNames.length > 1)
         (div { className: 'col-xs-12'},
           (ul { className: 'nav nav-pills stacks' }, [
-            (li { className: if (stack.name == @state.activeStack.name ) then 'active' }, (a {
+            (li { className: if (name == @state.activeStack ) then 'active' }, (a {
               href: '#'
-              onClick: @markActive.bind(this, stack)
-            }, stack.name )) for stack in @state.stacks
+              onClick: @markActive.bind(this, name)
+            }, name )) for name in @state.stackNames
           ])
         )
-      (Stack { name: @state.activeStack.name, asgs: @state.activeStack.asgs })
+      if (@state.activeStack) then (Stack { name: @state.activeStack, asgs: @state.stacks[@state.activeStack].asgs })
     ])
 
-  markActive: (stack) ->
-    @setState({ activeStack: stack })
+  markActive: (stackName) ->
+    @setState({ activeStack: stackName })
 
 Stack = React.createClass
   getInitialState: () -> {
@@ -102,6 +108,11 @@ AutoScalingGroup = React.createClass
             points: {x: point.time, y: point.average} for point in @props.group.elb.latency
             unit: 'ms'
             height: 50
+            additionalLine:
+              (Sparkline {
+                points: {x: point.time, y: point.sum} for point in @props.group.elb.errorCount
+                stroke: 'red'
+              })
           })
         ])
       (ClusterMembers {

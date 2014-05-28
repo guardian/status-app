@@ -6,7 +6,7 @@ import scala.concurrent.Future
 import controllers.Application
 import com.amazonaws.services.sqs.model.ListQueuesRequest
 import org.joda.time.DateTime
-import play.api.libs.json.Json
+import play.api.libs.json.{Writes, Json}
 
 trait Estate extends Map[String, Stage] {
   def populated: Boolean
@@ -26,7 +26,9 @@ case class Stage(stacks: Seq[Stack]) {
   def asgs: Seq[ASG] = stacks.flatMap(_.asgs)
 }
 object Stage {
-  implicit val writes = Json.writes[Stage]
+  implicit val writes = new Writes[Stage] {
+    def writes(stage: Stage) = Json.toJson(Map(stage.stacks.map(s => s.name -> s): _ *))
+  }
 }
 
 case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue], lastUpdateTime: DateTime)

@@ -20,10 +20,15 @@ SparklinePlus = React.createClass
           })
           (Sparkline {
             points: points
-            x: @x
-            y: @y
+            width: @state.width - 50
+            height: @sparklineHeight()
             stroke: "black"
           })
+          if @props.additionalLine?.props.points.length > 0
+            React.addons.cloneWithProps(@props.additionalLine, {
+              width: @state.width - 50
+              height: @sparklineHeight()
+            })
           (circle {
             cx: @x()(points[points.length - 1].x)
             cy: @y()(points[points.length - 1].y)
@@ -96,11 +101,17 @@ SparklinePlus = React.createClass
 
 Sparkline = React.createClass
   render: () -> (path {
-    d : "M#{@props.x()(@props.points[0].x)},#{@props.y()(@props.points[0].y)}" +
-      ("L#{@props.x()(p.x)},#{@props.y()(p.y)}" for p in @props.points).join('')
+    d : "M#{@x()(@props.points[0].x)},#{@y()(@props.points[0].y)}" +
+      ("L#{@x()(p.x)},#{@y()(p.y)}" for p in @props.points).join('')
     fill: 'none'
     stroke: @props.stroke
   })
+
+  x: () ->
+    d3.time.scale().range([0, @props.width]).domain(d3.extent(@props.points, (d) -> d.x))
+
+  y: () ->
+    d3.scale.linear().range([@props.height,12]).domain(d3.extent(@props.points, (d) -> d.y))
 
 HoverDetail = React.createClass
   render: () -> (g {}, [
@@ -130,3 +141,4 @@ HoverDetail = React.createClass
   ])
 
 window.SparklinePlus = SparklinePlus
+window.Sparkline = Sparkline

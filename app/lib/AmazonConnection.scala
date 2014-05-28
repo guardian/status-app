@@ -31,7 +31,7 @@ class AmazonConnection(credentials: Option[AWSCredentials], clientConfig: Client
   val elb = new AmazonElasticLoadBalancingAsyncClient(credentialsProvider, clientConfig)
   val autoscaling = new AmazonAutoScalingAsyncClient(credentialsProvider, clientConfig)
   val s3 = new AmazonS3Client(credentialsProvider, clientConfig)
-  val cloudWatch = Region.getRegion(Regions.EU_WEST_1).createClient(
+  val cloudWatch: AmazonCloudWatchAsyncClient = Region.getRegion(Regions.EU_WEST_1).createClient(
     classOf[AmazonCloudWatchAsyncClient], credentialsProvider, clientConfig)
   val sqs = Region.getRegion(Regions.EU_WEST_1).createClient(
     classOf[AmazonSQSAsyncClient], credentialsProvider, clientConfig)
@@ -59,7 +59,8 @@ object AWS {
       override def writes(d: Datapoint) = Json.obj(
         "time" -> d.getTimestamp.getTime,
         "average" -> Option(d.getAverage).map(_.toInt),
-        "maximum" -> Option(d.getMaximum).map(_.toInt)
+        "maximum" -> Option(d.getMaximum).map(_.toInt),
+        "sum" -> Option(d.getSum).map(_.toLong)
       )
     }
 
