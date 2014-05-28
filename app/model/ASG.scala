@@ -64,7 +64,7 @@ object ASG {
       }
       ASG(
         name, tags.get("Stage"), tags.get("App") orElse tags.get("Role"), tags.get("Stack"),
-        lb, members, activities, cpu, asg.getSuspendedProcesses.toList.map(_.getProcessName).sorted,
+        lb, members.sortBy(_.instance.availabilityZone), activities, cpu, asg.getSuspendedProcesses.toList.map(_.getProcessName).sorted,
         Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption, moreDetailsLink
       )
     }
