@@ -1,10 +1,10 @@
 import sbt._
 import sbt.Keys._
-import play.Project._
 import sbtbuildinfo.Plugin._
 import PlayArtifact._
-import com.typesafe.sbt.SbtNativePackager._
-import com.typesafe.sbt.packager.Keys._
+import play.Play.autoImport._
+import PlayKeys._
+import com.typesafe.sbt.web._
 
 object StatusAppBuild extends Build {
 
@@ -12,19 +12,26 @@ object StatusAppBuild extends Build {
 
   val statusAppDependencies = Seq(
     awsSdk,
-    "com.typesafe.akka" %% "akka-agent" % "2.2.4",
-    cache
+    "com.typesafe.akka" %% "akka-agent" % "2.3.2",
+    cache,
+    ws,
+    "org.webjars" % "react" % "0.10.0",
+    "org.webjars" % "bootstrap" % "3.1.1",
+    "org.webjars" % "d3js" % "3.4.4-1",
+    "org.webjars" % "zeroclipboard" % "1.3.5"
   )
 
-  lazy val statusApp = play.Project("status-app", "1.0", statusAppDependencies, path = file("."))
+  lazy val statusApp = Project("status-app", file(".")).enablePlugins(play.PlayScala).enablePlugins(SbtWeb)
     .settings(buildInfoSettings: _*)
     .settings(playArtifactDistSettings: _*)
     .settings(
 
-    resolvers ++= Seq(Classpaths.typesafeReleases),
-    scalacOptions ++= List("-feature", "-deprecation"),
+    libraryDependencies ++= statusAppDependencies,
 
-    scalaVersion := "2.10.4",
+    resolvers ++= Seq(Classpaths.typesafeReleases),
+
+    scalaVersion := "2.11.0",
+    scalacOptions ++= List("-feature", "-deprecation"),
 
     // see https://groups.google.com/forum/#!topic/sbt-dev/YqDzRZohZ_k
     // this enables a better way of tracking dependencies available in sbt 0.13.2 which should mean

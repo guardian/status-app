@@ -70,13 +70,13 @@ object Login extends Controller {
         info.attributes.get("lastname").get
       )
       if (validator.isAuthorised(credentials)) {
-        Redirect(session.get("loginFromUrl").getOrElse("/")).withSession (
-          session + (User.KEY -> User.writeJson(credentials)) - "loginFromUrl"
+        Redirect(request.session.get("loginFromUrl").getOrElse("/")).withSession (
+          request.session + (User.KEY -> User.writeJson(credentials)) - "loginFromUrl"
         )
       } else {
         Redirect(routes.Login.login).flashing(
           ("error" -> (validator.authorisationError(credentials).get))
-        ).withSession(session - User.KEY)
+        ).withSession(request.session - User.KEY)
       }
     } recover {
       case t => {

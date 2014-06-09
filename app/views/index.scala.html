@@ -4,10 +4,10 @@
 
 @main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/settings.js")) {
 
-     <script src='@routes.Assets.at("nvd3/d3.v3.js")'></script>
-     <script src='@routes.Assets.at("zeroclipboard/ZeroClipboard.min.js")'></script>
+     <script src='@routes.Assets.at("lib/d3js/d3.min.js")'></script>
+     <script src='@routes.Assets.at("lib/zeroclipboard/ZeroClipboard.min.js")'></script>
      <script>
-        ZeroClipboard.setDefaults( { moviePath: '@routes.Assets.at("zeroclipboard/ZeroClipboard.swf")' } );
+        ZeroClipboard.config( { moviePath: '@routes.Assets.at("lib/zeroclipboard/ZeroClipboard.swf")' } );
      </script>
     <script src="@routes.Assets.at("js/components/asg.js")"></script>
     <script src="@routes.Assets.at("js/components/queue.js")"></script>

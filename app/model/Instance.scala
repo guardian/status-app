@@ -3,11 +3,10 @@ package model
 import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance, DescribeInstancesRequest}
 import lib._
 import collection.JavaConversions._
-import play.api.libs.ws.WS
+import play.api.libs.ws.{WSResponse, WS}
 import play.api.cache.Cache
 import scala.concurrent.ExecutionContext.Implicits.global
 import concurrent.Future
-import play.api.libs.ws.Response
 import scala.Some
 import play.api.Logger
 import scala.util.Try
@@ -85,7 +84,7 @@ case class ElasticSearchInstance(publicDns: String) extends AppSpecifics {
     "paramedic" -> (baseUrl + "/_plugin/paramedic/")
   )
 
-  val versionExtractor = { r: Response =>
+  val versionExtractor = { r: WSResponse =>
     val v = (r.json \ "version" \ "number").as[String]
     val name = (r.json \ "name").as[String]
     Some(v + " " + name)
@@ -98,18 +97,20 @@ case class StandardWebApp(versionUrl: String) extends AppSpecifics {
     "manifest" -> versionUrl
   )
 
-  val versionExtractor = { r: Response =>
+  val versionExtractor = { r: WSResponse =>
     val values = r.body.lines.map(_.split(':').map(_.trim)).collect { case Array(k, v) => k -> v }.toMap
     values.get("Build")
   }
 }
 
 trait AppSpecifics {
+  import play.api.Play.current
+
   val log = Logger[AppSpecifics](classOf[AppSpecifics])
 
   def usefulUrls: Seq[(String, String)]
   def versionUrl: String
-  def versionExtractor: Response => Option[String]
+  def versionExtractor: WSResponse => Option[String]
   def version = WS.url(versionUrl).withRequestTimeout(200).get() map (versionExtractor) recover {
     case _: ConnectException => {
       log.error(s"Couldn't retrieve $versionUrl")

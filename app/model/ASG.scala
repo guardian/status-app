@@ -26,6 +26,7 @@ object ASG {
   val log = Logger[ASG](classOf[ASG])
 
   def from(asg: AutoScalingGroup)(implicit conn: AmazonConnection): Future[ASG] =  {
+    import play.api.Play.current
     log.debug(s"Retrieving details for ${asg.getAutoScalingGroupName}")
     val elb = FutureOption((asg.getLoadBalancerNames.headOption map (ELB.forName(_))))
 

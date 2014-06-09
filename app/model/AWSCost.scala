@@ -74,6 +74,8 @@ object AWSCost {
   }
 
   lazy val costsAgent = ScheduledAgent[OnDemandPrices](0.seconds, 30.minutes, OnDemandPrices(Map())) {
+    import play.api.Play.current
+
     // There isn't a proper API for this at time of writing, but handily the
     logger.info("Starting costsAgent")
     val f = (WS.url("http://aws-assets-pricing-prod.s3.amazonaws.com/pricing/ec2/linux-od.js").withRequestTimeout(2000).get map { response =>

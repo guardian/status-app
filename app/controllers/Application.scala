@@ -64,6 +64,7 @@ object Application extends Controller {
   }
 
   def es(name: String) = Authenticated.async { implicit req =>
+    import play.api.Play.current
     import scala.concurrent.ExecutionContext.Implicits.global
     (for {
       asg <- Estate().asgs if asg.name == name
