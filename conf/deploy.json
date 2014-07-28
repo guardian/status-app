@@ -4,10 +4,7 @@
     ],
     "packages":{
         "status-app":{
-            "type":"autoscaling",
-            "data":{
-                "bucket": "ophan-dist"
-            }
+            "type":"autoscaling"
         }
     },
     "recipes":{
