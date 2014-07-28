@@ -140,9 +140,9 @@
 
                         "adduser --system --home /status --disabled-password status",
 
-                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com/ophan-dist", { "Ref" : "Stack" }, { "Ref" : "Stage" },  "status-app/status-app.conf --directory-prefix=/etc/init"]]},
+                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" },  "status-app/status-app.conf --directory-prefix=/etc/init"]]},
 
-                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com/ophan-dist", { "Ref" : "Stack" }, { "Ref" : "Stage" },  "status-app/status-app-1.0.zip --directory-prefix=/status"]]},
+                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" },  "status-app/status-app-1.0.zip --directory-prefix=/status"]]},
 
                         "unzip -d /status /status/status-app-1.0.zip",
 
