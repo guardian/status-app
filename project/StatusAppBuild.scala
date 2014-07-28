@@ -8,17 +8,17 @@ import com.typesafe.sbt.web._
 
 object StatusAppBuild extends Build {
 
-  val awsSdk = "com.amazonaws" % "aws-java-sdk" % "1.7.6"
+  val awsSdk = "com.amazonaws" % "aws-java-sdk" % "1.8.6"
 
   val statusAppDependencies = Seq(
     awsSdk,
-    "com.typesafe.akka" %% "akka-agent" % "2.3.2",
+    "com.typesafe.akka" %% "akka-agent" % "2.3.4",
     cache,
     ws,
-    "org.webjars" % "react" % "0.10.0",
-    "org.webjars" % "bootstrap" % "3.1.1",
-    "org.webjars" % "d3js" % "3.4.4-1",
-    "org.webjars" % "zeroclipboard" % "1.3.5"
+    "org.webjars" % "react" % "0.11.1",
+    "org.webjars" % "bootstrap" % "3.2.0",
+    "org.webjars" % "d3js" % "3.4.11",
+    "org.webjars" % "zeroclipboard" % "2.1.5"
   )
 
   lazy val statusApp = Project("status-app", file(".")).enablePlugins(play.PlayScala).enablePlugins(SbtWeb)
@@ -30,7 +30,7 @@ object StatusAppBuild extends Build {
 
     resolvers ++= Seq(Classpaths.typesafeReleases),
 
-    scalaVersion := "2.11.0",
+    scalaVersion := "2.11.2",
     scalacOptions ++= List("-feature", "-deprecation"),
 
     // see https://groups.google.com/forum/#!topic/sbt-dev/YqDzRZohZ_k
