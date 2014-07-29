@@ -26,6 +26,8 @@ object StatusAppBuild extends Build {
     .settings(playArtifactDistSettings: _*)
     .settings(
 
+    version := "1.0",
+
     libraryDependencies ++= statusAppDependencies,
 
     resolvers ++= Seq(Classpaths.typesafeReleases),
