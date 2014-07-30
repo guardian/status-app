@@ -70,6 +70,22 @@
                 "Roles": [ { "Ref": "StatusAppRole" } ]
             }
         },
+        "StatusAppReadConfigPolicy" : {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "StatusAppReadConfigPolicy",
+                "PolicyDocument": {
+                    "Statement": [ {
+                        "Action": [
+                            "dynamodb:GetItem"
+                        ],
+                        "Effect": "Allow",
+                        "Resource":"*"
+                    }]
+                },
+                "Roles": [ { "Ref": "StatusAppRole" } ]
+            }
+        },
         "StatusAppInstanceProfile": {
             "Type": "AWS::IAM::InstanceProfile",
             "Properties": {
@@ -174,6 +190,16 @@
                     { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",
                         "SourceSecurityGroupName": { "Ref" : "StatusAppSecurityGroup" } }
                 ]
+            }
+        },
+
+        "ConfigTable" : {
+            "Type" : "AWS::DynamoDB::Table",
+            "Properties" : {
+                "TableName": "StatusAppConfig",
+                "KeySchema" : [{ "AttributeName" : "key", "KeyType" : "HASH" }],
+                "AttributeDefinitions" : [{ "AttributeName" : "key", "AttributeType" : "S" }],
+                "ProvisionedThroughput" : { "ReadCapacityUnits" : "1", "WriteCapacityUnits" : "1" }
             }
         },
 
