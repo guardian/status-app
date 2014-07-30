@@ -1,10 +1,12 @@
 package lib
 
 import java.io.File
-import play.api.{Application, Configuration}
+import com.amazonaws.services.dynamodbv2.model.AttributeValue
+import com.gu.googleauth.GoogleAuthConfig
+import play.api.{Mode, Play, Application, Configuration}
 import com.typesafe.config.ConfigFactory
-import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.ClientConfiguration
+import collection.convert.decorateAll._
 
 object Config {
   import play.api.Play.current
@@ -13,9 +15,6 @@ object Config {
 
   def configuration(implicit app: Application) =
     Configuration(fileConfig(localPropsFile).withFallback(ConfigFactory.load()))
-
-  lazy val accessKey = configuration.getString("accessKey")
-  lazy val secretKey = configuration.getString("secretKey")
 
   lazy val proxyHost = configuration.getString("proxyHost")
   lazy val proxyPort = configuration.getInt("proxyPort")
@@ -29,11 +28,6 @@ object Config {
     client
   }
 
-  lazy val credentials = for {
-    a <- accessKey
-    s <- secretKey
-  } yield new BasicAWSCredentials(a, s)
-
   def fileConfig(filePath: String) = {
     val file = new File(filePath)
     if (file.exists)
@@ -42,5 +36,18 @@ object Config {
       ConfigFactory.empty()
   }
 
+  def dynamoConfig(key: String) = AWS.connection.dynamo.getItem(
+    "StatusAppConfig", Map("key" -> new AttributeValue(key)).asJava).getItem.asScala
+
+  lazy val googleAuthConfig = {
+    val oauthConfig = dynamoConfig("oauth")
+    val host = if (Play.mode == Mode.Dev) "localhost:9000" else oauthConfig("host").getS
+    GoogleAuthConfig(
+      clientId = oauthConfig("clientId").getS,
+      clientSecret = oauthConfig("clientSecret").getS,
+      redirectUrl =  s"http://$host/oauth2callback",
+      domain = oauthConfig.get("allowedDomain").map(_.getS) // Google App domain to restrict login
+    )
+  }
 }
 

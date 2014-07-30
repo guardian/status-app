@@ -18,15 +18,8 @@ import play.api.libs.json.{Json, Writes}
 import com.amazonaws.services.cloudwatch.model.Datapoint
 import model.ScalingAction
 
-class AmazonConnection(credentials: Option[AWSCredentials], clientConfig: ClientConfiguration) {
-  val credentialsProvider =  new AWSCredentialsProvider() {
-    val defaultProvider = new DefaultAWSCredentialsProviderChain()
-    def getCredentials = credentials.getOrElse(defaultProvider.getCredentials)
-
-    def refresh() {
-      defaultProvider.refresh()
-    }
-  }
+class AmazonConnection(clientConfig: ClientConfiguration) {
+  val credentialsProvider =  new DefaultAWSCredentialsProviderChain()
 
   val ec2 = new AmazonEC2AsyncClient(credentialsProvider, clientConfig)
   val elb = new AmazonElasticLoadBalancingAsyncClient(credentialsProvider, clientConfig)
@@ -55,7 +48,7 @@ object AWS {
     p.future
   }
 
-  lazy val connection = new AmazonConnection(Config.credentials, Config.clientConfiguration)
+  lazy val connection = new AmazonConnection(Config.clientConfiguration)
 
   object Writes {
     implicit val datapointWrites = new Writes[Datapoint] {

@@ -1,5 +1,6 @@
 package controllers
 
+import lib.Config
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
@@ -13,13 +14,7 @@ trait AuthActions extends Actions {
 
 object Login extends Controller with AuthActions {
   val ANTI_FORGERY_KEY = "antiForgeryToken"
-  val googleAuthConfig =
-    GoogleAuthConfig(
-      clientId = "",
-      clientSecret = "",
-      redirectUrl = "http://localhost:9000/oauth2callback",
-      Some("guardian.co.uk")                       // Google App domain to restrict login
-    )
+  val googleAuthConfig = Config.googleAuthConfig
 
   def login = Action { request =>
     val error = request.flash.get("error")
