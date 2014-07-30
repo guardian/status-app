@@ -80,7 +80,8 @@
                             "dynamodb:GetItem"
                         ],
                         "Effect": "Allow",
-                        "Resource":"*"
+                        "Resource": { "Fn::Join": [":",
+                            ["arn:aws:dynamodb", {"Ref": "AWS::Region"}, {"Ref": "AWS::AccountId"}, "table/StatusAppConfig"]] }
                     }]
                 },
                 "Roles": [ { "Ref": "StatusAppRole" } ]
