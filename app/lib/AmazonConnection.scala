@@ -1,6 +1,7 @@
 package lib
 
 import com.amazonaws.auth.{DefaultAWSCredentialsProviderChain, AWSCredentialsProvider, AWSCredentials}
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.ec2.AmazonEC2AsyncClient
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingAsyncClient
 import com.amazonaws.services.autoscaling.AmazonAutoScalingAsyncClient
@@ -35,6 +36,8 @@ class AmazonConnection(credentials: Option[AWSCredentials], clientConfig: Client
     classOf[AmazonCloudWatchAsyncClient], credentialsProvider, clientConfig)
   val sqs = Region.getRegion(Regions.EU_WEST_1).createClient(
     classOf[AmazonSQSAsyncClient], credentialsProvider, clientConfig)
+  val dynamo = Region.getRegion(Regions.EU_WEST_1).createClient(
+    classOf[AmazonDynamoDBAsyncClient], credentialsProvider, clientConfig)
 
   ec2.setEndpoint("ec2.eu-west-1.amazonaws.com")
   elb.setEndpoint("elasticloadbalancing.eu-west-1.amazonaws.com")

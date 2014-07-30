@@ -10,7 +10,7 @@ import scala.util.Random
 import play.api.libs.ws.WS
 import scala.concurrent.Future
 
-object Application extends Controller {
+object Application extends Controller with AuthActions {
 
   implicit val moneyFormat = new DecimalFormat("#,###")
 
@@ -21,7 +21,7 @@ object Application extends Controller {
     )
   }
 
-  def index = Authenticated { implicit req =>
+  def index = AuthAction { implicit req =>
     Estate().stageNames.headOption map (stage =>
       Redirect(routes.Application.stage(stage))
     ) getOrElse (
@@ -29,14 +29,14 @@ object Application extends Controller {
     )
   }
 
-  def stageJson(stage: String) = Authenticated {
+  def stageJson(stage: String) = AuthAction {
     import ASG.writes
     Ok(Json.toJson(
       Estate()(stage)
     ))
   }
 
-  def stage(stage: String) = Authenticated { implicit req =>
+  def stage(stage: String) = AuthAction { implicit req =>
     if (Estate().populated)
       Ok(views.html.index(
         stage,
@@ -47,7 +47,7 @@ object Application extends Controller {
       Ok(views.html.loading())
   }
 
-  def queues = Authenticated {
+  def queues = AuthAction {
     implicit val queueWrites = Json.writes[Queue]
 
     Ok(Json.toJson(
@@ -55,7 +55,7 @@ object Application extends Controller {
     ))
   }
 
-  def instance(id: String) = Authenticated { implicit req =>
+  def instance(id: String) = AuthAction { implicit req =>
     val instance = for {
       asg <- Estate().asgs
       member <- asg.members if member.id == id
@@ -63,7 +63,7 @@ object Application extends Controller {
     instance.headOption map (i => Ok(views.html.instance(i.instance))) getOrElse NotFound
   }
 
-  def es(name: String) = Authenticated.async { implicit req =>
+  def es(name: String) = AuthAction.async { implicit req =>
     import play.api.Play.current
     import scala.concurrent.ExecutionContext.Implicits.global
     (for {

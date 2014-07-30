@@ -1,4 +1,4 @@
-@(instance: model.Instance)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
+@(instance: model.Instance)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
 
 @main("Instance info for " + instance.id, refreshSecs = Some(15)) {
 

@@ -1,4 +1,4 @@
-@()(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
+@()(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
 
 @main("Status Monitor loading...", refreshSecs = Some(2)) {
     <div class="progress progress-striped active loading">
@@ -6,4 +6,5 @@
             <span class='sr-only'>loading..</span>
         </div>
     </div>
+
 }

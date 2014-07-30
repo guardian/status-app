@@ -1,5 +1,5 @@
 @(title: String, stage: Option[String] = None, refreshSecs: Option[Int] = None,
-        scripts: List[String] = Nil)(content: Html)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User])
+        scripts: List[String] = Nil)(content: Html)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
 
 <!DOCTYPE html>
 

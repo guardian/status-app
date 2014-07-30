@@ -1,4 +1,4 @@
- @(stage: String, estate: model.Estate, totalSunkCost: Float)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User], money: java.text.DecimalFormat)
+ @(stage: String, estate: model.Estate, totalSunkCost: Float)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], money: java.text.DecimalFormat)
 
 @import model._
 
