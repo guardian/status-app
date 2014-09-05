@@ -1,4 +1,4 @@
-@(elasticSearchStats: List[model.ElasticsearchStatsGroups.Node])(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, User], human: java.text.DecimalFormat)
+@(elasticSearchStats: List[model.ElasticsearchStatsGroups.Node])(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], human: java.text.DecimalFormat)
 
 @main("elasticsearch status") {
 

@@ -1,6 +1,7 @@
 package lib
 
 import com.amazonaws.auth.{DefaultAWSCredentialsProviderChain, AWSCredentialsProvider, AWSCredentials}
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
 import com.amazonaws.services.ec2.AmazonEC2AsyncClient
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingAsyncClient
 import com.amazonaws.services.autoscaling.AmazonAutoScalingAsyncClient
@@ -17,15 +18,8 @@ import play.api.libs.json.{Json, Writes}
 import com.amazonaws.services.cloudwatch.model.Datapoint
 import model.ScalingAction
 
-class AmazonConnection(credentials: Option[AWSCredentials], clientConfig: ClientConfiguration) {
-  val credentialsProvider =  new AWSCredentialsProvider() {
-    val defaultProvider = new DefaultAWSCredentialsProviderChain()
-    def getCredentials = credentials.getOrElse(defaultProvider.getCredentials)
-
-    def refresh() {
-      defaultProvider.refresh()
-    }
-  }
+class AmazonConnection(clientConfig: ClientConfiguration) {
+  val credentialsProvider =  new DefaultAWSCredentialsProviderChain()
 
   val ec2 = new AmazonEC2AsyncClient(credentialsProvider, clientConfig)
   val elb = new AmazonElasticLoadBalancingAsyncClient(credentialsProvider, clientConfig)
@@ -35,6 +29,8 @@ class AmazonConnection(credentials: Option[AWSCredentials], clientConfig: Client
     classOf[AmazonCloudWatchAsyncClient], credentialsProvider, clientConfig)
   val sqs = Region.getRegion(Regions.EU_WEST_1).createClient(
     classOf[AmazonSQSAsyncClient], credentialsProvider, clientConfig)
+  val dynamo = Region.getRegion(Regions.EU_WEST_1).createClient(
+    classOf[AmazonDynamoDBAsyncClient], credentialsProvider, clientConfig)
 
   ec2.setEndpoint("ec2.eu-west-1.amazonaws.com")
   elb.setEndpoint("elasticloadbalancing.eu-west-1.amazonaws.com")
@@ -52,7 +48,7 @@ object AWS {
     p.future
   }
 
-  lazy val connection = new AmazonConnection(Config.credentials, Config.clientConfiguration)
+  lazy val connection = new AmazonConnection(Config.clientConfiguration)
 
   object Writes {
     implicit val datapointWrites = new Writes[Datapoint] {

@@ -14,6 +14,12 @@ If you're tagging your auto-scaling groups according to the [Guardian convention
 have something to see. Note that these Cloud Formation templates require the creation 
 of new IAM resources.
 
+The Status App uses OAuth with Google as the provider for authentication. You'll need to
+create client ID in the Google API console and then copy the details into the DynamoDB table
+created by the CloudFormation scripts.
+
+![Example of filling in the the config details](dynamo-config.png)
+
 For best results, you'll want to allow the security group created by the Cloud 
 Formation script, called something like status-app-EC2SecurityGroup-XXXXXXXXXXXX, 
 access to the management port of your apps.
@@ -24,17 +30,7 @@ Running locally
 If you just want to run it locally, it's a standard [Play 2](http://www.playframework.com/) 
 app and can be run with the 'run' command from an [SBT](http://www.scala-sbt.org/) prompt.
 
-You'll need a file in ~/.gu/statusapp.conf that has contents something like
-```
-accessKey=<AWS ACCESSKEY>
-secretKey=<AWS SECRETKEY>
-managementPort=<XXXX>
-```
-
-or to set environment variables analogously:
-```
-ACCESS_KEY=<AWS ACCESSKEY> SECRET_KEY=<AWS SECRETKEY> sbt
-```
+Credentials are retrieved using from the configuration file used for the AWS CLI.
 
 Contributing
 ------------

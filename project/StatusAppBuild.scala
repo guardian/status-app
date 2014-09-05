@@ -15,6 +15,7 @@ object StatusAppBuild extends Build {
     "com.typesafe.akka" %% "akka-agent" % "2.3.4",
     cache,
     ws,
+    "com.gu" %% "play-googleauth" % "0.1.5",
     "org.webjars" % "react" % "0.11.1",
     "org.webjars" % "bootstrap" % "3.2.0",
     "org.webjars" % "d3js" % "3.4.11",
