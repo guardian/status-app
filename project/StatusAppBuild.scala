@@ -18,6 +18,7 @@ object StatusAppBuild extends Build {
     "com.gu" %% "play-googleauth" % "0.1.5",
     "org.webjars" % "react" % "0.11.1",
     "org.webjars" % "bootstrap" % "3.2.0",
+    "org.webjars" % "react-bootstrap" % "0.11.0",
     "org.webjars" % "d3js" % "3.4.11",
     "org.webjars" % "zeroclipboard" % "2.1.5"
   )

@@ -1,4 +1,5 @@
-{div, span, h4, p, img, a, table, thead, tbody, th, tr, td, small, strong, button, ul, li} = React.DOM
+{div, span, h4, p, img, a, table, thead, tbody, th, tr, td, small, strong, button, ul, li, noscript} = React.DOM
+{Panel, Table} = ReactBootstrap
 
 Stage = React.createClass
   getInitialState: () -> {
@@ -83,77 +84,73 @@ AutoScalingGroup = React.createClass
   }
 
   render: () ->
-    (div {
-      className: "panel panel-default asg"
-      style: {
-        overflow: 'hidden'
-      }
-    }, [
-      (ClusterTitle {
-        name: @props.group.name
-        app: @props.group.app
-        approxMonthlyCost: @props.group.approxMonthlyCost
-        moreDetailsLink: @props.group.moreDetailsLink
+    group = @props.group
+    (Panel {
+      className: "asg"
+      header: (ClusterTitle {
+        name: group.name
+        app: group.app
+        approxMonthlyCost: group.approxMonthlyCost
+        moreDetailsLink: group.moreDetailsLink
       })
-      if @props.group.suspendedActivities?.length > 0
-        (div { className: 'panel-body alert-info' }, [
+      footer: if group.recentActivity.length > 0
+        (RecentActivity {
+          asgName: group.name
+          activities: group.recentActivity
+        })
+    }, [
+      if group.suspendedActivities?.length > 0
+        (div { className: 'alert-info' }, [
           (strong {}, "Suspended activities")
-          ": #{@props.group.suspendedActivities.join(',')}"
+          ": #{group.suspendedActivities.join(',')}"
         ])
-      if @props.group.elb && @props.group.elb.active
+      if group.elb && group.elb.active
         (a {
-          href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D05!E07!ET6!MN4!NS2!PD1!SS3!ST0!VA-PT3H~60~AWS%25252FELB~Average~Latency~LoadBalancerName~P0D~#{@props.group.elb.name}"
+          href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D05!E07!ET6!MN4!NS2!PD1!SS3!ST0!VA-PT3H~60~AWS%25252FELB~Average~Latency~LoadBalancerName~P0D~#{group.elb.name}"
         }, [
           (SparklinePlus {
-            points: {x: point.time, y: point.average} for point in @props.group.elb.latency
+            points: {x: point.time, y: point.average} for point in group.elb.latency
             unit: 'ms'
             height: 50
             additionalLine:
               (Sparkline {
-                points: {x: point.time, y: point.sum} for point in @props.group.elb.errorCount
+                points: {x: point.time, y: point.sum} for point in group.elb.errorCount
                 stroke: 'red'
               })
           })
         ])
       (ClusterMembers {
-        members: @props.group.members
-        elb: @props.group.elb
+        members: group.members
+        elb: group.elb
       })
       (a {
-        href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D03!E06!ET7!MN5!NS2!PD1!SS4!ST0!VA-PT3H~60~AWS%252FEC2~AutoScalingGroupName~Maximum~CPUUtilization~#{@props.group.name}~P0D"
+        href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D03!E06!ET7!MN5!NS2!PD1!SS4!ST0!VA-PT3H~60~AWS%252FEC2~AutoScalingGroupName~Maximum~CPUUtilization~#{group.name}~P0D"
       }, [
         (SparklinePlus {
-          points: {x: point.time, y: point.maximum} for point in @props.group.cpu
+          points: {x: point.time, y: point.maximum} for point in group.cpu
           unit: '%'
           height: 50
         })
       ])
-      (RecentActivity {
-        asgName: @props.group.name
-        activities: @props.group.recentActivity
-      })
     ])
 
 ClusterTitle = React.createClass
   render: () ->
-    (div { className: "panel-heading" }, [
-      (h4 { className: "panel-title" }, [
-        (div { className: "pull-right" }, [
-          (button {
-            id: @props.name + "-copy"
-            'data-clipboard-text': @props.name
-            title: "Copy ASG name to clipboard"
-          }, [
-            (img {
-              src: "/assets/images/ios7-copy-outline.png"
-              height: "16px"
-            })
-          ])
+    (h4 { className: "panel-title" }, [
+      (div { className: "pull-right" }, [
+        (button {
+          id: @props.name + "-copy"
+          'data-clipboard-text': @props.name
+          title: "Copy ASG name to clipboard"
+        }, [
+          (img {
+            src: "/assets/images/ios7-copy-outline.png"
+            height: "16px"
+          })
         ])
-
-        if @props.moreDetailsLink? then (a { href: @props.moreDetailsLink }, @props.app) else @props.app
-        (small {}, " (~$#{d3.format(',.0f')(@props.approxMonthlyCost)}/month)")
-      ])
+      ]),
+      if @props.moreDetailsLink? then (a { href: @props.moreDetailsLink }, @props.app) else @props.app
+      (small {}, " (~$#{d3.format(',.0f')(@props.approxMonthlyCost)}/month)")
     ])
 
   componentDidMount: () ->
@@ -162,7 +159,7 @@ ClusterTitle = React.createClass
 ClusterMembers = React.createClass
   render: () ->
     hasELB = @props.elb?
-    (table { className: "table table-condensed" }, [
+    (Table { condensed: true }, [
       (thead {}, [
         (tr {}, [
           (th {}, ["Instance"])
@@ -194,47 +191,44 @@ RecentActivity = React.createClass
   }
 
   render: () ->
-    if (@props.activities.length == 0) then (div {})
-    else
-      (div {
-        id: @props.asgName + "-activity"
-        className: "panel-footer"
-      }, [
-        (a { onClick: @toggle }, [
-          (small {}, "Recent activity")
-        ])
-        if (!@state.collapsed)
-          (div {}, [
-            (small {}, [
-              @props.activities.map((a) ->
-                (ScalingActivity {
-                  age: a.age
-                  cause: a.cause
-                })
-              )
-            ])
-          ])
+    (div {
+      id: @props.asgName + "-activity"
+    }, [
+      (a { onClick: @toggle }, [
+        (small {}, "Recent activity")
       ])
+      if (!@state.collapsed)
+        (div {}, [
+          (small {}, [
+            @props.activities.map((a) ->
+              (ScalingActivity {
+                age: a.age
+                cause: a.cause
+              })
+            )
+          ])
+        ])
+    ])
 
 
 ScalingActivity = React.createClass
   render: () ->
-    (React.DOM.p {}, [
+    (p {}, [
       (strong {}, [@props.age])
       @props.cause
     ])
 
 ClusterMember = React.createClass
   render: () ->
-    hasELB = @props.hasELB
-    (tr { className: @props.member.goodorbad }, [
+    member = @props.member
+    (tr { className: member.goodorbad }, [
       (td {}, [
-        (a { href: "/instance/#{@props.member.id}" }, [@props.member.id])
+        (a { href: "/instance/#{member.id}" }, [member.id])
       ])
-      (td {}, @props.member.lifecycleState )
-      if (hasELB) then (td { title: @props.member.description }, @props.member.state )
-      (td {}, @props.member.uptime)
-      (td {}, @props.member.version)
+      (td {}, member.lifecycleState )
+      if (@props.hasELB) then (td { title: member.description }, member.state )
+      (td {}, member.uptime)
+      (td {}, member.version)
     ])
 
 window.Stage = Stage
