@@ -20,6 +20,8 @@ created by the CloudFormation scripts.
 
 ![Example of filling in the the config details](dynamo-config.png)
 
+Ensure that you have switched on access to the Google+ API for your credentials.
+
 For best results, you'll want to allow the security group created by the Cloud 
 Formation script, called something like status-app-EC2SecurityGroup-XXXXXXXXXXXX, 
 access to the management port of your apps.
