@@ -84,8 +84,11 @@ BarChart = React.createClass
     window.addEventListener('resize', @deriveWidth)
 
   deriveWidth: () ->
+    svgNodeStyle = getComputedStyle(@getDOMNode().querySelector('svg'))
+    padding = (style) ->
+      parseInt(style.paddingLeft) + parseInt(style.paddingRight)
     @setState({
-      width: @getDOMNode().querySelector('svg').parentNode.offsetWidth
+      width: parseInt(svgNodeStyle.width) - padding(svgNodeStyle)
     })
 
   showToolTip: (datum) ->
