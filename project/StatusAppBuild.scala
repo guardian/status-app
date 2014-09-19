@@ -8,18 +8,18 @@ import com.typesafe.sbt.web._
 
 object StatusAppBuild extends Build {
 
-  val awsSdk = "com.amazonaws" % "aws-java-sdk" % "1.8.6"
+  val awsSdk = "com.amazonaws" % "aws-java-sdk" % "1.8.10.2"
 
   val statusAppDependencies = Seq(
     awsSdk,
-    "com.typesafe.akka" %% "akka-agent" % "2.3.4",
+    "com.typesafe.akka" %% "akka-agent" % "2.3.6",
     cache,
     ws,
     "com.gu" %% "play-googleauth" % "0.1.5",
     "org.webjars" % "react" % "0.11.1",
     "org.webjars" % "bootstrap" % "3.2.0",
     "org.webjars" % "d3js" % "3.4.11",
-    "org.webjars" % "zeroclipboard" % "2.1.5"
+    "org.webjars" % "zeroclipboard" % "2.1.6"
   )
 
   lazy val statusApp = Project("status-app", file(".")).enablePlugins(play.PlayScala).enablePlugins(SbtWeb)
