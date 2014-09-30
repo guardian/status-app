@@ -60,7 +60,7 @@ object Application extends Controller with AuthActions {
       asg <- Estate().asgs
       member <- asg.members if member.id == id
     } yield member
-    instance.headOption map (i => Ok(views.html.instance(i.instance))) getOrElse NotFound
+    instance.headOption map (i => Ok(views.html.instance(i.instance))) getOrElse NotFound(views.html.instanceNotFound(id))
   }
 
   def es(name: String) = AuthAction.async { implicit req =>
