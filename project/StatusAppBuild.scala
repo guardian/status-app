@@ -1,10 +1,11 @@
+import com.typesafe.sbt.packager.Keys._
 import sbt._
 import sbt.Keys._
 import sbtbuildinfo.Plugin._
-import PlayArtifact._
 import play.Play.autoImport._
 import PlayKeys._
 import com.typesafe.sbt.web._
+import com.gu.riffraff.artifact.RiffRaffArtifact.autoImport._
 
 object StatusAppBuild extends Build {
 
@@ -24,7 +25,6 @@ object StatusAppBuild extends Build {
 
   lazy val statusApp = Project("status-app", file(".")).enablePlugins(play.PlayScala).enablePlugins(SbtWeb)
     .settings(buildInfoSettings: _*)
-    .settings(playArtifactDistSettings: _*)
     .settings(
 
     version := "1.0",
@@ -55,7 +55,7 @@ object StatusAppBuild extends Build {
       BuildInfoKey.constant("buildTime", System.currentTimeMillis)
     ),
 
-    magentaPackageName := "status-app",
+    riffRaffPackageType := (dist in config("universal")).value,
 
     buildInfoPackage := "controllers"
   )

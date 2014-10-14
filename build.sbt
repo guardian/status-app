@@ -1,0 +1,1 @@
+addCommandAlias("play-artifact", "riffRaffArtifact")
