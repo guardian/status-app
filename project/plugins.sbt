@@ -12,5 +12,5 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.0.2")
 
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.3.2")
 
-addSbtPlugin("com.gu" % "riffraff-artifact" % "0.1")
+addSbtPlugin("com.gu" % "riffraff-artifact" % "0.2")
 
