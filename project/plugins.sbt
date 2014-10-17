@@ -1,7 +1,5 @@
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
-resolvers += Resolver.url("Guardian bintray", url("http://dl.bintray.com/guardian/sbt-plugins"))(Resolver.ivyStylePatterns)
-
 addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.1.0")
 
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.4")
