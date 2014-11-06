@@ -28,7 +28,7 @@ addCommandAlias("play-artifact", "riffRaffArtifact")
 
 buildInfoSettings
 
-sourceGenerators in Compile <+= buildInfo
+sourceGenerators in Compile += buildInfo.taskValue
 
 buildInfoPackage := "controllers"
 
@@ -44,4 +44,4 @@ buildInfoKeys := Seq[BuildInfoKey](
   BuildInfoKey.constant("buildTime", System.currentTimeMillis)
 )
 
-testOptions += Tests.Argument("-o", "-u", s"shippable/testresults")
+testListeners += new JUnitXmlTestsListener(s"${baseDirectory.value}/shippable/testresults")
