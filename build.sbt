@@ -43,3 +43,5 @@ buildInfoKeys := Seq[BuildInfoKey](
   // it was loaded is just fine
   BuildInfoKey.constant("buildTime", System.currentTimeMillis)
 )
+
+testOptions += Tests.Argument("-o", "-u", s"${(target in Test).value}/test-reports")
