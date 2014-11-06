@@ -1,3 +1,4 @@
 language: scala
-script: 
-- sbt clean test play-artifact
+
+scala:
+    - 2.11.2
