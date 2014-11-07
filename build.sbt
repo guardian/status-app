@@ -32,16 +32,18 @@ sourceGenerators in Compile += buildInfo.taskValue
 
 buildInfoPackage := "controllers"
 
+def env(key: String): Option[String] = Option(System.getenv(key))
+
 buildInfoKeys := Seq[BuildInfoKey](
   libraryDependencies in Compile,
   name,
   version,
-  BuildInfoKey.constant("buildNumber", Option(System.getenv("BUILD_NUMBER")) orElse
-    Option(System.getenv("TRAVIS_BUILD_NUMBER")) getOrElse "DEV"),
+  BuildInfoKey.constant("buildNumber", env("BUILD_NUMBER") orElse env("TRAVIS_BUILD_NUMBER") getOrElse "DEV"),
   // so this next one is constant to avoid it always recompiling on dev machines.
   // we only really care about build time on teamcity, when a constant based on when
   // it was loaded is just fine
   BuildInfoKey.constant("buildTime", System.currentTimeMillis)
 )
 
-testListeners += new JUnitXmlTestsListener(s"${baseDirectory.value}/shippable/testresults")
+testListeners += new JUnitXmlTestsListener(
+  s"${baseDirectory.value}/${env("$CI_REPORTS").getOrElse("shippable/testresults")}")
