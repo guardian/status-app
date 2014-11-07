@@ -46,4 +46,4 @@ buildInfoKeys := Seq[BuildInfoKey](
 )
 
 testListeners += new JUnitXmlTestsListener(
-  env("$CI_REPORTS").getOrElse(s"${baseDirectory.value}/shippable/testresults"))
+  env("CI_REPORTS").getOrElse(s"${baseDirectory.value}/shippable/testresults"))
