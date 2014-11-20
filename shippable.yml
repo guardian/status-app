@@ -1,4 +1,6 @@
 language: scala
 
+cache: true
+
 scala:
     - 2.11.2
