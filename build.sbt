@@ -4,33 +4,28 @@ name := "status-app"
 
 version := "1.0"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(SbtWeb)
+lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(SbtWeb).enablePlugins(RiffRaffArtifact)
 
-scalaVersion := "2.11.2"
-
+scalaVersion := "2.11.4"
 scalacOptions ++= List("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.8.10.2",
-  "com.typesafe.akka" %% "akka-agent" % "2.3.6",
+  "com.amazonaws" % "aws-java-sdk" % "1.9.7",
+  "com.typesafe.akka" %% "akka-agent" % "2.3.7",
   cache,
   ws,
-  "com.gu" %% "play-googleauth" % "0.1.5",
-  "org.webjars" % "react" % "0.11.1",
-  "org.webjars" % "bootstrap" % "3.2.0",
-  "org.webjars" % "d3js" % "3.4.11",
+  "com.gu" %% "play-googleauth" % "0.1.7",
+  "org.webjars" % "react" % "0.12.0",
+  "org.webjars" % "bootstrap" % "3.3.1",
+  "org.webjars" % "d3js" % "3.4.13",
   "org.webjars" % "zeroclipboard" % "2.1.6"
 )
 
 riffRaffPackageType := (dist in config("universal")).value
 
-addCommandAlias("play-artifact", "riffRaffArtifact")
-
 buildInfoSettings
-
-sourceGenerators in Compile += buildInfo.taskValue
-
 buildInfoPackage := "controllers"
+sourceGenerators in Compile += buildInfo.taskValue
 
 def env(key: String): Option[String] = Option(System.getenv(key))
 
@@ -47,3 +42,6 @@ buildInfoKeys := Seq[BuildInfoKey](
 
 testListeners += new JUnitXmlTestsListener(
   env("CI_REPORTS").getOrElse(s"${baseDirectory.value}/shippable/testresults"))
+
+// see http://www.scala-sbt.org/0.13/docs/Cached-Resolution.html
+updateOptions := updateOptions.value.withCachedResolution(true)

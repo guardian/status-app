@@ -1,6 +1,6 @@
 language: scala
 script: 
-- sbt clean test play-artifact
+- sbt clean test riffRaffArtifact
 before_script:
 - gem install --version 0.8.9 faraday
 - gem install travis-artifacts

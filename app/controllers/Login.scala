@@ -10,11 +10,12 @@ import play.api.Play.current
 
 trait AuthActions extends Actions {
   val loginTarget: Call = routes.Login.loginAction()
+
+  val authConfig = Config.googleAuthConfig
 }
 
 object Login extends Controller with AuthActions {
   val ANTI_FORGERY_KEY = "antiForgeryToken"
-  val googleAuthConfig = Config.googleAuthConfig
 
   def login = Action { request =>
     val error = request.flash.get("error")
@@ -26,7 +27,7 @@ object Login extends Controller with AuthActions {
    */
   def loginAction = Action.async { implicit request =>
     val antiForgeryToken = GoogleAuth.generateAntiForgeryToken()
-    GoogleAuth.redirectToGoogle(googleAuthConfig, antiForgeryToken).map {
+    GoogleAuth.redirectToGoogle(authConfig, antiForgeryToken).map {
       _.withSession { request.session + (ANTI_FORGERY_KEY -> antiForgeryToken) }
     }
   }
@@ -44,7 +45,7 @@ object Login extends Controller with AuthActions {
       case None =>
         Future.successful(Redirect(routes.Login.login()).flashing("error" -> "Anti forgery token missing in session"))
       case Some(token) =>
-        GoogleAuth.validatedUserIdentity(googleAuthConfig, token).map { identity =>
+        GoogleAuth.validatedUserIdentity(authConfig, token).map { identity =>
           // We store the URL a user was trying to get to in the LOGIN_ORIGIN_KEY in AuthAction
           // Redirect a user back there now if it exists
           val redirect = session.get(LOGIN_ORIGIN_KEY) match {
