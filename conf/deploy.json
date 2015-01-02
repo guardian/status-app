@@ -1,7 +1,7 @@
 {
     "defaultStacks":[
         "ophan",
-        "content-api"
+        "mobile"
     ],
     "packages":{
         "status-app":{
