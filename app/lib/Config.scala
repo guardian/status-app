@@ -42,10 +42,11 @@ object Config {
   lazy val googleAuthConfig = {
     val oauthConfig = dynamoConfig("oauth")
     val host = if (Play.mode == Mode.Dev) "localhost:9000" else oauthConfig("host").getS
+    val protocol = if (Play.mode == Mode.Dev) "http" else oauthConfig.get("protocol").map(_.getS).getOrElse("http")
     GoogleAuthConfig(
       clientId = oauthConfig("clientId").getS,
       clientSecret = oauthConfig("clientSecret").getS,
-      redirectUrl =  s"http://$host/oauth2callback",
+      redirectUrl =  s"$protocol://$host/oauth2callback",
       domain = oauthConfig.get("allowedDomain").map(_.getS) // Google App domain to restrict login
     )
   }
