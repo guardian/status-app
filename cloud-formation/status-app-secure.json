@@ -6,6 +6,10 @@
             "Description": "Applied directly as a tag",
             "Type": "String"
         },
+        "SSLCertificateId": {
+            "Description": "ARN of the SSL certificate.",
+            "Type": "String"
+        },
         "KeyName" : {
             "Description" : "The EC2 Key Pair to allow SSH access to the instance",
             "Type" : "String"
@@ -100,12 +104,20 @@
         "LoadBalancer" : {
             "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties" : {
+                "SecurityGroups": [{ "Fn::GetAtt": ["LoadBalancerSecurityGroup", "GroupId"] }],
+
                 "AvailabilityZones" : { "Fn::GetAZs" : "" },
                 "Listeners" : [ {
                     "LoadBalancerPort" : "80",
                     "InstancePort" : "9000",
                     "Protocol" : "HTTP"
-                } ],
+                } ,
+                {
+                    "LoadBalancerPort": "443",
+                    "InstancePort": "9000",
+                    "Protocol": "HTTPS",
+                    "SSLCertificateId": { "Ref": "SSLCertificateId" }
+                 } ],
 
                 "HealthCheck" : {
                     "Target" : "HTTP:9000/management/healthcheck",
@@ -114,6 +126,27 @@
                     "Interval" : "10",
                     "Timeout" : "5"
                 }
+            }
+        },
+
+        "LoadBalancerSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Application load balancer",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "443",
+                        "ToPort": "443",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
             }
         },
 
@@ -186,8 +219,12 @@
                 "SecurityGroupIngress" : [
                     { "IpProtocol": "tcp", "FromPort": "22",   "ToPort": "22",   "CidrIp": "0.0.0.0/0" },
                     { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",   "CidrIp": "77.91.248.0/21" },
-                    { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",
-                        "SourceSecurityGroupName": "amazon-elb-sg", "SourceSecurityGroupOwnerId": "amazon-elb" },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 9000,
+                        "ToPort": 9000,
+                        "SourceSecurityGroupName": { "Fn::GetAtt": ["LoadBalancer", "SourceSecurityGroup.GroupName"]}
+                    },
                     { "IpProtocol": "tcp", "FromPort": "9000",   "ToPort": "9000",
                         "SourceSecurityGroupName": { "Ref" : "StatusAppSecurityGroup" } }
                 ]
