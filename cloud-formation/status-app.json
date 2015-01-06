@@ -6,6 +6,10 @@
             "Description": "Applied directly as a tag",
             "Type": "String"
         },
+        "SSLCertificateId": {
+            "Description": "ARN of the SSL certificate.",
+            "Type": "String"
+        },
         "KeyName" : {
             "Description" : "The EC2 Key Pair to allow SSH access to the instance",
             "Type" : "String"
@@ -107,7 +111,13 @@
                     "LoadBalancerPort" : "80",
                     "InstancePort" : "9000",
                     "Protocol" : "HTTP"
-                } ],
+                } ,
+                {
+                    "LoadBalancerPort": "443",
+                    "InstancePort": "9000",
+                    "Protocol": "HTTPS",
+                    "SSLCertificateId": { "Ref": "SSLCertificateId" }
+                 } ],
 
                 "HealthCheck" : {
                     "Target" : "HTTP:9000/management/healthcheck",
