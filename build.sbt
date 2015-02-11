@@ -4,7 +4,7 @@ name := "status-app"
 
 version := "1.0"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(SbtWeb).enablePlugins(RiffRaffArtifact)
+enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact)
 
 scalaVersion := "2.11.5"
 scalacOptions ++= List("-feature", "-deprecation")
