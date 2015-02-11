@@ -6,19 +6,19 @@ version := "1.0"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(SbtWeb).enablePlugins(RiffRaffArtifact)
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.5"
 scalacOptions ++= List("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.9.7",
-  "com.typesafe.akka" %% "akka-agent" % "2.3.7",
+  "com.amazonaws" % "aws-java-sdk" % "1.9.18",
+  "com.typesafe.akka" %% "akka-agent" % "2.3.9",
   cache,
   ws,
   "com.gu" %% "play-googleauth" % "0.1.10",
-  "org.webjars" % "react" % "0.12.0",
-  "org.webjars" % "bootstrap" % "3.3.1",
-  "org.webjars" % "d3js" % "3.4.13",
-  "org.webjars" % "zeroclipboard" % "2.1.6"
+  "org.webjars" % "react" % "0.12.2",
+  "org.webjars" % "bootstrap" % "3.3.2",
+  "org.webjars" % "d3js" % "3.5.3",
+  "org.webjars" % "zeroclipboard" % "2.2.0"
 )
 
 riffRaffPackageType := (dist in config("universal")).value
