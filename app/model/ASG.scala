@@ -1,12 +1,15 @@
 package model
 
+import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance, DescribeInstancesRequest}
+import io.getclump.Clump
+
 import scala.concurrent.Future
 import lib.{AWS, AmazonConnection}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
 
-import collection.JavaConversions._
+import collection.convert.wrapAll._
 import scala.util.{Random, Try}
 import play.api.Logger
 import play.api.libs.ws.WS
@@ -23,6 +26,8 @@ case class ASG(name: String, stage: Option[String], app: Option[String], stack: 
                  moreDetailsLink: Option[String])
 
 object ASG {
+  import io.getclump.FutureBridge._
+
   val log = Logger[ASG](classOf[ASG])
 
   def from(asg: AutoScalingGroup)(implicit conn: AmazonConnection): Future[ASG] =  {
@@ -34,15 +39,21 @@ object ASG {
       actions <- ScalingAction.forGroup(asg.getAutoScalingGroupName)
     } yield actions filter (_.isRecent)
 
-    val clusterMembers = for {
-      lb <- elb
-      members <- Future.sequence(asg.getInstances map { m =>
-        val membersOfElb = lb.map(_.members).getOrElse(Nil)
-        for {
-          i <- Instance.get(m.getInstanceId)
-        } yield ASGMember.from(m, membersOfElb.find(_.id == m.getInstanceId), i)
-      })
-    } yield members
+    def instanceDetails(ids: List[String]): Future[Seq[AwsEc2Instance]] =
+      for (result<- AWS.futureOf(conn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(ids :_*)))
+        yield result.getReservations flatMap (_.getInstances)
+
+    val instanceSource = Clump.source(instanceDetails)(_.getInstanceId)
+
+    val clump = Clump.traverse(asg.getInstances.toList) { m =>
+      for {
+        elb <- Clump.future(elb.map(Some(_)))
+        i <- instanceSource.get(m.getInstanceId)
+        instance <- Clump.future(Instance.from(i).map(Some(_)))
+      } yield ASGMember.from(m, elb.map(_.members).getOrElse(Nil).find(_.id == m.getInstanceId), instance)
+    }
+
+    val clusterMembers = clump.list
 
     val stats = AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
       .withDimensions(new Dimension().withName("AutoScalingGroupName").withValue(asg.getAutoScalingGroupName))
