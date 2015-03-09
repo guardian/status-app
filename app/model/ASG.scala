@@ -47,10 +47,10 @@ object ASG {
 
     val clump = Clump.traverse(asg.getInstances.toList) { m =>
       for {
-        elb <- Clump.future(elb.map(Some(_)))
+        elb <- Clump.future(elb)
         i <- instanceSource.get(m.getInstanceId)
-        instance <- Clump.future(Instance.from(i).map(Some(_)))
-      } yield ASGMember.from(m, elb.map(_.members).getOrElse(Nil).find(_.id == m.getInstanceId), instance)
+        instance <- Clump.future(Instance.from(i))
+      } yield ASGMember.from(m, elb.members.find(_.id == m.getInstanceId), instance)
     }
 
     val clusterMembers = clump.list

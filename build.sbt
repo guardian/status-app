@@ -12,7 +12,7 @@ scalacOptions ++= List("-feature", "-deprecation")
 libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk" % "1.9.18",
   "com.typesafe.akka" %% "akka-agent" % "2.3.9",
-  "io.getclump" %% "clump" % "0.0.8",
+  "io.getclump" %% "clump" % "0.0.9",
   cache,
   ws,
   "com.gu" %% "play-googleauth" % "0.1.10",
