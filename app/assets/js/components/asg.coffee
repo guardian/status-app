@@ -31,7 +31,7 @@ Stage = React.createClass
   render: () ->
     (div {}, [
       if (@state.stackNames.length > 1)
-        (div { className: 'col-xs-12'},
+        (div { className: 'container'},
           (ul { className: 'nav nav-pills stacks' }, [
             (li { className: if (name == @state.activeStack ) then 'active' }, (a {
               href: '#'
