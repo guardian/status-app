@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-agent" % "2.3.9",
   cache,
   ws,
-  "com.gu" %% "play-googleauth" % "0.1.10",
+  "com.gu" %% "play-googleauth" % "0.1.11",
   "org.webjars" % "react" % "0.12.2",
   "org.webjars" % "bootstrap" % "3.3.2",
   "org.webjars" % "d3js" % "3.5.3",
