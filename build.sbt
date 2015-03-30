@@ -4,28 +4,26 @@ name := "status-app"
 
 version := "1.0"
 
-enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact)
+enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin)
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 scalacOptions ++= List("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.9.18",
+  "com.amazonaws" % "aws-java-sdk" % "1.9.27",
   "com.typesafe.akka" %% "akka-agent" % "2.3.9",
   cache,
   ws,
   "com.gu" %% "play-googleauth" % "0.1.11",
-  "org.webjars" % "react" % "0.12.2",
-  "org.webjars" % "bootstrap" % "3.3.2",
+  "org.webjars" % "react" % "0.13.0",
+  "org.webjars" % "bootstrap" % "3.3.4",
   "org.webjars" % "d3js" % "3.5.3",
   "org.webjars" % "zeroclipboard" % "2.2.0"
 )
 
 riffRaffPackageType := (dist in config("universal")).value
 
-buildInfoSettings
 buildInfoPackage := "controllers"
-sourceGenerators in Compile += buildInfo.taskValue
 
 def env(key: String): Option[String] = Option(System.getenv(key))
 
