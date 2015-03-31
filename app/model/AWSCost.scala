@@ -2,7 +2,7 @@ package model
 
 import play.api.libs.ws.WS
 import play.api.libs.json._
-import collection.convert.wrapAsScala._
+import collection.convert.wrapAll._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -10,7 +10,7 @@ import scala.util.Try
 import play.api.libs.json.JsArray
 import play.api.libs.json.JsSuccess
 import play.api.Logger
-import com.amazonaws.services.ec2.model.{DescribeReservedInstancesRequest, DescribeInstancesRequest}
+import com.amazonaws.services.ec2.model.{Filter, DescribeReservedInstancesRequest, DescribeInstancesRequest}
 import lib.{AWS, ScheduledAgent}
 
 
@@ -61,7 +61,8 @@ object AWSCost {
   lazy val reservationsAgent = ScheduledAgent[Map[EC2CostingType, Seq[Reservation]]](0.seconds, 5.minutes, Map()) {
     logger.info("Starting reservationsAgent")
     for {
-      reservations <- AWS.futureOf(awsConnection.ec2.describeReservedInstancesAsync, new DescribeReservedInstancesRequest())
+      reservations <- AWS.futureOf(awsConnection.ec2.describeReservedInstancesAsync,
+        new DescribeReservedInstancesRequest().withFilters(new Filter("state", List("active"))))
     } yield {
       val reservs = reservations.getReservedInstances map { r =>
         (EC2CostingType(r.getInstanceType, r.getAvailabilityZone) ->
