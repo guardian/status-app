@@ -2,7 +2,6 @@ package model
 
 import play.api.libs.ws.WS
 import play.api.libs.json._
-import controllers.Application
 import collection.convert.wrapAsScala._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -65,8 +64,8 @@ object AWSCost {
       reservations <- AWS.futureOf(awsConnection.ec2.describeReservedInstancesAsync, new DescribeReservedInstancesRequest())
     } yield {
       val reservs = reservations.getReservedInstances map { r =>
-        (EC2CostingType(r.getInstanceType ,r.getAvailabilityZone) ->
-          Reservation(r.getInstanceCount, r.getFixedPrice, r.getRecurringCharges.head.getAmount))
+        (EC2CostingType(r.getInstanceType, r.getAvailabilityZone) ->
+          Reservation(r.getInstanceCount, r.getFixedPrice, r.getRecurringCharges.headOption.map(_.getAmount.toDouble).getOrElse(0d)))
       }
       reservs.foreach{ res => logger.info("Reservation: "+res)}
       reservs.groupBy { case (costType, _) => costType } mapValues (_ map { case (_, res) => res })
@@ -78,7 +77,7 @@ object AWSCost {
 
     // There isn't a proper API for this at time of writing, but handily the
     logger.info("Starting costsAgent")
-    val f = (WS.url("http://aws-assets-pricing-prod.s3.amazonaws.com/pricing/ec2/linux-od.js").withRequestTimeout(2000).get map { response =>
+    def pricesFromJson(url: String) = (WS.url(url).withRequestTimeout(2000).get map { response =>
       logger.info("Fetched cost data")
       implicit object BigDecimalReads extends Reads[BigDecimal]{
         def reads(json: JsValue) = JsSuccess(Try { BigDecimal(json.as[String]) } getOrElse (BigDecimal(0)) )
@@ -110,34 +109,25 @@ object AWSCost {
       Json.parse(response.body.dropWhile(_ != '{').takeWhile(_ != ')')).as[OnDemandPrices]
     })
 
-    f
+    for {
+      current <- pricesFromJson("http://aws.amazon.com/ec2/pricing/json/linux-od.json")
+      old <- pricesFromJson("https://a0.awsstatic.com/pricing/1/deprecated/ec2/previous-generation/linux-od.json")
+    } yield current ++ old
   }
 
-  val zoneToCostRegion = Map(
-    "eu-west-1a" -> "eu-ireland",
-    "eu-west-1b" -> "eu-ireland",
-    "eu-west-1c" -> "eu-ireland",
-    "us-east-1a" -> "us-east",
-    "us-east-1b" -> "us-east",
-    "us-east-1c" -> "us-east",
-    "us-east-1d" -> "us-east",
-    "us-west-1a" -> "us-west",
-    "us-west-1b" -> "us-west",
-    "us-west-1c" -> "us-west",
-    "us-west-2a" -> "us-west-2",
-    "us-west-2b" -> "us-west-2",
-    "ap-northeast-1a" -> "apac-tokyo",
-    "ap-northeast-1b" -> "apac-tokyo",
-    "ap-southeast-1a" -> "apac-sin",
-    "ap-southeast-1b" -> "apac-sin",
-    "ap-southeast-2a" -> "apac-syd",
-    "ap-southeast-2b" -> "apac-syd",
-    "sa-east-1a" -> "sa-east-1",
-    "sa-east-1b" -> "sa-east-1"
-  )
+  val zoneToCostRegion: String => String = _.dropRight(1)
 }
 
-case class OnDemandPrices(regions: Map[String, RegionPrices])
+case class OnDemandPrices(regions: Map[String, RegionPrices]) {
+  def ++ (other: OnDemandPrices) = OnDemandPrices(regions.foldLeft(other.regions){
+    case (m, (regionName, regionPrices)) =>
+      (
+        for {
+          myPrices <- m.get(regionName)
+        } yield m.updated(regionName, RegionPrices(regionPrices.instanceTypes ++ myPrices.instanceTypes))
+      ).getOrElse(m + (regionName -> regionPrices))
+  })
+}
 case class RegionPrices(instanceTypes: Map[String, BigDecimal])
 
 case class EC2CostingType(instanceType: String, zone: String)
