@@ -29,17 +29,18 @@ class EstateTest extends Specification {
     estate("PROD").stacks should haveLength(3)
   }
 
-  "Stacks should be in alphabetic order" in {
+  "Stacks should be ordered by number of instances" in {
     val estate = PopulatedEstate(Seq(
-      asg("PROD", Some("a")),
-      asg("PROD", Some("a")),
-      asg("PROD", Some("b")),
+      asg("PROD", Some("b"), 1),
+      asg("PROD", Some("b"), 1),
+      asg("PROD", Some("a"), 3),
       asg("PROD", None)
     ), Seq(), DateTime.now)
     estate("PROD").stacks.map(_.name).toSeq should be_== (Seq("a", "b", "unknown"))
   }
 
-  def asg(stage: String, stack: Option[String] = None) = ASG(
-    s"name-${Random.alphanumeric}", Some(stage), None, stack, None, Nil, Nil, Nil, Nil, None, None
+  def asg(stage: String, stack: Option[String] = None, numMembers: Int = 1) = ASG(
+    s"name-${Random.alphanumeric}", Some(stage), None, stack, None,
+      Seq.fill(numMembers)(ASGMember(Random.alphanumeric.toString(), None, "", None, None, "", "", null)), Nil, Nil, Nil, None, None
   )
 }
