@@ -1,12 +1,16 @@
 package model
 
+import com.amazonaws.AmazonServiceException
 import lib.{Config, AmazonConnection, AWS, ScheduledAgent}
 import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsRequest
+import play.api.Logger
 import scala.concurrent.Future
 import controllers.Application
-import com.amazonaws.services.sqs.model.ListQueuesRequest
+import com.amazonaws.services.sqs.model.{ListQueuesResult, ListQueuesRequest}
 import org.joda.time.DateTime
 import play.api.libs.json.{Writes, Json}
+
+import scala.util.control.NonFatal
 
 trait Estate extends Map[String, Stage] {
   def populated: Boolean
@@ -63,7 +67,11 @@ case object PendingEstate extends Estate {
 object Estate {
   import scala.concurrent.duration._
   import scala.concurrent.ExecutionContext.Implicits.global
-  import collection.convert.wrapAsScala._
+  import collection.convert.wrapAll._
+
+  import play.api.Play.current
+
+  val log = Logger[Estate](classOf[Estate])
 
   implicit val conn = AWS.connection
 
@@ -74,7 +82,12 @@ object Estate {
     for {
       groups <- groupsFuture
       asgs <- Future.traverse(groups.getAutoScalingGroups.toSeq)(ASG.from)
-      queueResult <- queuesFuture
+      queueResult <- queuesFuture.recover {
+        case NonFatal(e) => {
+          log.logger.error("Error retrieving queues", e)
+          new ListQueuesResult().withQueueUrls(Seq(s"/ERROR ${e.getMessage}"))
+        }
+      }
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
     } yield PopulatedEstate(asgs, queues, DateTime.now)
   }
