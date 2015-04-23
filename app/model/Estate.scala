@@ -43,7 +43,7 @@ case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue], last
 
   lazy val stages = stacks.foldLeft(Map.empty[String, Seq[Stack]].withDefaultValue(Seq[Stack]())){
     case (map, (stage, stack)) => map.updated(stage, map(stage) :+ stack)
-  } mapValues (stacks => Stage(stacks.sortBy(_.name)))
+  } mapValues (stacks => Stage(stacks.sortBy(- _.asgs.flatMap(_.members).length)))
 
   def get(key: String) = stages.get(key)
   def iterator = stages.iterator
