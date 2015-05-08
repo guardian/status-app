@@ -1,4 +1,6 @@
 language: scala
+jdk:
+- oraclejdk8
 script: 
 - sbt clean test riffRaffArtifact
 before_script:
