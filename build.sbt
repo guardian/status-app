@@ -10,14 +10,14 @@ scalaVersion := "2.11.6"
 scalacOptions ++= List("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.9.27",
-  "com.typesafe.akka" %% "akka-agent" % "2.3.9",
+  "com.amazonaws" % "aws-java-sdk" % "1.9.34",
+  "com.typesafe.akka" %% "akka-agent" % "2.3.10",
   cache,
   ws,
   "com.gu" %% "play-googleauth" % "0.1.11",
   "org.webjars" % "react" % "0.12.2",
   "org.webjars" % "bootstrap" % "3.3.4",
-  "org.webjars" % "d3js" % "3.5.3",
+  "org.webjars" % "d3js" % "3.5.5",
   "org.webjars" % "zeroclipboard" % "2.2.0"
 )
 
