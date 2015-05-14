@@ -1,0 +1,11 @@
+[Unit]
+Description=Status app
+
+[Service]
+Environment='MANAGEMENT_PORT=9000'
+ExecStart=/status/status-app-1.0/bin/status-app -mem 512
+User=status
+WorkingDirectory=/status
+
+[Install]
+WantedBy=multi-user.target
