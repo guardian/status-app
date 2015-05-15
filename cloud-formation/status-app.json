@@ -142,7 +142,7 @@
             "Type" : "AWS::AutoScaling::LaunchConfiguration",
             "Properties" : {
                 "KeyName" : { "Ref" : "KeyName" },
-                "ImageId" : "ami-a6f34cd1",
+                "ImageId" : "ami-a50e7bd2",
                 "SecurityGroups": [
                     { "Ref" : "EC2SecurityGroup" }, { "Ref" : "StatusAppSecurityGroup" }
                 ],
@@ -157,7 +157,7 @@
 
                         "adduser --system --home /status --disabled-password status",
 
-                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" }, "status-app/status-app.conf --directory-prefix=/etc/init"]]},
+                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" }, "status-app/status-app.service --directory-prefix=/etc/systemd/system"]]},
 
                         {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" }, "status-app/status-app-1.0.zip --directory-prefix=/status"]]},
 
@@ -165,7 +165,7 @@
 
                         "chown -R status /status/",
 
-                        {"Fn::Join": ["", ["start status-app MANAGEMENT_PORT=", { "Ref" : "ManagementPort" }]]}
+                        {"Fn::Join": ["", ["systemctl start status-app MANAGEMENT_PORT=", { "Ref" : "ManagementPort" }]]}
                     ]]
 
                 }}
