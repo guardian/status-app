@@ -3,7 +3,7 @@
 Queues = React.createClass
   render: () ->
     (div { className: "row" }, [
-      (ul { className: "list-group" }, [(Queue { q: q }) for q in @state.queues when localStorage.getItem(q.name) != 'off'])
+      (ul { className: "list-group" }, [(queue { q: q }) for q in @state.queues when localStorage.getItem(q.name) != 'off'])
     ])
 
   getInitialState: () -> { queues: [] }
@@ -25,11 +25,12 @@ Queue = React.createClass
     (li {className: 'list-group-item list-group-item-condensed queue'}, [
       (div {className: 'row'}, [
         (h4 {className: 'col-md-3 queue-condensed'}, @props.q.name),
-        (BarChart {
+        (barChart {
           points: @props.q.approxQueueLength
         })
       ])
     ])
+queue = React.createFactory(Queue)
 
 BarChart = React.createClass
   render: () ->
@@ -101,6 +102,7 @@ BarChart = React.createClass
     @setState({
       renderToolTip: false
     })
+barChart = React.createFactory(BarChart)
 
 window.Queues = Queues
 

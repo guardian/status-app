@@ -18,7 +18,7 @@ SparklinePlus = React.createClass
             onMouseMove: @calculateActivePoint
             onMouseLeave: @disableDetail
           })
-          (Sparkline {
+          (sparkline {
             points: points
             width: @state.width - 50
             height: @sparklineHeight()
@@ -44,7 +44,7 @@ SparklinePlus = React.createClass
           }, points[points.length - 1].y + @props.unit)
 
           if @state.showDetail
-            HoverDetail({
+            hoverDetail({
               detailPoint: @state.detailPoint
               x: @x
               y: @y
@@ -112,6 +112,7 @@ Sparkline = React.createClass
 
   y: () ->
     d3.scale.linear().range([@props.height,12]).domain(d3.extent(@props.points, (d) -> d.y))
+sparkline = React.createFactory(Sparkline)
 
 HoverDetail = React.createClass
   render: () -> (g {}, [
@@ -139,6 +140,7 @@ HoverDetail = React.createClass
       }
     }, "" + d3.format(' ,')(@props.detailPoint.y) + @props.unit)
   ])
+hoverDetail = React.createFactory(HoverDetail)
 
-window.SparklinePlus = SparklinePlus
-window.Sparkline = Sparkline
+window.sparklinePlus = React.createFactory(SparklinePlus)
+window.sparkline = React.createFactory(Sparkline)

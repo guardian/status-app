@@ -39,7 +39,7 @@ Stage = React.createClass
             }, name )) for name in @state.stackNames
           ])
         )
-      if (@state.activeStack) then (Stack { name: @state.activeStack, asgs: @state.stacks[@state.activeStack].asgs })
+      if (@state.activeStack) then (stack { name: @state.activeStack, asgs: @state.stacks[@state.activeStack].asgs })
     ])
 
   markActive: (stackName) ->
@@ -65,15 +65,16 @@ Stack = React.createClass
       asgs.length / numChunks
     if (@state.twoCol)
       (div {}, [
-        (div { className: 'col-sm-6' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(0, chunkSize(2))])
-        (div { className: 'col-sm-6' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(chunkSize(2))])
+        (div { className: 'col-sm-6' }, [(autoScalingGroup { group: asg }) for asg in @props.asgs.slice(0, chunkSize(2))])
+        (div { className: 'col-sm-6' }, [(autoScalingGroup { group: asg }) for asg in @props.asgs.slice(chunkSize(2))])
       ])
     else
       (div {}, [
-        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(0, chunkSize(3))])
-        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(chunkSize(3), 2 * chunkSize(3))])
-        (div { className: 'col-lg-4' }, [(AutoScalingGroup { group: asg }) for asg in @props.asgs.slice(2 * chunkSize(3))])
+        (div { className: 'col-lg-4' }, [(autoScalingGroup { group: asg }) for asg in @props.asgs.slice(0, chunkSize(3))])
+        (div { className: 'col-lg-4' }, [(autoScalingGroup { group: asg }) for asg in @props.asgs.slice(chunkSize(3), 2 * chunkSize(3))])
+        (div { className: 'col-lg-4' }, [(autoScalingGroup { group: asg }) for asg in @props.asgs.slice(2 * chunkSize(3))])
       ])
+stack = React.createFactory(Stack)
 
 AutoScalingGroup = React.createClass
   getInitialState: () -> {
@@ -89,7 +90,7 @@ AutoScalingGroup = React.createClass
         overflow: 'hidden'
       }
     }, [
-      (ClusterTitle {
+      (clusterTitle {
         name: @props.group.name
         app: @props.group.app
         approxMonthlyCost: @props.group.approxMonthlyCost
@@ -104,35 +105,36 @@ AutoScalingGroup = React.createClass
         (a {
           href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D05!E07!ET6!MN4!NS2!PD1!SS3!ST0!VA-PT3H~60~AWS%25252FELB~Average~Latency~LoadBalancerName~P0D~#{@props.group.elb.name}"
         }, [
-          (SparklinePlus {
+          (sparklinePlus {
             points: {x: point.time, y: point.average} for point in @props.group.elb.latency
             unit: 'ms'
             height: 50
             additionalLine:
-              (Sparkline {
+              (sparkline {
                 points: {x: point.time, y: point.sum} for point in @props.group.elb.errorCount
                 stroke: 'red'
               })
           })
         ])
-      (ClusterMembers {
+      (clusterMembers {
         members: @props.group.members
         elb: @props.group.elb
       })
       (a {
         href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D03!E06!ET7!MN5!NS2!PD1!SS4!ST0!VA-PT3H~60~AWS%252FEC2~AutoScalingGroupName~Maximum~CPUUtilization~#{@props.group.name}~P0D"
       }, [
-        (SparklinePlus {
+        (sparklinePlus {
           points: {x: point.time, y: point.maximum} for point in @props.group.cpu
           unit: '%'
           height: 50
         })
       ])
-      (RecentActivity {
+      (recentActivity {
         asgName: @props.group.name
         activities: @props.group.recentActivity
       })
     ])
+autoScalingGroup = React.createFactory(AutoScalingGroup)
 
 ClusterTitle = React.createClass
   render: () ->
@@ -158,6 +160,7 @@ ClusterTitle = React.createClass
 
   componentDidMount: () ->
     new ZeroClipboard(document.getElementById(@props.name + "-copy"))
+clusterTitle = React.createFactory(ClusterTitle)
 
 ClusterMembers = React.createClass
   render: () ->
@@ -176,7 +179,7 @@ ClusterMembers = React.createClass
         ])
       ])
       (tbody {}, [
-        @props.members.map((m) -> (ClusterMember {
+        @props.members.map((m) -> (clusterMember {
           member: m
           key: m.id
           hasELB: hasELB
@@ -184,6 +187,7 @@ ClusterMembers = React.createClass
         }))
       ])
     ])
+clusterMembers = React.createFactory(ClusterMembers)
 
 RecentActivity = React.createClass
   toggle: () ->
@@ -207,7 +211,7 @@ RecentActivity = React.createClass
           (div {}, [
             (small {}, [
               @props.activities.map((a) ->
-                (ScalingActivity {
+                (scalingActivity {
                   age: a.age
                   cause: a.cause
                 })
@@ -215,7 +219,7 @@ RecentActivity = React.createClass
             ])
           ])
       ])
-
+recentActivity = React.createFactory(RecentActivity)
 
 ScalingActivity = React.createClass
   render: () ->
@@ -223,6 +227,7 @@ ScalingActivity = React.createClass
       (strong {}, [@props.age])
       @props.cause
     ])
+scalingActivity = React.createFactory(ScalingActivity)
 
 ClusterMember = React.createClass
   render: () ->
@@ -236,5 +241,6 @@ ClusterMember = React.createClass
       (td {}, @props.member.uptime)
       (td {}, @props.member.version)
     ])
+clusterMember = React.createFactory(ClusterMember)
 
 window.Stage = Stage
