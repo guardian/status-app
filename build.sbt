@@ -22,9 +22,6 @@ libraryDependencies ++= Seq(
 )
 
 riffRaffPackageType := (dist in config("universal")).value
-riffRaffArtifactResources +=
-  baseDirectory.value / s"${riffRaffPackageName.value}.service" ->
-  s"packages/${riffRaffPackageName.value}/${riffRaffPackageName.value}.service"
 
 buildInfoPackage := "controllers"
 
