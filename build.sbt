@@ -7,6 +7,8 @@ enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin)
 scalaVersion := "2.11.6"
 scalacOptions ++= List("-feature", "-deprecation")
 
+resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
+
 libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk" % "1.9.34",
   "com.typesafe.akka" %% "akka-agent" % "2.3.10",
