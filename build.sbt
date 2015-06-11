@@ -2,7 +2,7 @@ name := "status-app"
 
 version := "1.0"
 
-enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin)
+enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging)
 
 scalaVersion := "2.11.6"
 scalacOptions ++= List("-feature", "-deprecation")
@@ -22,12 +22,12 @@ libraryDependencies ++= Seq(
   "org.webjars" % "zeroclipboard" % "2.2.0"
 )
 
-riffRaffPackageType := (dist in Universal).value
+import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
+serverLoading in Debian := Systemd
+riffRaffPackageType := (packageBin in Debian).value
 
 buildInfoPackage := "controllers"
-
 def env(key: String): Option[String] = Option(System.getenv(key))
-
 buildInfoKeys := Seq[BuildInfoKey](
   libraryDependencies in Compile,
   name,
