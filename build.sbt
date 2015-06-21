@@ -25,6 +25,7 @@ libraryDependencies ++= Seq(
 maintainer := "Phil Wills <philip.wills@theguardian.com>"
 packageSummary := "AWS status web-app"
 packageDescription := """Web app that shows an overview of the status of autoscaling groups in an AWS account"""
+debianPackageDependencies := Seq("openjdk-8-jre-headless")
 
 import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
 serverLoading in Debian := Systemd
