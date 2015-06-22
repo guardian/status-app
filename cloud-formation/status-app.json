@@ -160,8 +160,6 @@
 
                         {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" }, "status-app/status-app_1.0_all.deb"]]},
 
-                        "echo $PWD",
-
                         "dpkg -i status-app_1.0_all.deb"
                     ]]
 
