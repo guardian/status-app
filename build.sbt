@@ -34,7 +34,7 @@ javaOptions in Universal ++= Seq(
   "-J-XX:MaxMetaspaceSize=500m",
   "-J-XX:+PrintGCDetails",
   "-J-XX:+PrintGCDateStamps",
-  s"-J-Xloggc:/var/log/${name.value}/gc.log"
+  s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
 )
 
 import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
