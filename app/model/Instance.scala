@@ -155,11 +155,12 @@ object Instance {
     val tags = i.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
     val dns = i.getPublicDnsName
 
-    val managementEndpoint = ManagementEndpoint.fromTag(dns, tags.get("Management"))
+    val managementTag = ManagementTag(tags.get("Management"))
+    val managementEndpoint = managementTag map (ManagementEndpoint(dns, _))
 
     val specifics =
-      if (tags("Role").contains("elasticsearch")) new ElasticSearchInstance(dns)
-      else new StandardWebApp(managementEndpoint.get.url + "/manifest")
+      if (managementTag.flatMap(_.format).exists(_ == "elasticsearch")) new ElasticSearchInstance(dns)
+      else new StandardWebApp(s"${managementEndpoint.get.url}/manifest")
 
     log.debug(s"Retrieving version of instance with tags: $tags")
     specifics.version map { v =>
@@ -173,12 +174,6 @@ case class ManagementEndpoint(dnsName:String, tag: ManagementTag) {
   val protocol = tag.protocol getOrElse "http"
   val path = tag.path getOrElse "/management"
   def url: String = s"""$protocol://$dnsName:$port$path"""
-}
-
-object ManagementEndpoint {
-  def fromTag(dnsName:String, tag:Option[String]): Option[ManagementEndpoint] = {
-    ManagementTag(tag) map (ManagementEndpoint(dnsName, _))
-  }
 }
 
 object UnknownInstance {
