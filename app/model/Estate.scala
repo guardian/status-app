@@ -2,7 +2,7 @@ package model
 
 import com.amazonaws.AmazonServiceException
 import lib.{Config, AmazonConnection, AWS, ScheduledAgent}
-import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsRequest
+import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import play.api.Logger
 import scala.concurrent.Future
 import controllers.Application
@@ -75,13 +75,25 @@ object Estate {
 
   implicit val conn = AWS.connection
 
-  val estateAgent = ScheduledAgent[Estate](0.seconds, 10.seconds, PendingEstate) {
-    val groupsFuture = AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, new DescribeAutoScalingGroupsRequest)
+  private def fetchAllAsg(nextToken: Option[String] = None): Future[List[AutoScalingGroup]] = {
+    val request = new DescribeAutoScalingGroupsRequest
+    nextToken.foreach(request.setNextToken)
+    AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, request).flatMap { result =>
+      val autoScalingGroups = result.getAutoScalingGroups.toList
+      Option(result.getNextToken()) match {
+        case None => Future.successful(autoScalingGroups)
+        case token: Some[String] => fetchAllAsg(token).map( _ ++ autoScalingGroups)
+      }
+    }
+  }
+
+  val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
+    val groupsFuture = fetchAllAsg()
     val queuesFuture = AWS.futureOf(conn.sqs.listQueuesAsync, new ListQueuesRequest())
 
     for {
       groups <- groupsFuture
-      asgs <- Future.traverse(groups.getAutoScalingGroups.toSeq)(ASG.from)
+      asgs <- Future.traverse(groups)(ASG.from)
       queueResult <- queuesFuture.recover {
         case NonFatal(e) => {
           log.logger.error("Error retrieving queues", e)
