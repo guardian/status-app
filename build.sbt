@@ -41,6 +41,10 @@ import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
 serverLoading in Debian := Systemd
 riffRaffPackageType := (packageBin in Debian).value
 
+riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV")
+riffRaffUploadArtifactBucket := "riffraff-artifact"
+riffRaffUploadManifestBucket := "riffraff-builds"
+
 buildInfoPackage := "controllers"
 def env(key: String): Option[String] = Option(System.getenv(key))
 buildInfoKeys := Seq[BuildInfoKey](
