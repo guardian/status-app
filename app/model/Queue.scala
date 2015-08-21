@@ -8,7 +8,7 @@ import org.joda.time.DateTime
 import collection.convert.wrapAsScala._
 import play.api.Logger
 
-case class Queue(name: String, url: String, approxQueueLength: Seq[Datapoint])
+case class Queue(lastUpdated: DateTime, name: String, url: String, approxQueueLength: Seq[Datapoint])
 
 object Queue {
   def from(url: String)(implicit conn: AmazonConnection, context: ExecutionContext): Future[Queue] = {
@@ -19,6 +19,6 @@ object Queue {
         .withMetricName("ApproximateNumberOfMessagesVisible").withNamespace("AWS/SQS").withPeriod(60).withStatistics("Average")
         .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
       )
-    } yield Queue(name, url, stats.getDatapoints.sortBy(_.getTimestamp))
+    } yield Queue(DateTime.now, name, url, stats.getDatapoints.sortBy(_.getTimestamp))
   }
 }

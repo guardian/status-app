@@ -40,6 +40,7 @@ class EstateTest extends Specification {
   }
 
   def asg(stage: String, stack: Option[String] = None, numMembers: Int = 1) = ASG(
+    "arn:test", DateTime.now,
     s"name-${Random.alphanumeric}", Some(stage), None, stack, None,
       Seq.fill(numMembers)(ASGMember(Random.alphanumeric.toString(), None, "", None, None, "", "", null)), Nil, Nil, Nil, None, None
   )

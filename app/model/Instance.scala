@@ -1,13 +1,11 @@
 package model
 
-import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance, DescribeInstancesRequest}
+import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance}
 import lib._
 import collection.JavaConversions._
 import play.api.libs.ws.{WSResponse, WS}
-import play.api.cache.Cache
 import scala.concurrent.ExecutionContext.Implicits.global
 import concurrent.Future
-import scala.Some
 import play.api.Logger
 import scala.util.Try
 import java.util.Date
@@ -74,6 +72,13 @@ object EC2Instance {
   }
 }
 
+object UnknownApp extends AppSpecifics {
+  def usefulUrls = List.empty
+  def versionUrl = ""
+  override def version = Future.successful(None)
+  override def versionExtractor = _ => None
+}
+
 case class ElasticSearchInstance(publicDns: String) extends AppSpecifics {
   val baseUrl = s"http://$publicDns:9200"
   val versionUrl = baseUrl
@@ -124,42 +129,25 @@ trait AppSpecifics {
 }
 
 object Instance {
-  import play.api.Play.current
-
   implicit val instanceWrites = Json.writes[Instance]
 
   val log = Logger[Instance](classOf[Instance])
 
-  private def uncachedGet(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
-    (for {
-      result <- AWS.futureOf(awsConn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(id))
-      i <- (result.getReservations flatMap (_.getInstances) map (Instance.from(_))).head
-    } yield i) recover {
-      case e => {
-        log.error(s"Unable to retrieve details for instance: $id")
-        UnknownInstance(id)
-      }
-    }
-  }
-
-  def get(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
-    Cache.getAs[Instance](id) map (Future.successful(_)) getOrElse {
-      uncachedGet(id) map { i =>
-        Cache.set(id, i, 30)
-        i
-      }
-    }
-  }
-
   def from(i: AwsEc2Instance): Future[Instance] = {
     val tags = i.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
-    val dns = i.getPublicDnsName
+    val optDns = Option(i.getPublicDnsName).filter(_.nonEmpty)
 
-    val managementEndpoint = ManagementEndpoint.fromTag(dns, tags.get("Management"))
+    def elasticSearchSpecifics = if (tags("Role").contains("elasticsearch"))
+      optDns map { new ElasticSearchInstance(_) }
+    else
+      None
 
-    val specifics =
-      if (tags("Role").contains("elasticsearch")) new ElasticSearchInstance(dns)
-      else new StandardWebApp(managementEndpoint.get.url + "/manifest")
+    def standardWebAppSpecifics = for {
+      dns <- optDns
+      endpoint <- ManagementEndpoint.fromTag(dns, tags.get("Management"))
+    } yield new StandardWebApp(s"${endpoint.url}/manifest")
+
+    val specifics = elasticSearchSpecifics orElse standardWebAppSpecifics getOrElse UnknownApp
 
     log.debug(s"Retrieving version of instance with tags: $tags")
     specifics.version map { v =>
