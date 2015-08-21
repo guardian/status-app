@@ -17,10 +17,20 @@ import com.amazonaws.services.cloudwatch.model.Statistic._
 import org.joda.time.DateTime
 import play.api.libs.json.JsObject
 
-case class ASG(name: String, stage: Option[String], app: Option[String], stack: Option[String],
-                 elb: Option[ELB], members: Seq[ASGMember], recentActivity: Seq[ScalingAction],
-                 cpu: Seq[Datapoint],suspendedActivities: Seq[String], approxMonthlyCost: Option[BigDecimal],
-                 moreDetailsLink: Option[String])
+case class ASG(
+  arn: String,
+  lastUpdated: DateTime,
+  name: String,
+  stage: Option[String],
+  app: Option[String],
+  stack: Option[String],
+  elb: Option[ELB],
+  members: Seq[ASGMember],
+  recentActivity: Seq[ScalingAction],
+  cpu: Seq[Datapoint],
+  suspendedActivities: Seq[String],
+  approxMonthlyCost: Option[BigDecimal],
+  moreDetailsLink: Option[String])
 
 object ASG {
   val log = Logger[ASG](classOf[ASG])
@@ -64,6 +74,8 @@ object ASG {
         if (t.format == Some("elasticsearch")) Some(routes.Application.es(name).url) else None
       }
       ASG(
+        asg.getAutoScalingGroupARN,
+        DateTime.now,
         name, tags.get("Stage"), tags.get("App") orElse tags.get("Role"), tags.get("Stack"),
         lb, members.sortBy(_.instance.availabilityZone), activities, cpu, asg.getSuspendedProcesses.toList.map(_.getProcessName).sorted,
         Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption, moreDetailsLink

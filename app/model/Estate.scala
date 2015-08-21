@@ -1,9 +1,10 @@
 package model
 
 import com.amazonaws.AmazonServiceException
-import lib.{Config, AmazonConnection, AWS, ScheduledAgent}
+import lib._
 import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import play.api.Logger
+import scala.annotation.tailrec
 import scala.concurrent.Future
 import controllers.Application
 import com.amazonaws.services.sqs.model.{ListQueuesResult, ListQueuesRequest}
@@ -20,6 +21,42 @@ trait Estate extends Map[String, Stage] {
   def +[B1 >: Stage](kv: (String, B1)) = throw new UnsupportedOperationException
   def asgs: Seq[ASG] = values.flatMap(_.asgs).toSeq
   def lastUpdated: Option[DateTime]
+
+  def withAsg(asg: ASG): PopulatedEstate = {
+    @tailrec
+    def updateAsgs(asgs: Seq[ASG], newItem: Option[ASG], threshold: DateTime, result: List[ASG] = Nil): List[ASG] = asgs match {
+      case h :: t if newItem.exists(_.arn == h.arn) =>
+        updateAsgs(t, None, threshold, newItem.get :: result)
+      case h :: t if h.lastUpdated isBefore threshold =>
+        updateAsgs(t, newItem, threshold, result)
+      case h :: t =>
+        updateAsgs(t, newItem, threshold, h :: result)
+      case Nil if newItem.nonEmpty =>
+        (newItem.get :: result).reverse
+      case Nil =>
+        result.reverse
+    }
+
+    PopulatedEstate(updateAsgs(asgs, Some(asg), DateTime.now.minusMinutes(10)), queues, DateTime.now)
+  }
+
+  def withQueue(queue: Queue): PopulatedEstate = {
+    @tailrec
+    def updateQueues(queues: Seq[Queue], newItem: Option[Queue], threshold: DateTime, result: List[Queue] = Nil): List[Queue] = queues match {
+      case h :: t if newItem.exists(_.url == h.url) =>
+        updateQueues(t, None, threshold, newItem.get :: result)
+      case h :: t if h.lastUpdated isBefore threshold =>
+        updateQueues(t, newItem, threshold, result)
+      case h :: t =>
+        updateQueues(t, newItem, threshold, h :: result)
+      case Nil if newItem.nonEmpty =>
+        (newItem.get :: result).reverse
+      case Nil =>
+        result.reverse
+    }
+
+    PopulatedEstate(asgs, updateQueues(queues, Some(queue), DateTime.now.minusMinutes(10)), DateTime.now)
+  }
 }
 
 case class Stack(name: String, asgs: Seq[ASG])
@@ -87,21 +124,32 @@ object Estate {
     }
   }
 
-  val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
+  private def addAsgToEstate(asg: ASG)(previous: Estate) = previous.withAsg(asg)
+
+  private def addQueueToEstate(queue: Queue)(previous: Estate) = previous.withQueue(queue)
+
+  val estateAgent = SpreadingScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
     val groupsFuture = fetchAllAsg()
     val queuesFuture = AWS.futureOf(conn.sqs.listQueuesAsync, new ListQueuesRequest())
 
     for {
-      groups <- groupsFuture
-      asgs <- Future.traverse(groups)(ASG.from)
+      groups <- groupsFuture.recover {
+        case NonFatal(e) =>
+          log.logger.error("Error retrieving asgs", e)
+          List.empty
+      }
       queueResult <- queuesFuture.recover {
-        case NonFatal(e) => {
+        case NonFatal(e) =>
           log.logger.error("Error retrieving queues", e)
           new ListQueuesResult().withQueueUrls(Seq(s"/ERROR ${e.getMessage}"))
-        }
       }
-      queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
-    } yield PopulatedEstate(asgs, queues, DateTime.now)
+    } yield {
+      val queues = queueResult.getQueueUrls.toList
+      val asgUpdaters = groups map { group => () => { ASG.from(group) map addAsgToEstate } }
+      val queueUpdaters = queues map { queue => () => { Queue.from(queue) map addQueueToEstate } }
+      asgUpdaters ++ queueUpdaters
+    }
   }
+
   def apply() = estateAgent()
 }
