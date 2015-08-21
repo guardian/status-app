@@ -1,13 +1,11 @@
 package model
 
-import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance, DescribeInstancesRequest}
+import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance}
 import lib._
 import collection.JavaConversions._
 import play.api.libs.ws.{WSResponse, WS}
-import play.api.cache.Cache
 import scala.concurrent.ExecutionContext.Implicits.global
 import concurrent.Future
-import scala.Some
 import play.api.Logger
 import scala.util.Try
 import java.util.Date
@@ -131,32 +129,9 @@ trait AppSpecifics {
 }
 
 object Instance {
-  import play.api.Play.current
-
   implicit val instanceWrites = Json.writes[Instance]
 
   val log = Logger[Instance](classOf[Instance])
-
-  private def uncachedGet(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
-    (for {
-      result <- AWS.futureOf(awsConn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(id))
-      i <- (result.getReservations flatMap (_.getInstances) map (Instance.from(_))).head
-    } yield i) recover {
-      case e => {
-        log.error(s"Unable to retrieve details for instance: $id")
-        UnknownInstance(id)
-      }
-    }
-  }
-
-  def get(id: String)(implicit awsConn: AmazonConnection): Future[Instance] = {
-    Cache.getAs[Instance](id) map (Future.successful(_)) getOrElse {
-      uncachedGet(id) map { i =>
-        Cache.set(id, i, 30)
-        i
-      }
-    }
-  }
 
   def from(i: AwsEc2Instance): Future[Instance] = {
     val tags = i.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")

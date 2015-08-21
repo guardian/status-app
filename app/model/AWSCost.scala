@@ -32,7 +32,7 @@ object AWSCost {
     ((totalInstances - reservationCount) * onDemandRate + reservationCount * reservationRate) / totalInstances
   }
 
-  def countForType(costType: EC2CostingType) = typeCounts().getOrElse(costType, 0)
+  def countForType(costType: EC2CostingType) = Instances().count(_.costingType == costType)
 
   def onDemandPriceFor(costType: EC2CostingType) = {
     costsAgent()
@@ -48,15 +48,6 @@ object AWSCost {
   def reservationsFor(costType: EC2CostingType) = reservations.getOrElse(costType, Seq())
 
   def reservations = reservationsAgent()
-
-  val typeCounts = ScheduledAgent[Map[EC2CostingType, Int]](0.seconds, 5.minutes, Map()) {
-    for {
-      reservations <- AWS.futureOf(awsConnection.ec2.describeInstancesAsync, new DescribeInstancesRequest())
-      instances <- Future.sequence (
-        reservations.getReservations flatMap (_.getInstances) map (Instance.from(_))
-      )
-    } yield instances.groupBy(_.costingType).mapValues(_.size)
-  }
 
   lazy val reservationsAgent = ScheduledAgent[Map[EC2CostingType, Seq[Reservation]]](0.seconds, 5.minutes, Map()) {
     logger.info("Starting reservationsAgent")
