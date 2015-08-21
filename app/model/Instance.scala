@@ -74,6 +74,13 @@ object EC2Instance {
   }
 }
 
+object UnknownApp extends AppSpecifics {
+  def usefulUrls = List.empty
+  def versionUrl = ""
+  override def version = Future.successful(None)
+  override def versionExtractor = _ => None
+}
+
 case class ElasticSearchInstance(publicDns: String) extends AppSpecifics {
   val baseUrl = s"http://$publicDns:9200"
   val versionUrl = baseUrl
@@ -153,13 +160,19 @@ object Instance {
 
   def from(i: AwsEc2Instance): Future[Instance] = {
     val tags = i.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
-    val dns = i.getPublicDnsName
+    val optDns = Option(i.getPublicDnsName).filter(_.nonEmpty)
 
-    val managementEndpoint = ManagementEndpoint.fromTag(dns, tags.get("Management"))
+    def elasticSearchSpecifics = if (tags("Role").contains("elasticsearch"))
+      optDns map { new ElasticSearchInstance(_) }
+    else
+      None
 
-    val specifics =
-      if (tags("Role").contains("elasticsearch")) new ElasticSearchInstance(dns)
-      else new StandardWebApp(managementEndpoint.get.url + "/manifest")
+    def standardWebAppSpecifics = for {
+      dns <- optDns
+      endpoint <- ManagementEndpoint.fromTag(dns, tags.get("Management"))
+    } yield new StandardWebApp(s"${endpoint.url}/manifest")
+
+    val specifics = elasticSearchSpecifics orElse standardWebAppSpecifics getOrElse UnknownApp
 
     log.debug(s"Retrieving version of instance with tags: $tags")
     specifics.version map { v =>
