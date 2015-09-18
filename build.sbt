@@ -4,7 +4,7 @@ version := "1.0"
 
 enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging)
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 scalacOptions ++= List("-feature", "-deprecation")
 
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
