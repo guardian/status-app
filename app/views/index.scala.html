@@ -20,8 +20,8 @@
     <div class="container cluster-status">
         <div id="queues" class="col-sm-12">
             <script>
-                React.renderComponent(
-                    Queues({}),
+                React.render(
+                    React.createFactory(Queues)({}),
                     document.getElementById('queues')
                 );
             </script>
@@ -32,7 +32,7 @@
                 @snippets.renderASG(asg)
             }
             <script>
-                React.renderComponent(Stage({ name: "@stage" }), document.getElementById("stage"))
+                React.render(React.createFactory(Stage)({ name: "@stage" }), document.getElementById("stage"))
             </script>
         </div>
         <div class="row">

@@ -15,7 +15,7 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   "com.gu" %% "play-googleauth" % "0.1.11",
-  "org.webjars" % "react" % "0.12.2",
+  "org.webjars.bower" % "react" % "0.13.3",
   "org.webjars" % "bootstrap" % "3.3.4",
   "org.webjars" % "d3js" % "3.5.5",
   "org.webjars" % "zeroclipboard" % "2.2.0"
