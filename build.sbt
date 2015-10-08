@@ -7,18 +7,16 @@ enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackagin
 scalaVersion := "2.11.7"
 scalacOptions ++= List("-feature", "-deprecation")
 
-resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
-
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.9.34",
-  "com.typesafe.akka" %% "akka-agent" % "2.3.10",
+  "com.amazonaws" % "aws-java-sdk" % "1.10.22",
+  "com.typesafe.akka" %% "akka-agent" % "2.3.14",
   specs2 % Test,
   cache,
   ws,
-  "com.gu" %% "play-googleauth" % "0.3.0",
+  "com.gu" %% "play-googleauth" % "0.3.1",
   "org.webjars.bower" % "react" % "0.13.3",
   "org.webjars" % "bootstrap" % "3.3.4",
-  "org.webjars" % "d3js" % "3.5.5",
+  "org.webjars" % "d3js" % "3.5.6",
   "org.webjars" % "zeroclipboard" % "2.2.0"
 )
 
@@ -42,8 +40,8 @@ serverLoading in Debian := Systemd
 riffRaffPackageType := (packageBin in Debian).value
 
 riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV")
-riffRaffUploadArtifactBucket := "riffraff-artifact"
-riffRaffUploadManifestBucket := "riffraff-builds"
+riffRaffUploadArtifactBucket := Some("riffraff-artifact")
+riffRaffUploadManifestBucket := Some("riffraff-builds")
 
 buildInfoPackage := "controllers"
 def env(key: String): Option[String] = Option(System.getenv(key))
