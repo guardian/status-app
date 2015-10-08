@@ -88,10 +88,10 @@ object AWSCost {
           val JsArray(typeGroups) = json
           val typeToCost = for {
             group <- typeGroups
-            JsArray(size) = (group \ "sizes")
+            JsArray(size) = (group \ "sizes").get
             s <- size
           } yield {
-            val JsArray(c) = (s \ "valueColumns")
+            val JsArray(c) = (s \ "valueColumns").get
             ((s \ "size").as[String] -> (c.head \ "prices" \ "USD").as[BigDecimal])
           }
 
@@ -100,7 +100,7 @@ object AWSCost {
       }
       implicit object OnDemandPricesReads extends Reads[OnDemandPrices] {
         def reads(json: JsValue) = {
-          val JsArray(regionsJs) = (json \ "config" \ "regions")
+          val JsArray(regionsJs) = (json \ "config" \ "regions").get
           val regions = regionsJs.map { r =>
             ((r \ "region").as[String] -> (r \ "instanceTypes").as[RegionPrices])
           }

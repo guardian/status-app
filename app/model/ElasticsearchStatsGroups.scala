@@ -6,7 +6,7 @@ import org.joda.time.Duration
 
 object ElasticsearchStatsGroups {
   def parse(js: JsValue): List[Node] = {
-    val JsObject(nodes) = js \ "nodes"
+    val JsObject(nodes) = (js \ "nodes").get
 
     nodes.toList.map { case (_, json) => Node(json) }
   }
@@ -31,7 +31,7 @@ object ElasticsearchStatsGroups {
   object Node {
     def apply(nodeInfo: JsValue): Node = {
       val nodeName = (nodeInfo \ "name").as[String]
-      val JsObject(groupsJson) = nodeInfo \ "indices" \ "search" \ "groups"
+      val JsObject(groupsJson) = (nodeInfo \ "indices" \ "search" \ "groups").get
 
       val stats = for ((name, groups) <- groupsJson) yield StatsGroup(name, groups)
 

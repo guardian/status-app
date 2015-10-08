@@ -1,5 +1,3 @@
-import com.typesafe.sbt.packager.Keys._
-
 name := "status-app"
 
 version := "1.0"
@@ -9,19 +7,22 @@ enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin)
 scalaVersion := "2.11.6"
 scalacOptions ++= List("-feature", "-deprecation")
 
+resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
+
 libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk" % "1.9.34",
   "com.typesafe.akka" %% "akka-agent" % "2.3.10",
+  specs2 % Test,
   cache,
   ws,
-  "com.gu" %% "play-googleauth" % "0.1.11",
+  "com.gu" %% "play-googleauth" % "0.3.0",
   "org.webjars.bower" % "react" % "0.13.3",
   "org.webjars" % "bootstrap" % "3.3.4",
   "org.webjars" % "d3js" % "3.5.5",
   "org.webjars" % "zeroclipboard" % "2.2.0"
 )
 
-riffRaffPackageType := (dist in config("universal")).value
+riffRaffPackageType := (dist in Universal).value
 
 buildInfoPackage := "controllers"
 
