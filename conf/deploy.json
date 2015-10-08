@@ -1,7 +1,8 @@
 {
     "defaultStacks":[
         "ophan",
-        "mobile"
+        "mobile",
+        "membership"
     ],
     "packages":{
         "status-app":{
