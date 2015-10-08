@@ -2,7 +2,7 @@ name := "status-app"
 
 version := "1.0"
 
-enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin)
+enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging)
 
 scalaVersion := "2.11.6"
 scalacOptions ++= List("-feature", "-deprecation")
@@ -22,12 +22,27 @@ libraryDependencies ++= Seq(
   "org.webjars" % "zeroclipboard" % "2.2.0"
 )
 
-riffRaffPackageType := (dist in Universal).value
+maintainer := "Phil Wills <philip.wills@theguardian.com>"
+packageSummary := "AWS status web-app"
+packageDescription := """Web app that shows an overview of the status of autoscaling groups in an AWS account"""
+debianPackageDependencies := Seq("openjdk-8-jre-headless")
+
+javaOptions in Universal ++= Seq(
+  "-Dpidfile.path=/dev/null",
+  "-J-XX:MaxRAMFraction=2",
+  "-J-XX:InitialRAMFraction=2",
+  "-J-XX:MaxMetaspaceSize=500m",
+  "-J-XX:+PrintGCDetails",
+  "-J-XX:+PrintGCDateStamps",
+  s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
+)
+
+import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
+serverLoading in Debian := Systemd
+riffRaffPackageType := (packageBin in Debian).value
 
 buildInfoPackage := "controllers"
-
 def env(key: String): Option[String] = Option(System.getenv(key))
-
 buildInfoKeys := Seq[BuildInfoKey](
   libraryDependencies in Compile,
   name,

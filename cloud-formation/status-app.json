@@ -158,17 +158,9 @@
                         "#See https://bugs.launchpad.net/ubuntu/+source/ca-certificates-java/+bug/1396760",
                         "/var/lib/dpkg/info/ca-certificates-java.postinst configure",
 
-                        "adduser --system --home /status --disabled-password status",
+                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" }, "status-app/status-app_1.0_all.deb"]]},
 
-                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" }, "status-app/status-app.service --directory-prefix=/etc/systemd/system"]]},
-
-                        {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" }, "status-app/status-app-1.0.zip --directory-prefix=/status"]]},
-
-                        "unzip -d /status /status/status-app-1.0.zip",
-
-                        "chown -R status /status/",
-
-                        {"Fn::Join": ["", ["systemctl start status-app MANAGEMENT_PORT=", { "Ref" : "ManagementPort" }]]}
+                        "dpkg -i status-app_1.0_all.deb"
                     ]]
 
                 }}
