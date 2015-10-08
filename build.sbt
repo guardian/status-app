@@ -4,7 +4,7 @@ version := "1.0"
 
 enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging)
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 scalacOptions ++= List("-feature", "-deprecation")
 
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
@@ -40,6 +40,10 @@ javaOptions in Universal ++= Seq(
 import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
 serverLoading in Debian := Systemd
 riffRaffPackageType := (packageBin in Debian).value
+
+riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV")
+riffRaffUploadArtifactBucket := "riffraff-artifact"
+riffRaffUploadManifestBucket := "riffraff-builds"
 
 buildInfoPackage := "controllers"
 def env(key: String): Option[String] = Option(System.getenv(key))
