@@ -15,7 +15,7 @@ libraryDependencies ++= Seq(
   specs2 % Test,
   cache,
   ws,
-  "com.gu" %% "play-googleauth" % "0.3.1",
+  "com.gu" %% "play-googleauth" % "0.3.3",
   "org.webjars.bower" % "react" % "0.13.3",
   "org.webjars" % "bootstrap" % "3.3.4",
   "org.webjars" % "d3js" % "3.5.6",
