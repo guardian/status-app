@@ -175,7 +175,7 @@
             "Type" : "AWS::AutoScaling::LaunchConfiguration",
             "Properties" : {
                 "KeyName" : { "Ref" : "KeyName" },
-                "ImageId" : "ami-cb4986bc",
+                "ImageId" : "ami-464af835",
                 "SecurityGroups": [
                     { "Ref" : "EC2SecurityGroup" }, { "Ref" : "StatusAppSecurityGroup" }
                 ],
