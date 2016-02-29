@@ -38,7 +38,7 @@ object Stage {
 case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue], lastUpdateTime: DateTime)
     extends Estate {
   lazy val stacks = asgs.groupBy(asg =>
-    (asg.stage.getOrElse("unkown"), asg.stack.getOrElse("unknown"))
+    (asg.stage.getOrElse("unknown"), asg.stack.getOrElse("unknown"))
   ).toSeq.map { case ((stage, name), asgs) => stage -> Stack(name, asgs) }
 
   lazy val stages = stacks.foldLeft(Map.empty[String, Seq[Stack]].withDefaultValue(Seq[Stack]())){
