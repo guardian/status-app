@@ -144,7 +144,7 @@
                 "KeyName":{
                     "Ref":"KeyName"
                 },
-                "ImageId":"ami-af0e7bd8",
+                "ImageId":"ami-36289a45",
                 "SecurityGroups":[ {
                     "Ref":"InstanceSecurityGroup"
                 } ],
