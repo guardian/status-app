@@ -4,7 +4,6 @@ import play.api.mvc._
 import model._
 import java.text.DecimalFormat
 import play.api.libs.json.{JsString, Json, Writes}
-import lib.UptimeDisplay
 import com.amazonaws.services.cloudwatch.model.Datapoint
 import scala.util.Random
 import play.api.libs.ws.WS

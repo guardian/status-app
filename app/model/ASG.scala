@@ -25,6 +25,19 @@ case class ASG(name: String, stage: Option[String], app: Option[String], stack: 
 object ASG {
   val log = Logger[ASG](classOf[ASG])
 
+  def fromApp(app: String, instances: List[com.amazonaws.services.ec2.model.Instance]): Future[ASG] = {
+    val clusterMembers = Future.sequence(instances.map(i => Instance.from(i).map(i => ASGMember.from(i))))
+    for {
+      members <- clusterMembers
+    } yield {
+      ASG(
+        "nonASG", Some("PROD"), Some(app), Some("ophan-data-lake"),
+        None, members.sortBy(_.instance.availabilityZone), Nil, Nil, Nil,
+        Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption, None
+      )
+    }
+  }
+
   def from(asg: AutoScalingGroup)(implicit conn: AmazonConnection): Future[ASG] =  {
     import play.api.Play.current
     log.debug(s"Retrieving details for ${asg.getAutoScalingGroupName}")
@@ -39,6 +52,7 @@ object ASG {
       members <- Future.sequence(asg.getInstances map { m =>
         val membersOfElb = lb.map(_.members).getOrElse(Nil)
         for {
+          //this is where instances are populated by ASG.
           i <- Instance.get(m.getInstanceId)
         } yield ASGMember.from(m, membersOfElb.find(_.id == m.getInstanceId), i)
       })

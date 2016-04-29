@@ -1,11 +1,10 @@
 package model
 
-import com.amazonaws.AmazonServiceException
-import lib.{Config, AmazonConnection, AWS, ScheduledAgent}
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest
+import lib.{AWS, ScheduledAgent}
 import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import play.api.Logger
 import scala.concurrent.Future
-import controllers.Application
 import com.amazonaws.services.sqs.model.{ListQueuesResult, ListQueuesRequest}
 import org.joda.time.DateTime
 import play.api.libs.json.{Writes, Json}
@@ -87,12 +86,42 @@ object Estate {
     }
   }
 
+  def fetchAsgByNames(names: List[String]): Future[List[AutoScalingGroup]] = {
+    val request = new DescribeAutoScalingGroupsRequest().withAutoScalingGroupNames(names: _*)
+    AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, request).flatMap { result =>
+      val autoScalingGroups = result.getAutoScalingGroups.toList
+      Option(result.getNextToken()) match {
+        case None => Future.successful(autoScalingGroups)
+        case token: Some[String] => fetchAllAsg(token).map( _ ++ autoScalingGroups)
+      }
+    }
+
+  }
+
+  private def fetchAllInstances(nextToken: Option[String] = None): Future[List[com.amazonaws.services.ec2.model.Instance]] = {
+    val request = new DescribeInstancesRequest
+    nextToken.foreach(request.setNextToken)
+    AWS.futureOf(conn.ec2.describeInstancesAsync, request).flatMap { result =>
+      val instances = result.getReservations().toList.flatMap(r => r.getInstances())
+      Option(result.getNextToken()) match {
+        case None => Future.successful(instances)
+        case token: Some[String] =>   fetchAllInstances(token).map(_ ++ instances)
+      }
+    }
+  }
+
   val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
-    val groupsFuture = fetchAllAsg()
+    val instancesFuture = fetchAllInstances()
     val queuesFuture = AWS.futureOf(conn.sqs.listQueuesAsync, new ListQueuesRequest())
 
     for {
-      groups <- groupsFuture
+      instances <- instancesFuture
+      tmp = instances.groupBy(i => i.getTags.toList.filter(t => t.getKey=="App").map(t => t.getValue).headOption.getOrElse("noapp"))
+      nonAsgs <- Future.traverse(tmp)({case(app, instances) => ASG.fromApp(app, instances)})
+      t = nonAsgs.seq.toList
+      tags = instances.flatMap(i => i.getTags().toList)
+      asgNames = tags.filter(t => t.getKey=="aws:autoscaling:groupName").map(t => t.getValue).distinct
+      groups <- fetchAsgByNames(asgNames)
       asgs <- Future.traverse(groups)(ASG.from)
       queueResult <- queuesFuture.recover {
         case NonFatal(e) => {
@@ -101,7 +130,7 @@ object Estate {
         }
       }
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
-    } yield PopulatedEstate(asgs, queues, DateTime.now)
+    } yield PopulatedEstate(asgs ::: t, queues, DateTime.now)
   }
   def apply() = estateAgent()
 }

@@ -25,6 +25,13 @@ object ASGMember {
     ASGMember(asgInfo.getInstanceId, description, instance.uptime, instance.version,
       state, lifecycleState, goodorbad, instance)
   }
+
+  def from(instance: Instance): ASGMember = {
+    ASGMember(instance.id, None, instance.uptime, instance.version, None, "lifecycle", "healthStatus", instance)
+  }
+
 }
+
+
 
 
