@@ -1,6 +1,6 @@
 package model
 
-import com.amazonaws.services.ec2.model.DescribeInstancesRequest
+import com.amazonaws.services.ec2.model.{Tag, DescribeInstancesRequest}
 import lib.{AWS, ScheduledAgent}
 import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import play.api.Logger
@@ -95,7 +95,13 @@ object Estate {
         case token: Some[String] => fetchAllAsg(token).map( _ ++ autoScalingGroups)
       }
     }
+  }
 
+  def fetchAsgByName(name: String): Future[Option[AutoScalingGroup]] = {
+    val request = new DescribeAutoScalingGroupsRequest().withAutoScalingGroupNames(name)
+    AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, request).map { result =>
+      result.getAutoScalingGroups.headOption
+    }
   }
 
   private def fetchAllInstances(nextToken: Option[String] = None): Future[List[com.amazonaws.services.ec2.model.Instance]] = {
@@ -105,7 +111,7 @@ object Estate {
       val instances = result.getReservations().toList.flatMap(r => r.getInstances())
       Option(result.getNextToken()) match {
         case None => Future.successful(instances)
-        case token: Some[String] =>   fetchAllInstances(token).map(_ ++ instances)
+        case token: Some[String] => fetchAllInstances(token).map(_ ++ instances)
       }
     }
   }
@@ -116,8 +122,8 @@ object Estate {
 
     for {
       instances <- instancesFuture
-      tmp = instances.groupBy(i => i.getTags.toList.filter(t => t.getKey=="App").map(t => t.getValue).headOption.getOrElse("noapp"))
-      nonAsgs <- Future.traverse(tmp)({case(app, instances) => ASG.fromApp(app, instances)})
+      tmp = instances.groupBy(i => i.getTags.map(t => t.getKey -> t.getValue).toMap)
+      nonAsgs <- Future.traverse(tmp)({case(tagsMap, instances) => ASG.fromApp(tagsMap, instances)})
       t = nonAsgs.seq.toList
       tags = instances.flatMap(i => i.getTags().toList)
       asgNames = tags.filter(t => t.getKey=="aws:autoscaling:groupName").map(t => t.getValue).distinct

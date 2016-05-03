@@ -1,7 +1,7 @@
 package model
 
 import scala.concurrent.Future
-import lib.{AWS, AmazonConnection}
+import lib.{FutureO, AWS, AmazonConnection}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
@@ -9,13 +9,11 @@ import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
 import collection.JavaConversions._
 import scala.util.{Random, Try}
 import play.api.Logger
-import play.api.libs.ws.WS
 import play.api.libs.json._
 import controllers.routes
 import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricStatisticsRequest}
 import com.amazonaws.services.cloudwatch.model.Statistic._
 import org.joda.time.DateTime
-import play.api.libs.json.JsObject
 
 case class ASG(name: String, stage: Option[String], app: Option[String], stack: Option[String],
                  elb: Option[ELB], members: Seq[ASGMember], recentActivity: Seq[ScalingAction],
@@ -25,14 +23,52 @@ case class ASG(name: String, stage: Option[String], app: Option[String], stack: 
 object ASG {
   val log = Logger[ASG](classOf[ASG])
 
-  def fromApp(app: String, instances: List[com.amazonaws.services.ec2.model.Instance]): Future[ASG] = {
+  def fromApp(tags: Map[String, String], instances: List[com.amazonaws.services.ec2.model.Instance])(implicit conn: AmazonConnection): Future[ASG] = {
+    val autoScalingGroupNameOpt = tags.get("aws:autoscaling:groupName")
+
+    val asgFtO = for {
+      asgName <- FutureO.toFut(autoScalingGroupNameOpt)
+      asg <- FutureO(Estate.fetchAsgByName(asgName))
+    } yield asg
+
+    val elbOptFt: FutureO[ELB] = for {
+      asg <- asgFtO
+      elbName <- FutureO.toFut(asg.getLoadBalancerNames.headOption)
+      elb <- FutureO.toOpt(ELB.forName(elbName))
+    } yield elb
+
+    val recentActivity = for {
+      asg <- asgFtO
+      actions <- FutureO.toOpt(ScalingAction.forGroup(asg.getAutoScalingGroupName))
+    } yield actions filter (_.isRecent)
+
+    val cpuFtO = for {
+      asg <- asgFtO
+      stats <-  FutureO.toOpt(AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
+        .withDimensions(new Dimension().withName("AutoScalingGroupName").withValue(asg.getAutoScalingGroupName))
+        .withMetricName("CPUUtilization").withNamespace("AWS/EC2").withPeriod(60)
+        .withStatistics(Maximum, Average)
+        .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
+      ))
+    } yield stats.getDatapoints.sortBy(_.getTimestamp)
+
+    val suspendedProcesses = for {
+      asg <- asgFtO
+      processes = asg.getSuspendedProcesses.toList.map(_.getProcessName).sorted
+    } yield processes
+
     val clusterMembers = Future.sequence(instances.map(i => Instance.from(i).map(i => ASGMember.from(i))))
     for {
+      elbOpt <- elbOptFt.futureOption
       members <- clusterMembers
+      activities <- recentActivity.futureOption
+      cpu <- cpuFtO.futureOption
+      susPro <- suspendedProcesses.futureOption
     } yield {
       ASG(
-        "nonASG", Some("PROD"), Some(app), Some("ophan-data-lake"),
-        None, members.sortBy(_.instance.availabilityZone), Nil, Nil, Nil,
+        autoScalingGroupNameOpt.getOrElse("noASG"), tags.get("Stage"), tags.get("App") orElse tags.get("Role"), tags.get("Stack"),
+        elbOpt, members.sortBy(_.instance.availabilityZone), activities.getOrElse(Nil),
+        cpu.getOrElse(Nil), susPro.getOrElse(Nil),
         Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption, None
       )
     }
