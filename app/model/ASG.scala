@@ -15,7 +15,7 @@ import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricS
 import com.amazonaws.services.cloudwatch.model.Statistic._
 import org.joda.time.DateTime
 
-case class ASG(name: String, stage: Option[String], app: Option[String], stack: Option[String],
+case class ASG(name: Option[String], stage: Option[String], app: Option[String], stack: Option[String],
                  elb: Option[ELB], members: Seq[ASGMember], recentActivity: Seq[ScalingAction],
                  cpu: Seq[Datapoint],suspendedActivities: Seq[String], approxMonthlyCost: Option[BigDecimal],
                  moreDetailsLink: Option[String])
@@ -78,7 +78,7 @@ object ASG {
         } else None
       }
       ASG(
-        autoScalingGroupNameOpt.getOrElse("noASG"), tags.get("Stage"), tags.get("App") orElse tags.get("Role"), tags.get("Stack"),
+        autoScalingGroupNameOpt, tags.get("Stage"), tags.get("App") orElse tags.get("Role"), tags.get("Stack"),
         elbOpt, members.sortBy(_.instance.availabilityZone), activities.getOrElse(Nil),
         cpu.getOrElse(Nil), susPro.getOrElse(Nil),
         Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption, moreDetailsLink
