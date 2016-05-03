@@ -31,6 +31,10 @@ object ASG {
       asg <- FutureO(Estate.fetchAsgByName(asgName))
     } yield asg
 
+    val awsAsgInstances = for {
+      asg <- asgFtO
+    } yield asg.getInstances.toList
+
     val elbOptFt: FutureO[ELB] = for {
       asg <- asgFtO
       elbName <- FutureO.toFut(asg.getLoadBalancerNames.headOption)
@@ -57,19 +61,27 @@ object ASG {
       processes = asg.getSuspendedProcesses.toList.map(_.getProcessName).sorted
     } yield processes
 
-    val clusterMembers = Future.sequence(instances.map(i => Instance.from(i).map(i => ASGMember.from(i))))
     for {
       elbOpt <- elbOptFt.futureOption
+      membersOfElb = elbOpt.map(_.members).getOrElse(Nil)
+      membersOfASGOpt <- awsAsgInstances.futureOption
+      membersOfASG = membersOfASGOpt.getOrElse(Nil)
+      clusterMembers = Future.sequence(instances.map(i => Instance.from(i).map(i => ASGMember.from(i, membersOfASG.find(_.getInstanceId == i.id), membersOfElb.find(_.id == i.id)))))
       members <- clusterMembers
       activities <- recentActivity.futureOption
       cpu <- cpuFtO.futureOption
       susPro <- suspendedProcesses.futureOption
     } yield {
+      val moreDetailsLink = ManagementTag(tags.get("Management")).flatMap { t =>
+        if (t.format == Some("elasticsearch")) {
+          autoScalingGroupNameOpt.map(name => (routes.Application.es(name).url))
+        } else None
+      }
       ASG(
         autoScalingGroupNameOpt.getOrElse("noASG"), tags.get("Stage"), tags.get("App") orElse tags.get("Role"), tags.get("Stack"),
         elbOpt, members.sortBy(_.instance.availabilityZone), activities.getOrElse(Nil),
         cpu.getOrElse(Nil), susPro.getOrElse(Nil),
-        Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption, None
+        Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption, moreDetailsLink
       )
     }
   }
