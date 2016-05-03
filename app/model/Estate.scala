@@ -74,29 +74,6 @@ object Estate {
 
   implicit val conn = AWS.connection
 
-  private def fetchAllAsg(nextToken: Option[String] = None): Future[List[AutoScalingGroup]] = {
-    val request = new DescribeAutoScalingGroupsRequest
-    nextToken.foreach(request.setNextToken)
-    AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, request).flatMap { result =>
-      val autoScalingGroups = result.getAutoScalingGroups.toList
-      Option(result.getNextToken()) match {
-        case None => Future.successful(autoScalingGroups)
-        case token: Some[String] => fetchAllAsg(token).map( _ ++ autoScalingGroups)
-      }
-    }
-  }
-
-  def fetchAsgByNames(names: List[String]): Future[List[AutoScalingGroup]] = {
-    val request = new DescribeAutoScalingGroupsRequest().withAutoScalingGroupNames(names: _*)
-    AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, request).flatMap { result =>
-      val autoScalingGroups = result.getAutoScalingGroups.toList
-      Option(result.getNextToken()) match {
-        case None => Future.successful(autoScalingGroups)
-        case token: Some[String] => fetchAllAsg(token).map( _ ++ autoScalingGroups)
-      }
-    }
-  }
-
   def fetchAsgByName(name: String): Future[Option[AutoScalingGroup]] = {
     val request = new DescribeAutoScalingGroupsRequest().withAutoScalingGroupNames(name)
     AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, request).map { result =>
@@ -122,13 +99,8 @@ object Estate {
 
     for {
       instances <- instancesFuture
-      tmp = instances.groupBy(i => i.getTags.map(t => t.getKey -> t.getValue).toMap)
-      nonAsgs <- Future.traverse(tmp)({case(tagsMap, instances) => ASG.fromApp(tagsMap, instances)})
-      t = nonAsgs.seq.toList
-      tags = instances.flatMap(i => i.getTags().toList)
-      asgNames = tags.filter(t => t.getKey=="aws:autoscaling:groupName").map(t => t.getValue).distinct
-      groups <- fetchAsgByNames(asgNames)
-      asgs <- Future.traverse(groups)(ASG.from)
+      tagsToInstances = instances.groupBy(i => i.getTags.map(t => t.getKey -> t.getValue).toMap)
+      asgs <- Future.traverse(tagsToInstances)({case(tagsMap, instances) => ASG.fromApp(tagsMap, instances)})
       queueResult <- queuesFuture.recover {
         case NonFatal(e) => {
           log.logger.error("Error retrieving queues", e)
@@ -136,7 +108,7 @@ object Estate {
         }
       }
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
-    } yield PopulatedEstate(asgs ::: t, queues, DateTime.now)
+    } yield PopulatedEstate(asgs.seq.toList, queues, DateTime.now)
   }
   def apply() = estateAgent()
 }
