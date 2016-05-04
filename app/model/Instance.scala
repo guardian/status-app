@@ -21,6 +21,7 @@ case class Instance(
   privateDns: String,
   privateIp: String,
   instanceType: String,
+  state: String,
 
   availabilityZone: String,
 
@@ -52,6 +53,7 @@ object EC2Instance {
       privateDns = awsInstance.getPrivateDnsName,
       privateIp = awsInstance.getPrivateIpAddress,
       instanceType = awsInstance.getInstanceType,
+      state = awsInstance.getState.getName,
 
       availabilityZone = awsInstance.getPlacement.getAvailabilityZone,
 
@@ -182,6 +184,7 @@ object UnknownInstance {
     app = "???",
     stage = "???",
     uptime = "???",
+    state = "???",
     cost = None,
     approxMonthlyCost = None,
     availabilityZone = "???",

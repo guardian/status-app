@@ -13,17 +13,20 @@ object ASGMember {
     def healthStatus = asgInfo.map(_.getHealthStatus)
     def lifecycleState = asgInfo.map(_.getLifecycleState)
 
-    def state = elbInfo.map(_.state)
+    def lbState = elbInfo.map(_.state)
     def description = elbInfo.flatMap(_.description)
 
-    def goodorbad = (healthStatus, lifecycleState, state) match {
-      case (_, Some("Pending"), _) | (_, Some("Terminating"), _) => "pending"
-      case (Some("Healthy"), Some("InService"), Some("InService")) => "success"
-      case (Some("Healthy"), Some("InService"), None) => "success"
+    def instanteState = instance.state
+
+    def goodorbad = (healthStatus, lifecycleState, lbState, instanteState) match {
+      case (_, Some("Pending"), _, _) | (_, Some("Terminating"), _, _) => "pending"
+      case (Some("Healthy"), Some("InService"), Some("InService"), _) => "success"
+      case (Some("Healthy"), Some("InService"), None, _) => "success"
+      case (None, None, None, "running") => "success"
       case _ => "danger"
     }
 
-    ASGMember(instance.id, description, instance.uptime, instance.version, state, lifecycleState, goodorbad, instance)
+    ASGMember(instance.id, description, instance.uptime, instance.version, lbState, lifecycleState, goodorbad, instance)
   }
 
 }
