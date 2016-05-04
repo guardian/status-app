@@ -18,7 +18,9 @@
 
         <thead>
             <th>Instance</th>
-            <th>AutoScaling</th>
+            @for(_ <- asg.name) {
+                <th>AutoScaling</th>
+            }
             @for(_ <- asg.elb) {
                 <th>ELB</th>
             }
@@ -29,7 +31,9 @@
         @for(member <- asg.members) {
             <tr class="@member.goodorbad">
                 <td><a href="@routes.Application.instance(member.id)">@member.id</a></td>
-                <td>@member.lifecycleState</td>
+                @for(_ <- asg.name) {
+                    <td>@member.lifecycleState</td>
+                }
                 @for(_ <- asg.elb) {
                     <td title="@member.description">@member.state<br>@member.description</td>
                 }

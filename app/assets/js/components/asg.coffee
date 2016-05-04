@@ -119,6 +119,7 @@ AutoScalingGroup = React.createClass
       (clusterMembers {
         members: @props.group.members
         elb: @props.group.elb
+        asg: @props.group.name
       })
       (a {
         href: "https://console.aws.amazon.com/cloudwatch/home?region=eu-west-1#metrics:graph=!D03!E06!ET7!MN5!NS2!PD1!SS4!ST0!VA-PT3H~60~AWS%252FEC2~AutoScalingGroupName~Maximum~CPUUtilization~#{@props.group.name}~P0D"
@@ -165,11 +166,15 @@ clusterTitle = React.createFactory(ClusterTitle)
 ClusterMembers = React.createClass
   render: () ->
     hasELB = @props.elb?
+    hasASG = @props.asg?
     (table { className: "table table-condensed" }, [
       (thead {}, [
         (tr {}, [
           (th {}, ["Instance"])
-          (th {}, ["AutoScaling"])
+          if(hasASG)
+            (th {}, ["AutoScaling"])
+          else
+            (th {}, ["Instance State"])
           if (hasELB)
             (th {}, ["ELB"])
           else
@@ -183,6 +188,7 @@ ClusterMembers = React.createClass
           member: m
           key: m.id
           hasELB: hasELB
+          hasASG: hasASG
           url: m.url
         }))
       ])
@@ -232,11 +238,15 @@ scalingActivity = React.createFactory(ScalingActivity)
 ClusterMember = React.createClass
   render: () ->
     hasELB = @props.hasELB
+    hasASG = @props.hasASG
     (tr { className: @props.member.goodorbad }, [
       (td {}, [
         (a { href: "/instance/#{@props.member.id}" }, [@props.member.id])
       ])
-      (td {}, @props.member.lifecycleState )
+      if (hasASG)
+        (td {}, @props.member.lifecycleState )
+      else
+        (td {}, @props.member.instance.state )
       if (hasELB) then (td { title: @props.member.description }, @props.member.state )
       (td {}, @props.member.uptime)
       (td {}, @props.member.version)

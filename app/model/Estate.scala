@@ -1,11 +1,10 @@
 package model
 
-import com.amazonaws.AmazonServiceException
-import lib.{Config, AmazonConnection, AWS, ScheduledAgent}
+import com.amazonaws.services.ec2.model.{Tag, DescribeInstancesRequest}
+import lib.{AWS, ScheduledAgent}
 import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import play.api.Logger
 import scala.concurrent.Future
-import controllers.Application
 import com.amazonaws.services.sqs.model.{ListQueuesResult, ListQueuesRequest}
 import org.joda.time.DateTime
 import play.api.libs.json.{Writes, Json}
@@ -38,7 +37,7 @@ object Stage {
 case class PopulatedEstate(override val asgs: Seq[ASG], queues: Seq[Queue], lastUpdateTime: DateTime)
     extends Estate {
   lazy val stacks = asgs.groupBy(asg =>
-    (asg.stage.getOrElse("unkown"), asg.stack.getOrElse("unknown"))
+    (asg.stage.getOrElse("unknown"), asg.stack.getOrElse("unknown"))
   ).toSeq.map { case ((stage, name), asgs) => stage -> Stack(name, asgs) }
 
   lazy val stages = stacks.foldLeft(Map.empty[String, Seq[Stack]].withDefaultValue(Seq[Stack]())){
@@ -75,25 +74,33 @@ object Estate {
 
   implicit val conn = AWS.connection
 
-  private def fetchAllAsg(nextToken: Option[String] = None): Future[List[AutoScalingGroup]] = {
-    val request = new DescribeAutoScalingGroupsRequest
+  def fetchAsgByName(name: String): Future[Option[AutoScalingGroup]] = {
+    val request = new DescribeAutoScalingGroupsRequest().withAutoScalingGroupNames(name)
+    AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, request).map { result =>
+      result.getAutoScalingGroups.headOption
+    }
+  }
+
+  private def fetchAllInstances(nextToken: Option[String] = None): Future[List[com.amazonaws.services.ec2.model.Instance]] = {
+    val request = new DescribeInstancesRequest
     nextToken.foreach(request.setNextToken)
-    AWS.futureOf(conn.autoscaling.describeAutoScalingGroupsAsync, request).flatMap { result =>
-      val autoScalingGroups = result.getAutoScalingGroups.toList
+    AWS.futureOf(conn.ec2.describeInstancesAsync, request).flatMap { result =>
+      val instances = result.getReservations().toList.flatMap(r => r.getInstances())
       Option(result.getNextToken()) match {
-        case None => Future.successful(autoScalingGroups)
-        case token: Some[String] => fetchAllAsg(token).map( _ ++ autoScalingGroups)
+        case None => Future.successful(instances)
+        case token: Some[String] => fetchAllInstances(token).map(_ ++ instances)
       }
     }
   }
 
   val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
-    val groupsFuture = fetchAllAsg()
+    val instancesFuture = fetchAllInstances()
     val queuesFuture = AWS.futureOf(conn.sqs.listQueuesAsync, new ListQueuesRequest())
 
     for {
-      groups <- groupsFuture
-      asgs <- Future.traverse(groups)(ASG.from)
+      instances <- instancesFuture
+      tagsToInstances = instances.groupBy(i => i.getTags.map(t => t.getKey -> t.getValue).toMap)
+      asgs <- Future.traverse(tagsToInstances)({case(tagsMap, instances) => ASG.fromApp(tagsMap, instances)})
       queueResult <- queuesFuture.recover {
         case NonFatal(e) => {
           log.logger.error("Error retrieving queues", e)
@@ -101,7 +108,7 @@ object Estate {
         }
       }
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
-    } yield PopulatedEstate(asgs, queues, DateTime.now)
+    } yield PopulatedEstate(asgs.seq.toList, queues, DateTime.now)
   }
   def apply() = estateAgent()
 }
