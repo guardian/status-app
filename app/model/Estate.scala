@@ -8,6 +8,7 @@ import scala.concurrent.Future
 import com.amazonaws.services.sqs.model.{ListQueuesResult, ListQueuesRequest}
 import org.joda.time.DateTime
 import play.api.libs.json.{Writes, Json}
+import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance}
 
 import scala.util.control.NonFatal
 
@@ -93,13 +94,20 @@ object Estate {
     }
   }
 
+  def groupInstancesByTag(instances: List[AwsEc2Instance]): Map[Map[String, String], List[AwsEc2Instance]] = {
+    instances.groupBy(i => {
+      i.getTags.filterNot(t => t.getKey == "Magenta" && t.getValue == "Terminate")
+               .map(t => t.getKey -> t.getValue).toMap
+    })
+  }
+
   val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
     val instancesFuture = fetchAllInstances()
     val queuesFuture = AWS.futureOf(conn.sqs.listQueuesAsync, new ListQueuesRequest())
 
     for {
       instances <- instancesFuture
-      tagsToInstances = instances.groupBy(i => i.getTags.map(t => t.getKey -> t.getValue).toMap)
+      tagsToInstances = groupInstancesByTag(instances)
       asgs <- Future.traverse(tagsToInstances)({case(tagsMap, instances) => ASG.fromApp(tagsMap, instances)})
       queueResult <- queuesFuture.recover {
         case NonFatal(e) => {
