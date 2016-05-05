@@ -1,5 +1,6 @@
 package model
 
+import com.amazonaws.services.ec2.model.{Tag, Instance => AwsEc2Instance}
 import org.specs2.mutable._
 import com.amazonaws.services.autoscaling.model.{TagDescription, AutoScalingGroup}
 import collection.convert.wrapAll._

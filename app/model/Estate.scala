@@ -96,8 +96,8 @@ object Estate {
 
   def groupInstancesByTag(instances: List[AwsEc2Instance]): Map[Map[String, String], List[AwsEc2Instance]] = {
     instances.groupBy(i => {
-      i.getTags.filterNot(t => t.getKey == "Magenta" && t.getValue == "Terminate")
-               .map(t => t.getKey -> t.getValue).toMap
+      i.getTags.toList.filter(t => t.getKey == "App" || t.getKey == "Stage" || t.getKey == "Stack")
+        .map(t => t.getKey -> t.getValue).toMap
     })
   }
 
@@ -108,7 +108,7 @@ object Estate {
     for {
       instances <- instancesFuture
       tagsToInstances = groupInstancesByTag(instances)
-      asgs <- Future.traverse(tagsToInstances)({case(tagsMap, instances) => ASG.fromApp(tagsMap, instances)})
+      asgs <- Future.traverse(tagsToInstances)({case(_, instances) => ASG.fromApp(instances)})
       queueResult <- queuesFuture.recover {
         case NonFatal(e) => {
           log.logger.error("Error retrieving queues", e)
