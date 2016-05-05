@@ -23,7 +23,9 @@ case class ASG(name: Option[String], stage: Option[String], app: Option[String],
 object ASG {
   val log = Logger[ASG](classOf[ASG])
 
-  def fromApp(tags: Map[String, String], instances: List[com.amazonaws.services.ec2.model.Instance])(implicit conn: AmazonConnection): Future[ASG] = {
+  def fromApp(instances: List[com.amazonaws.services.ec2.model.Instance])(implicit conn: AmazonConnection): Future[ASG] = {
+    val tags = instances.flatMap(i => i.getTags.toList.map(t => t.getKey -> t.getValue)).toMap
+
     val autoScalingGroupNameOpt = tags.get("aws:autoscaling:groupName")
 
     val asgFtO = for {
