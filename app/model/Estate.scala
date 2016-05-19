@@ -1,6 +1,6 @@
 package model
 
-import com.amazonaws.services.ec2.model.{Tag, DescribeInstancesRequest}
+import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance, DescribeInstancesRequest}
 import lib.{AWS, ScheduledAgent}
 import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import play.api.Logger
@@ -8,7 +8,6 @@ import scala.concurrent.Future
 import com.amazonaws.services.sqs.model.{ListQueuesResult, ListQueuesRequest}
 import org.joda.time.DateTime
 import play.api.libs.json.{Writes, Json}
-import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance}
 
 import scala.util.control.NonFatal
 
@@ -107,7 +106,8 @@ object Estate {
 
     for {
       instances <- instancesFuture
-      tagsToInstances = groupInstancesByTag(instances)
+      nonTerminatedInstances = instances.filterNot(i => i.getState.getName=="terminated")
+      tagsToInstances = groupInstancesByTag(nonTerminatedInstances)
       asgs <- Future.traverse(tagsToInstances)({case(_, instances) => ASG.fromApp(instances)})
       queueResult <- queuesFuture.recover {
         case NonFatal(e) => {
