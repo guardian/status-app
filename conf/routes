@@ -17,6 +17,7 @@ GET        /queues                        controllers.Application.queues
 GET        /$stage<.*?>.json              controllers.Application.stageJson(stage)
 GET        /:stage                        controllers.Application.stage(stage)
 
+GET        /api/billEstimates             controllers.Application.billEstimates
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file                  controllers.Assets.at(path="/public", file)
 
