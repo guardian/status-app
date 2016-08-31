@@ -22,6 +22,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "zeroclipboard" % "2.2.0"
 )
 
+packageName in Universal := name.value
 maintainer := "Phil Wills <philip.wills@theguardian.com>"
 packageSummary := "AWS status web-app"
 packageDescription := """Web app that shows an overview of the status of autoscaling groups in an AWS account"""

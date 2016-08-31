@@ -144,7 +144,7 @@
                 "KeyName":{
                     "Ref":"KeyName"
                 },
-                "ImageId":"ami-36289a45",
+                "ImageId":"ami-581a692b",
                 "SecurityGroups":[ {
                     "Ref":"InstanceSecurityGroup"
                 } ],
@@ -158,14 +158,8 @@
                         "Fn::Join": [
                             "\n",
                             [
-                                "#!/bin/bash -ev",
-                                "apt-get -y update",
-                                "apt-get -y upgrade",
-                                "apt-get -y install language-pack-en openjdk-8-jre-headless",
-                                "#See https://bugs.launchpad.net/ubuntu/+source/ca-certificates-java/+bug/1396760",
-                                "/var/lib/dpkg/info/ca-certificates-java.postinst configure",
-                                {"Fn::Join":["/", ["wget https://s3-eu-west-1.amazonaws.com", {"Fn::Join":["-", [{ "Ref" : "Stack" }, "dist"]]}, { "Ref" : "Stack" }, { "Ref" : "Stage" }, "status-app/status-app_1.0_all.deb"]]},
-                                "dpkg -i status-app_1.0_all.deb"
+                                "#!/bin/bash -ev\n",
+                                "/opt/features/deb/install.sh -b ophan-dist\n"
                             ]
                         ]
                     }
