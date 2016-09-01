@@ -47,6 +47,10 @@ riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV")
 riffRaffManifestBranch := env("TRAVIS_BRANCH").getOrElse(git.gitCurrentBranch.value)
 riffRaffUploadArtifactBucket := Some("riffraff-artifact")
 riffRaffUploadManifestBucket := Some("riffraff-builds")
+riffRaffArtifactResources  := Seq(
+  riffRaffPackageType.value -> s"packages/${name.value}/${name.value}.deb",
+  (resourceDirectory in Compile).value / "deploy.json" -> "deploy.json"
+)
 
 buildInfoPackage := "controllers"
 def env(key: String): Option[String] = Option(System.getenv(key))
