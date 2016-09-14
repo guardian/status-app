@@ -26,7 +26,13 @@ object ASGMember {
       case _ => "danger"
     }
 
-    ASGMember(instance.id, description, instance.uptime, instance.version, lbState, lifecycleState, goodorbad, instance)
+    val truncatedId = {
+      if(instance.id.length > 10) {
+        s"${instance.id.take(8)}..."
+      } else instance.id
+    }
+
+    ASGMember(truncatedId, description, instance.uptime, instance.version, lbState, lifecycleState, goodorbad, instance)
   }
 
 }
