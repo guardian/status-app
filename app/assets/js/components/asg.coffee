@@ -241,7 +241,7 @@ ClusterMember = React.createClass
     hasASG = @props.hasASG
     (tr { className: @props.member.goodorbad }, [
       (td {}, [
-        (a { href: "/instance/#{@props.member.id}" }, [@props.member.id])
+        (a { href: "/instance/#{@props.member.id}" }, [@props.member.truncatedId])
       ])
       if (hasASG)
         (td {}, @props.member.lifecycleState )
