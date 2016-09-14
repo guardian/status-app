@@ -3,7 +3,7 @@ package model
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
 import play.api.libs.json.Json
 
-case class ASGMember(id: String, description: Option[String], uptime: String, version: Option[String],
+case class ASGMember(id: String, truncatedId: String, description: Option[String], uptime: String, version: Option[String],
                      state: Option[String], lifecycleState: Option[String], goodorbad: String, instance: Instance)
 
 object ASGMember {
@@ -32,7 +32,7 @@ object ASGMember {
       } else instance.id
     }
 
-    ASGMember(truncatedId, description, instance.uptime, instance.version, lbState, lifecycleState, goodorbad, instance)
+    ASGMember(instance.id, truncatedId, description, instance.uptime, instance.version, lbState, lifecycleState, goodorbad, instance)
   }
 
 }
