@@ -1,13 +1,17 @@
 package controllers
 
+import com.amazonaws.services.cloudwatch.model.Statistic._
+import lib.AWS
+import org.joda.time.DateTime
 import play.api.mvc._
 import model._
 import java.text.DecimalFormat
 import play.api.libs.json.{JsString, Json, Writes}
-import com.amazonaws.services.cloudwatch.model.Datapoint
+import com.amazonaws.services.cloudwatch.model.{Dimension, GetMetricStatisticsRequest, GetMetricStatisticsResult, Datapoint}
 import scala.util.Random
 import play.api.libs.ws.WS
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object Application extends Controller with AuthActions {
 
@@ -82,5 +86,11 @@ object Application extends Controller with AuthActions {
         |User-agent: *
         |Disallow: *
       """.stripMargin)
+  }
+
+  def billEstimates() = Action.async { req =>
+    for {
+      billEst <- Billing.billEstimatesByService
+    }yield Ok(Json.toJson(ServiceToCost.fromBillEst(billEst)))
   }
 }

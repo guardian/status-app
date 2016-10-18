@@ -27,6 +27,9 @@ class AmazonConnection(clientConfig: ClientConfiguration) {
   val s3 = new AmazonS3Client(credentialsProvider, clientConfig)
   val cloudWatch: AmazonCloudWatchAsyncClient = Region.getRegion(Regions.EU_WEST_1).createClient(
     classOf[AmazonCloudWatchAsyncClient], credentialsProvider, clientConfig)
+  //all billing data in is the US region
+  val billingWatch : AmazonCloudWatchAsyncClient = Region.getRegion(Regions.US_EAST_1).createClient(
+    classOf[AmazonCloudWatchAsyncClient], credentialsProvider, clientConfig)
   val sqs = Region.getRegion(Regions.EU_WEST_1).createClient(
     classOf[AmazonSQSAsyncClient], credentialsProvider, clientConfig)
   val dynamo = Region.getRegion(Regions.EU_WEST_1).createClient(
