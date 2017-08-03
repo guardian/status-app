@@ -37,7 +37,6 @@ javaOptions in Universal ++= Seq(
   s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
 )
 
-import com.typesafe.sbt.SbtGit.git
 import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
 serverLoading in Debian := Systemd
 riffRaffPackageType := (packageBin in Debian).value
