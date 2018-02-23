@@ -1,8 +1,6 @@
 stacks:
 - ophan
-- mobile
 - membership
-- discussion
 deployments:
   status-app:
     type: autoscaling
