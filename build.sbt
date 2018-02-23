@@ -53,6 +53,7 @@ buildInfoKeys := Seq[BuildInfoKey](
   name,
   version,
   BuildInfoKey.constant("buildNumber", env("BUILD_NUMBER") orElse env("TRAVIS_BUILD_NUMBER") getOrElse "DEV"),
+  BuildInfoKey.constant("gitCommitId", Option(System.getenv("TRAVIS_COMMIT")) getOrElse "DEV"),
   // so this next one is constant to avoid it always recompiling on dev machines.
   // we only really care about build time on teamcity, when a constant based on when
   // it was loaded is just fine
