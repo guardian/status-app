@@ -16,6 +16,7 @@ object Management extends Controller {
   def manifest() = Action {
     val data = Map(
       "Build" -> BuildInfo.buildNumber,
+      "Commit" -> BuildInfo.gitCommitId,
       "Date" -> new Date(BuildInfo.buildTime).toString,
       "Dependencies" -> BuildInfo.libraryDependencies.mkString(", ")
     )

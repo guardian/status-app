@@ -1,0 +1,5 @@
+{
+  "checkpoints": {
+    "status.ophan.co.uk": { "url": "http://status.ophan.co.uk/management/manifest", "overdue": "1H" }
+  }
+}
