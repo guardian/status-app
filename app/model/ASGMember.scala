@@ -27,7 +27,7 @@ object ASGMember {
       case _ => "danger"
     }
 
-    val truncatedId: String = Ascii.truncate(instance.id, 8, "...")
+    val truncatedId: String = Ascii.truncate(instance.id, 9, "…")
 
     ASGMember(instance.id, truncatedId, description, instance.uptime, instance.version, lbState, lifecycleState, goodorbad, instance)
   }
