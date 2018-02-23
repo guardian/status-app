@@ -1,0 +1,9 @@
+stacks:
+- ophan
+- membership
+deployments:
+  status-app:
+    type: autoscaling
+regions:
+- eu-west-1
+
