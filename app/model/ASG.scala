@@ -1,9 +1,9 @@
 package model
 
 import scala.concurrent.Future
-import lib.{FutureO, AWS, AmazonConnection}
-import scala.concurrent.ExecutionContext.Implicits.global
+import lib.{AWS, AmazonConnection, FutureO}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
 
 import collection.JavaConversions._
@@ -13,6 +13,7 @@ import play.api.libs.json._
 import controllers.routes
 import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricStatisticsRequest}
 import com.amazonaws.services.cloudwatch.model.Statistic._
+import com.amazonaws.services.ec2
 import org.joda.time.DateTime
 
 case class ASG(name: Option[String], stage: Option[String], app: Option[String], stack: Option[String],
@@ -23,10 +24,18 @@ case class ASG(name: Option[String], stage: Option[String], app: Option[String],
 object ASG {
   val log = Logger[ASG](classOf[ASG])
 
-  def fromApp(instances: List[com.amazonaws.services.ec2.model.Instance])(implicit conn: AmazonConnection): Future[ASG] = {
-    val tags = instances.flatMap(i => i.getTags.toList.map(t => t.getKey -> t.getValue)).toMap
+  def fromApp(instances: List[com.amazonaws.services.ec2.model.Instance])(implicit conn: AmazonConnection): Future[Seq[ASG]] = {
 
-    val autoScalingGroupNameOpt = tags.get("aws:autoscaling:groupName")
+    val instancesByAutoScalingGroupName: Map[Option[String], Seq[ec2.model.Instance]] =
+      instances.groupBy(_.getTags.toList.find(_.getKey == "aws:autoscaling:groupName").map(_.getValue))
+
+    Future.traverse(instancesByAutoScalingGroupName.toSeq){
+      case (autoScalingGroupNameOpt, instancesOfGroupName) => fromInstancesWithAutoscalingGroupName(autoScalingGroupNameOpt, instancesOfGroupName)
+    }
+  }
+
+  private def fromInstancesWithAutoscalingGroupName(autoScalingGroupNameOpt: Option[String],instances: Seq[ec2.model.Instance])(implicit conn: AmazonConnection): Future[ASG]  = {
+    val tags = instances.flatMap(i => i.getTags.toList.map(t => t.getKey -> t.getValue)).toMap
 
     val asgFtO = for {
       asgName <- FutureO.toFut(autoScalingGroupNameOpt)
@@ -50,7 +59,7 @@ object ASG {
 
     val cpuFtO = for {
       asg <- asgFtO
-      stats <-  FutureO.toOpt(AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
+      stats <- FutureO.toOpt(AWS.futureOf(conn.cloudWatch.getMetricStatisticsAsync, new GetMetricStatisticsRequest()
         .withDimensions(new Dimension().withName("AutoScalingGroupName").withValue(asg.getAutoScalingGroupName))
         .withMetricName("CPUUtilization").withNamespace("AWS/EC2").withPeriod(60)
         .withStatistics(Maximum, Average)
