@@ -6,19 +6,19 @@ enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackagin
 
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.12"
 scalacOptions ++= List("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.10.22",
+  "com.amazonaws" % "aws-java-sdk" % "1.11.283",
   "com.typesafe.akka" %% "akka-agent" % "2.3.14",
   specs2 % Test,
   cache,
   ws,
-  "com.gu" %% "play-googleauth" % "0.3.3",
+  "com.gu" %% "play-googleauth" % "0.3.7",
   "org.webjars.bower" % "react" % "0.13.3",
-  "org.webjars" % "bootstrap" % "3.3.4",
-  "org.webjars" % "d3js" % "3.5.6",
+  "org.webjars" % "bootstrap" % "3.3.7",
+  "org.webjars" % "d3js" % "3.5.17",
   "org.webjars" % "zeroclipboard" % "2.2.0"
 )
 

@@ -102,7 +102,7 @@ object Estate {
 
   val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
     val instancesFuture = fetchAllInstances()
-    val queuesFuture = AWS.futureOf(conn.sqs.listQueuesAsync, new ListQueuesRequest())
+    val queuesFuture = AWS.futureOf[ListQueuesRequest,ListQueuesResult](conn.sqs.listQueuesAsync, new ListQueuesRequest())
 
     for {
       instances <- instancesFuture

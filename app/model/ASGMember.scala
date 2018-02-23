@@ -1,6 +1,7 @@
 package model
 
 import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
+import com.google.common.base.Ascii
 import play.api.libs.json.Json
 
 case class ASGMember(id: String, truncatedId: String, description: Option[String], uptime: String, version: Option[String],
@@ -26,11 +27,7 @@ object ASGMember {
       case _ => "danger"
     }
 
-    val truncatedId = {
-      if(instance.id.length > 10) {
-        s"${instance.id.take(8)}..."
-      } else instance.id
-    }
+    val truncatedId: String = Ascii.truncate(instance.id, 8, "...")
 
     ASGMember(instance.id, truncatedId, description, instance.uptime, instance.version, lbState, lifecycleState, goodorbad, instance)
   }
