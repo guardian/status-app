@@ -5,7 +5,11 @@
     <div class="container instance-info">
         <div class="page-header">
 
-            <h1>Instance Status for @instance.id</h1>
+            <h1>Instance Status for @instance.id
+            @for(name <- instance.nameOpt) {
+                (<a href="https://www.google.com/search?q=@name+wiki">@name</a>)
+            }
+            </h1>
         </div>
 
         <h2>General</h2>
