@@ -39,7 +39,9 @@ case class Instance(
   version: Option[String],
 
   usefulUrls: Map[String, String]
-)
+) {
+  val nameOpt = tags.get("Name")
+}
 
 object EC2Instance {
   def apply(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)]) = {
