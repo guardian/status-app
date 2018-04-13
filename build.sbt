@@ -19,7 +19,8 @@ libraryDependencies ++= Seq(
   "org.webjars.bower" % "react" % "0.13.3",
   "org.webjars" % "bootstrap" % "3.3.7",
   "org.webjars" % "d3js" % "3.5.17",
-  "org.webjars" % "zeroclipboard" % "2.2.0"
+  "org.webjars" % "zeroclipboard" % "2.2.0",
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.8.11.1"
 )
 
 maintainer := "Phil Wills <philip.wills@theguardian.com>"
