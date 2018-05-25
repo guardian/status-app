@@ -16,6 +16,7 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   "com.gu" %% "play-googleauth" % "0.3.7",
+  "com.google.guava" % "guava" % "25.0-jre", //-- added explicitly - snyk report avoid logback vulnerability
   "org.webjars.bower" % "react" % "0.13.3",
   "org.webjars" % "bootstrap" % "3.3.7",
   "org.webjars" % "d3js" % "3.5.17",
