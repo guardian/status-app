@@ -41,8 +41,8 @@ object Config {
 
   lazy val googleAuthConfig = {
     val oauthConfig = dynamoConfig("oauth")
-    val host = if (Play.mode == Mode.Dev) "localhost:9000" else oauthConfig("host").getS
-    val protocol = if (Play.mode == Mode.Dev) "http" else oauthConfig.get("protocol").map(_.getS).getOrElse("http")
+    val host = if (Play.mode == Mode.Dev) "status.thegulocal.com" else oauthConfig("host").getS
+    val protocol = if (Play.mode == Mode.Dev) "https" else oauthConfig.get("protocol").map(_.getS).getOrElse("http")
     GoogleAuthConfig(
       clientId = oauthConfig("clientId").getS,
       clientSecret = oauthConfig("clientSecret").getS,

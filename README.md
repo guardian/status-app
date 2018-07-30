@@ -32,10 +32,42 @@ access to the management port of your apps.
 Running locally
 ---------------
 
+####Credentials
+
+Credentials are retrieved from the configuration file used for the AWS CLI. For a Guardian stack, get your 
+credentials via 'export to shell' in Janus as status-app doesn't currently handle AWS profiles.
+
+#### Nginx setup
+
+You'll need to perform the Nginx setup for 
+[identity-platform](https://github.com/guardian/identity-platform/blob/master/nginx/README.md) 
+first, before you do anything else.
+
+##### Status-app specific setup
+Update your hosts file
+
+Add the following local development domain to your hosts file in /etc/hosts:
+
+`127.0.0.1   status.thegulocal.com`
+
+Run status-app's Nginx setup script
+Run the status-app setup.sh script from the root of the support-frontend project:
+
+`./nginx/setup.sh`
+
+The script doesn't start Nginx. To manually start it run `sudo nginx` or `sudo systemctl start nginx` depending on your system.
+
+#### Start the app
 If you just want to run it locally, it's a standard [Play 2](http://www.playframework.com/) 
 app and can be run with the 'run' command from an [SBT](http://www.scala-sbt.org/) prompt.
 
-Credentials are retrieved using from the configuration file used for the AWS CLI.
+`sbt run` 
+
+this defaults to port 9000
+
+visit 
+
+`https://status.thegulocal.com`
 
 Contributing
 ------------
