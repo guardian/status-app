@@ -34,7 +34,7 @@ Running locally
 
 ####Credentials
 
-Credentials are retrieved using from the configuration file used for the AWS CLI. For a Guardian stack, get your 
+Credentials are retrieved from the configuration file used for the AWS CLI. For a Guardian stack, get your 
 credentials via 'export to shell' in Janus as status-app doesn't currently handle AWS profiles.
 
 #### Nginx setup
