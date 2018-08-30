@@ -1,0 +1,246 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: status-app
+Parameters:
+  Stack:
+    Description: Applied directly as a tag
+    Type: String
+  KeyName:
+    Description: The EC2 Key Pair to allow SSH access to the instance
+    Type: String
+  Stage:
+    Description: Applied directly as a tag
+    Type: String
+    Default: PROD
+  HostedZone:
+    Description: >-
+      DNS hosted zone for which A CNAME will be created. e.g. 'example.com'
+      (note, no trailing full-stop) for status.example.com. Leave empty if you
+      don't want to add a CNAME to the status app
+    Type: String
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    ConstraintDescription: must be a valid EC2 instance type.
+  VPC:
+    Description: ID of the VPC onto which to launch the application
+    Type: 'AWS::EC2::VPC::Id'
+  Subnets:
+    Description: Subnets to use in VPC
+    Type: 'List<AWS::EC2::Subnet::Id>'
+  ImageId:
+    Description: AMI ID
+    Type: String
+  AllowedIngressIps:
+    Description: IP address range (CIDR) that access the site
+    Type: String
+    Default: 0.0.0.0/0
+  SSLCertificateId:
+    Description: SSL Certificate ID
+    Type: String
+Conditions:
+  HasDNS: !Not
+  - !Equals
+    - !Ref HostedZone
+    - ''
+Resources:
+  StatusAppRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - 'sts:AssumeRole'
+  StatusAppReadMetadataPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: StatusAppReadMetadataPolicy
+      PolicyDocument:
+        Statement:
+        - Action:
+          - 'ec2:describe*'
+          - 'autoscaling:Describe*'
+          - 'elasticloadbalancing:Describe*'
+          - 'cloudwatch:Get*'
+          - 'sqs:ListQueues'
+          Effect: Allow
+          Resource: '*'
+      Roles:
+      - !Ref StatusAppRole
+  StatusAppReadConfigPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: StatusAppReadConfigPolicy
+      PolicyDocument:
+        Statement:
+        - Action:
+          - 'dynamodb:GetItem'
+          Effect: Allow
+          Resource: !Join
+          - ':'
+          - - 'arn:aws:dynamodb'
+            - !Ref 'AWS::Region'
+            - !Ref 'AWS::AccountId'
+            - table/StatusAppConfig
+      Roles:
+      - !Ref StatusAppRole
+  StatusAppInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+      - !Ref StatusAppRole
+  LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+    Properties:
+      Listeners:
+      - LoadBalancerPort: 443
+        InstancePort: 9000
+        Protocol: HTTPS
+        SSLCertificateId: !Sub 'arn:aws:acm:eu-west-1:${AWS::AccountId}:certificate/${SSLCertificateId}'
+      CrossZone: 'true'
+      HealthCheck:
+        Target: 'HTTP:9000/management/healthcheck'
+        HealthyThreshold: 2
+        UnhealthyThreshold: 2
+        Interval: 10
+        Timeout: 5
+      Subnets: !Ref Subnets
+      SecurityGroups:
+      - !Ref LoadBalancerSecurityGroup
+  AutoscalingGroup:
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      AvailabilityZones: !GetAZs ''
+      LaunchConfigurationName: !Ref LaunchConfig
+      MinSize: 1
+      MaxSize: 2
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 300
+      LoadBalancerNames:
+      - !Ref LoadBalancer
+      Tags:
+      - Key: Stack
+        Value: !Ref Stack
+        PropagateAtLaunch: 'true'
+      - Key: App
+        Value: status-app
+        PropagateAtLaunch: 'true'
+      - Key: Stage
+        Value: !Ref Stage
+        PropagateAtLaunch: 'true'
+      - Key: Management
+        Value: port=9000
+        PropagateAtLaunch: 'true'
+      - Key: Role
+        Value: !Join
+        - '-'
+        - - !Ref Stack
+          - status-app
+        PropagateAtLaunch: 'true'
+      VPCZoneIdentifier: !Ref Subnets
+  LaunchConfig:
+    Type: 'AWS::AutoScaling::LaunchConfiguration'
+    Properties:
+      KeyName: !Ref KeyName
+      ImageId: !Ref ImageId
+      SecurityGroups:
+      - !Ref InstanceSecurityGroup
+      AssociatePublicIpAddress: true
+      InstanceType: t2.micro
+      IamInstanceProfile: !Ref StatusAppInstanceProfile
+      UserData: !Base64
+        'Fn::Join':
+        - |+
+
+        - - '#!/bin/bash -ev'
+          - !Join
+            - ''
+            - - >-
+                wget -N --directory-prefix=/home/ubuntu/.ssh
+                https://s3-eu-west-1.amazonaws.com/membership-dist/
+                - !Ref Stack
+                - /authorized_keys &
+          - apt-get -y update
+          - apt-get -y upgrade
+          - apt-get -y install language-pack-en openjdk-8-jre-headless
+          - >-
+            #See
+            https://bugs.launchpad.net/ubuntu/+source/ca-certificates-java/+bug/1396760
+          - /var/lib/dpkg/info/ca-certificates-java.postinst configure
+          - !Join
+            - /
+            - - 'wget https://s3-eu-west-1.amazonaws.com'
+              - !Join
+                - '-'
+                - - !Ref Stack
+                  - dist
+              - !Ref Stack
+              - !Ref Stage
+              - status-app/status-app_1.0_all.deb
+          - dpkg -i status-app_1.0_all.deb
+  LoadBalancerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Open up HTTP access to load balancer
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: !Ref 'AllowedIngressIps'
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: status app instance
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 9000
+        ToPort: 9000
+        SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref 'AllowedIngressIps'
+  ConfigTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: StatusAppConfig
+      KeySchema:
+      - AttributeName: key
+        KeyType: HASH
+      AttributeDefinitions:
+      - AttributeName: key
+        AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: '1'
+        WriteCapacityUnits: '1'
+  MainDnsEntry:
+    Type: 'AWS::Route53::RecordSet'
+    Condition: HasDNS
+    Properties:
+      HostedZoneName: !Join
+      - ''
+      - - !Ref HostedZone
+        - .
+      Comment: CNAME for status app
+      Name: !Join
+      - .
+      - - status
+        - !Ref HostedZone
+      Type: CNAME
+      TTL: '900'
+      ResourceRecords:
+      - !GetAtt
+        - LoadBalancer
+        - DNSName
+Outputs:
+  SecurityGroup:
+    Description: Security group to grant access to status app
+    Value: !Ref InstanceSecurityGroup
