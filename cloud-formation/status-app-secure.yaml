@@ -81,12 +81,7 @@ Resources:
         - Action:
           - 'dynamodb:GetItem'
           Effect: Allow
-          Resource: !Join
-          - ':'
-          - - 'arn:aws:dynamodb'
-            - !Ref 'AWS::Region'
-            - !Ref 'AWS::AccountId'
-            - table/StatusAppConfig
+          Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/StatusAppConfig'
       Roles:
       - !Ref StatusAppRole
   StatusAppInstanceProfile:
@@ -138,10 +133,7 @@ Resources:
         Value: port=9000
         PropagateAtLaunch: 'true'
       - Key: Role
-        Value: !Join
-        - '-'
-        - - !Ref Stack
-          - status-app
+        Value: !Sub '${Stack}-status-app'
         PropagateAtLaunch: 'true'
       VPCZoneIdentifier: !Ref Subnets
   LaunchConfig:
@@ -154,36 +146,17 @@ Resources:
       AssociatePublicIpAddress: true
       InstanceType: t2.micro
       IamInstanceProfile: !Ref StatusAppInstanceProfile
-      UserData: !Base64
-        'Fn::Join':
-        - |+
-
-        - - '#!/bin/bash -ev'
-          - !Join
-            - ''
-            - - >-
-                wget -N --directory-prefix=/home/ubuntu/.ssh
-                https://s3-eu-west-1.amazonaws.com/membership-dist/
-                - !Ref Stack
-                - /authorized_keys &
-          - apt-get -y update
-          - apt-get -y upgrade
-          - apt-get -y install language-pack-en openjdk-8-jre-headless
-          - >-
-            #See
-            https://bugs.launchpad.net/ubuntu/+source/ca-certificates-java/+bug/1396760
-          - /var/lib/dpkg/info/ca-certificates-java.postinst configure
-          - !Join
-            - /
-            - - 'wget https://s3-eu-west-1.amazonaws.com'
-              - !Join
-                - '-'
-                - - !Ref Stack
-                  - dist
-              - !Ref Stack
-              - !Ref Stage
-              - status-app/status-app_1.0_all.deb
-          - dpkg -i status-app_1.0_all.deb
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -ev
+          apt-get -y update
+          apt-get -y upgrade
+          apt-get -y install language-pack-en openjdk-8-jre-headless
+          #See https://bugs.launchpad.net/ubuntu/+source/ca-certificates-java/+bug/1396760
+          /var/lib/dpkg/info/ca-certificates-java.postinst configure
+          wget https://s3-eu-west-1.amazonaws.com/membership-dist/membership/PROD/status-app/status-app_1.0_all.deb
+          aws --region ${AWS::Region} s3 cp s3://membership-dist/${Stack}/${Stage}/status-app/status-app_1.0_all.deb .
+          dpkg -i status-app_1.0_all.deb
   LoadBalancerSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -225,15 +198,9 @@ Resources:
     Type: 'AWS::Route53::RecordSet'
     Condition: HasDNS
     Properties:
-      HostedZoneName: !Join
-      - ''
-      - - !Ref HostedZone
-        - .
+      HostedZoneName: !Sub '${HostedZone}.'
       Comment: CNAME for status app
-      Name: !Join
-      - .
-      - - status
-        - !Ref HostedZone
+      Name: !Sub 'status.${HostedZone}'
       Type: CNAME
       TTL: '900'
       ResourceRecords:
