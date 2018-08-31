@@ -149,14 +149,19 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -ev
-          apt-get -y update
-          apt-get -y upgrade
+          CONF_DIR=/etc/status-app
           apt-get -y install language-pack-en openjdk-8-jre-headless
           #See https://bugs.launchpad.net/ubuntu/+source/ca-certificates-java/+bug/1396760
           /var/lib/dpkg/info/ca-certificates-java.postinst configure
-          wget https://s3-eu-west-1.amazonaws.com/membership-dist/membership/PROD/status-app/status-app_1.0_all.deb
           aws --region ${AWS::Region} s3 cp s3://membership-dist/${Stack}/${Stage}/status-app/status-app_1.0_all.deb .
           dpkg -i status-app_1.0_all.deb
+
+          wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+          sed -i -e "s/__DATE/$(date +%F)/" -e 's/__STAGE/${Stage}/' $CONF_DIR/logger.conf
+          python awslogs-agent-setup.py -nr ${AWS::Region} -c $CONF_DIR/logger.conf
+
+          systemctl enable awslogs
+          systemctl start awslogs
   LoadBalancerSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
