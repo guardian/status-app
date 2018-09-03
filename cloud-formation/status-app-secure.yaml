@@ -4,9 +4,6 @@ Parameters:
   Stack:
     Description: Applied directly as a tag
     Type: String
-  KeyName:
-    Description: The EC2 Key Pair to allow SSH access to the instance
-    Type: String
   Stage:
     Description: Applied directly as a tag
     Type: String
@@ -153,7 +150,6 @@ Resources:
   LaunchConfig:
     Type: 'AWS::AutoScaling::LaunchConfiguration'
     Properties:
-      KeyName: !Ref KeyName
       ImageId: !Ref ImageId
       SecurityGroups:
       - !Ref InstanceSecurityGroup
