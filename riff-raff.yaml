@@ -2,8 +2,18 @@ stacks:
 - ophan
 - membership
 deployments:
+  ami:
+    type: ami-cloudformation-parameter
+    app: status-app
+    parameters:
+      amiTags:
+        Recipe: ubuntu-xenial-status-app
+        AmigoStage: PROD
+      amiParameter: ImageId
+      amiEncrypted: true
   status-app:
     type: autoscaling
+    dependencies: [ami]
 regions:
 - eu-west-1
 
