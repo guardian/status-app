@@ -33,8 +33,8 @@ class MyComponents(context: Context)
   val dynamoConfig = new DynamoConfig(environment.mode)
   val getScheduledAgent = new GetScheduledAgent
   val instanceSource = new InstanceSource(defaultCacheApi.sync, wsClient)
-  val awsCost = new AWSCost(wsClient, instanceSource, getScheduledAgent)
-  val asgSource = new ASGSource(instanceSource)
+  val awsCost = new AWSCost(wsClient,instanceSource, getScheduledAgent)
+  val asgSource = new ASGSource(instanceSource, awsCost)
   val getEstate = new GetEstate(getScheduledAgent, asgSource)
   val googleAuthConfig = dynamoConfig.googleAuthConfig
     val authAction = new StatusAppAuthAction[AnyContent](

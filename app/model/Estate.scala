@@ -90,7 +90,7 @@ class GetEstate(
       queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
     } yield PopulatedEstate(asgs.seq.toList.flatten, queues, DateTime.now)
   }
-  def apply(): Estate = estateAgent() //todo call this
+  def apply(): Estate = estateAgent()
 }
 
 object EstateInstances {

@@ -58,7 +58,7 @@ class AWSCost(
     for {
       reservations <- AWS.futureOf(awsConnection.ec2.describeInstancesAsync, new DescribeInstancesRequest())
       instances <- Future.sequence (
-        reservations.getReservations flatMap (_.getInstances) map (instanceSource.from(_))
+        reservations.getReservations flatMap (_.getInstances) map (instanceSource.from(_, this)) //fixme this needs a refactor to eliminate the cyclic dependency between AWSCost and InstanceSource
       )
     } yield instances.groupBy(_.costingType).mapValues(_.size)
   }

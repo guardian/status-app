@@ -25,7 +25,7 @@ object ASG {
   implicit val writes = Json.writes[ASG]
 }
 
-class ASGSource(instanceSource: InstanceSource) {
+class ASGSource(instanceSource: InstanceSource, cost: AWSCost) {
   val log = Logger(classOf[ASG])
 
   def fromApp(instances: List[com.amazonaws.services.ec2.model.Instance])(implicit conn: AmazonConnection): Future[Seq[ASG]] = {
@@ -81,7 +81,7 @@ class ASGSource(instanceSource: InstanceSource) {
       membersOfElb = elbOpt.map(_.members).getOrElse(Nil)
       membersOfASGOpt <- awsAsgInstances.futureOption
       membersOfASG = membersOfASGOpt.getOrElse(Nil)
-      clusterMembers = Future.sequence(instances.map(i => instanceSource.from(i).map(i => ASGMember.from(i, membersOfASG.find(_.getInstanceId == i.id), membersOfElb.find(_.id == i.id)))))
+      clusterMembers = Future.sequence(instances.map(i => instanceSource.from(i, cost).map(i => ASGMember.from(i, membersOfASG.find(_.getInstanceId == i.id), membersOfElb.find(_.id == i.id)))))
       members <- clusterMembers
       activities <- recentActivity.futureOption
       cpu <- cpuFtO.futureOption
