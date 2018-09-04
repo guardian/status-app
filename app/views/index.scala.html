@@ -1,8 +1,10 @@
- @(stage: String, estate: model.Estate, totalSunkCost: Float)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], money: java.text.DecimalFormat)
+@import model.GetEstate
+
+@(stage: String, estate: model.Estate, totalSunkCost: Float, getEstate: GetEstate)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], money: java.text.DecimalFormat)
 
 @import model._
 
-@main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/settings.js")) {
+@main("Status Monitor",getEstate, stage=Some(stage), refreshSecs = None, scripts = List("assets/js/settings.js")) {
 
      <script src='@routes.Assets.at("lib/d3js/d3.min.js")'></script>
      <script src='@routes.Assets.at("lib/zeroclipboard/ZeroClipboard.min.js")'></script>

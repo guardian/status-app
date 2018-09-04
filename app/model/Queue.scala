@@ -6,7 +6,6 @@ import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricS
 import org.joda.time.DateTime
 
 import collection.convert.wrapAsScala._
-import play.api.Logger
 
 case class Queue(name: String, url: String, approxQueueLength: Seq[Datapoint])
 
