@@ -3,12 +3,11 @@ package lib
 import akka.actor.ActorSystem
 import akka.agent.Agent
 import concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import play.Logger
 
-class GetScheduledAgent(implicit system: ActorSystem) {
+class GetScheduledAgent(implicit system: ActorSystem, ec: ExecutionContext) {
 
   def apply[T](initialDelay: FiniteDuration, frequency: FiniteDuration, initialValue: T)(block: => Future[T]): ScheduledAgent[T] = {
     new ScheduledAgent(initialDelay, frequency, initialValue, block, system)
