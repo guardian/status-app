@@ -43,9 +43,9 @@ javaOptions in Universal ++= Seq(
 serverLoading in Debian := Some(Systemd)
 riffRaffPackageType := (packageBin in Debian).value
 
-//TODO SEE IF THESE TWO LINES ARE NEEDED AND IF SO WHAT IS THE EQUIVALENT OF THEM IN THE NEW RIFF-RAFF PLUGIN VERSION
-//riffRaffUploadArtifactBucket := Some("riffraff-artifact")
-//riffRaffUploadManifestBucket := Some("riffraff-builds")
+
+riffRaffUploadArtifactBucket := Some("riffraff-artifact")
+riffRaffUploadManifestBucket := Some("riffraff-builds")
 
 buildInfoPackage := "controllers"
 def env(key: String): Option[String] = Option(System.getenv(key))
