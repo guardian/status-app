@@ -119,7 +119,7 @@ trait AppSpecifics {
 
   def versionExtractor: WSResponse => Option[String]
 
-  def version(wsClient: WSClient) = wsClient.url(versionUrl).withRequestTimeout(200.milliseconds).get() map (versionExtractor) recover {
+  def version(implicit wsClient: WSClient) = wsClient.url(versionUrl).withRequestTimeout(200.milliseconds).get() map (versionExtractor) recover {
     case _: ConnectException => {
       log.error(s"Couldn't retrieve $versionUrl")
       None
@@ -168,7 +168,7 @@ object Instance {
       else new StandardWebApp(s"${managementEndpoint.get.url}/manifest")
 
     log.debug(s"Retrieving version of instance with tags: $tags")
-    specifics.version(wsClient) map {
+    specifics.version map {
       v => EC2Instance(i, v, specifics.usefulUrls, awsCost)
     }
   }
