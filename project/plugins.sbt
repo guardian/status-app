@@ -1,6 +1,8 @@
-resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
+resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
 
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.18")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.9")
+
+libraryDependencies += "org.vafer" % "jdeb" % "1.5" artifacts (Artifact("jdeb", "jar", "jar"))
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.4.3")
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.2")
@@ -14,4 +16,3 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.0.4")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 
-libraryDependencies += "org.vafer" % "jdeb" % "1.3" artifacts Artifact("jdeb", "jar", "jar")
