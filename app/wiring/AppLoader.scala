@@ -2,7 +2,7 @@ package wiring
 
 import akka.actor.ActorSystem
 import controllers.{Login, Management, StatusAppAuthAction, routes, Application => ApplicationController}
-import lib.{DynamoConfig, GetScheduledAgent}
+import lib.DynamoConfig
 import model._
 import play.api.ApplicationLoader.Context
 import play.api.cache.ehcache.EhCacheComponents
@@ -31,11 +31,10 @@ class MyComponents(context: Context)
 
   implicit val system: ActorSystem = actorSystem
   val dynamoConfig = new DynamoConfig(environment.mode)
-  val getScheduledAgent = new GetScheduledAgent
-  val instanceSource = new InstanceSource(defaultCacheApi.sync, wsClient)
-  val awsCost = new AWSCost(wsClient,instanceSource, getScheduledAgent)
-  val asgSource = new ASGSource(instanceSource, awsCost)
-  val getEstate = new GetEstate(getScheduledAgent, asgSource)
+  implicit val ws = wsClient
+  val awsCost = new AWSCost
+  val asgSource = new ASGSource(awsCost)
+  val getEstate = new GetEstate(asgSource)
   val googleAuthConfig = dynamoConfig.googleAuthConfig
     val authAction = new StatusAppAuthAction[AnyContent](
       googleAuthConfig,

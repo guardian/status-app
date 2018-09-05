@@ -45,13 +45,9 @@ case class Instance(
   val nameOpt = tags.get("Name")
 }
 
-object Instance {
-  implicit val instanceWrites = Json.writes[Instance]
-
-}
 
 object EC2Instance {
-  def apply(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)], awsCost: AWSCost) = {
+  def apply(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)], awsCost: AWSCost, flag:Boolean = false) = {
     val tags = awsInstance.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
     val costingType = EC2CostingType(awsInstance.getInstanceType, awsInstance.getPlacement.getAvailabilityZone)
     val cost: Option[BigDecimal] = Try(awsCost(costingType)).toOption
@@ -123,7 +119,7 @@ trait AppSpecifics {
 
   def versionExtractor: WSResponse => Option[String]
 
-  def version(wsClient: WSClient) = wsClient.url(versionUrl).withRequestTimeout(Duration(200, MILLISECONDS)).get() map (versionExtractor) recover {
+  def version(wsClient: WSClient) = wsClient.url(versionUrl).withRequestTimeout(200.milliseconds).get() map (versionExtractor) recover {
     case _: ConnectException => {
       log.error(s"Couldn't retrieve $versionUrl")
       None
@@ -136,11 +132,11 @@ trait AppSpecifics {
 }
 
 
-class InstanceSource(cache: SyncCacheApi, wsClient: WSClient) {
-
+object Instance {
+  implicit val instanceWrites = Json.writes[Instance]
   val log = Logger(classOf[Instance])
 
-  private def uncachedGet(id: String, awsCost: AWSCost)(implicit awsConn: AmazonConnection): Future[Instance] = {
+  private def uncachedGet(id: String, awsCost: AWSCost)(implicit awsConn: AmazonConnection, wsClient: WSClient): Future[Instance] = {
     (for {
       result <- AWS.futureOf(awsConn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(id))
       i <- (result.getReservations flatMap (_.getInstances) map (from(_, awsCost))).head
@@ -152,7 +148,7 @@ class InstanceSource(cache: SyncCacheApi, wsClient: WSClient) {
     }
   }
 
-  def get(id: String, awsCost: AWSCost)(implicit awsConn: AmazonConnection): Future[Instance] =
+  def get(id: String, awsCost: AWSCost)(implicit awsConn: AmazonConnection, cache: SyncCacheApi, wsClient: WSClient ): Future[Instance] =
     cache.get[Instance](id) map (Future.successful(_)) getOrElse {
       uncachedGet(id, awsCost) map { instance: Instance =>
         cache.set(id, instance, Duration(30, SECONDS))
@@ -160,7 +156,7 @@ class InstanceSource(cache: SyncCacheApi, wsClient: WSClient) {
       }
     }
 
-  def from(i: AwsEc2Instance, awsCost: AWSCost): Future[Instance] = {
+  def from(i: AwsEc2Instance, awsCost: AWSCost)(implicit wsClient: WSClient): Future[Instance] = {
     val tags = i.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
     val dns = i.getPublicDnsName
 
@@ -172,7 +168,9 @@ class InstanceSource(cache: SyncCacheApi, wsClient: WSClient) {
       else new StandardWebApp(s"${managementEndpoint.get.url}/manifest")
 
     log.debug(s"Retrieving version of instance with tags: $tags")
-    specifics.version(wsClient) map { v => EC2Instance(i, v, specifics.usefulUrls, awsCost) }
+    specifics.version(wsClient) map {
+      v => EC2Instance(i, v, specifics.usefulUrls, awsCost)
+    }
   }
 }
 

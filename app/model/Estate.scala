@@ -1,12 +1,14 @@
 package model
 
+import akka.actor.ActorSystem
 import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AwsEc2Instance}
 import com.amazonaws.services.sqs.model.{ListQueuesRequest, ListQueuesResult}
-import lib.{AWS, GetScheduledAgent}
+import lib.{AWS, ScheduledAgent}
 import org.joda.time.DateTime
 import play.api.Logger
 import play.api.libs.json.{Json, Writes}
+import play.api.libs.ws.WSClient
 
 import scala.collection.convert.wrapAll._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -67,12 +69,11 @@ case object PendingEstate extends Estate {
 }
 
 class GetEstate(
-  getScheduledAgent: GetScheduledAgent,
-  asgSource: ASGSource
-) { //todo see what this should be called
+  asgSource: ASGSource,
+)(implicit wsClient: WSClient, actorSystem: ActorSystem) {
   val log = Logger(classOf[GetEstate])
   implicit val conn = AWS.connection
-  val estateAgent = getScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
+  val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
     val instancesFuture: Future[List[AwsEc2Instance]] = EstateInstances.fetchAllInstances()
     val queuesFuture: Future[ListQueuesResult] = AWS.futureOf[ListQueuesRequest,ListQueuesResult](conn.sqs.listQueuesAsync, new ListQueuesRequest())
 

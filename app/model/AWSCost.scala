@@ -1,5 +1,6 @@
 package model
 
+import akka.actor.ActorSystem
 import play.api.libs.json._
 
 import collection.convert.wrapAll._
@@ -10,16 +11,12 @@ import play.api.libs.json.JsArray
 import play.api.libs.json.JsSuccess
 import play.api.Logger
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, DescribeReservedInstancesRequest, Filter}
-import lib.{AWS, GetScheduledAgent, ScheduledAgent}
+import lib.{AWS, ScheduledAgent}
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.duration._
 
-class AWSCost(
-  wsClient:WSClient,
-  instanceSource: InstanceSource,
-  getScheduledAgent: GetScheduledAgent
-) {
+class AWSCost(implicit wsClient: WSClient, system: ActorSystem) {
   val logger = Logger(getClass)
 
   implicit val awsConnection = AWS.connection
@@ -33,7 +30,6 @@ class AWSCost(
       case 0 => 0
       case resCount => (reservations.map(_.hourlyCost).sum) / resCount
     }
-
     ((totalInstances - reservationCount) * onDemandRate + reservationCount * reservationRate) / totalInstances
   }
 
@@ -54,16 +50,16 @@ class AWSCost(
 
   def reservations = reservationsAgent()
 
-  val typeCounts = getScheduledAgent[Map[EC2CostingType, Int]](0.seconds, 5.minutes, Map()) {
+  val typeCounts = ScheduledAgent[Map[EC2CostingType, Int]](0.seconds, 5.minutes, Map()) {
     for {
       reservations <- AWS.futureOf(awsConnection.ec2.describeInstancesAsync, new DescribeInstancesRequest())
-      instances <- Future.sequence (
-        reservations.getReservations flatMap (_.getInstances) map (instanceSource.from(_, this)) //fixme this needs a refactor to eliminate the cyclic dependency between AWSCost and InstanceSource
-      )
+      instances <- Future.sequence {
+        reservations.getReservations flatMap (_.getInstances) map (Instance.from(_, this))
+      }
     } yield instances.groupBy(_.costingType).mapValues(_.size)
   }
 
-  lazy val reservationsAgent = getScheduledAgent[Map[EC2CostingType, Seq[Reservation]]](0.seconds, 5.minutes, Map()) {
+  lazy val reservationsAgent = ScheduledAgent[Map[EC2CostingType, Seq[Reservation]]](0.seconds, 5.minutes, Map()) {
     logger.info("Starting reservationsAgent")
     for {
       reservations <- AWS.futureOf(awsConnection.ec2.describeReservedInstancesAsync,
@@ -78,11 +74,10 @@ class AWSCost(
     }
   }
 
-  lazy val costsAgent = getScheduledAgent[OnDemandPrices](0.seconds, 30.minutes, OnDemandPrices(Map())) {
-
+  lazy val costsAgent = ScheduledAgent[OnDemandPrices](0.seconds, 30.minutes, OnDemandPrices(Map())) {
     // There isn't a proper API for this at time of writing, but handily the
     logger.info("Starting costsAgent")
-    def pricesFromJson(url: String) = wsClient.url(url).withRequestTimeout(Duration(2, SECONDS)).get map { response =>
+    def pricesFromJson(url: String) = wsClient.url(url).withRequestTimeout(2.seconds).get map { response =>
       logger.info("Fetched cost data")
       implicit object BigDecimalReads extends Reads[BigDecimal]{
         def reads(json: JsValue) = JsSuccess(Try { BigDecimal(json.as[String]) } getOrElse (BigDecimal(0)) )

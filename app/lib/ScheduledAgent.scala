@@ -7,9 +7,10 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import play.Logger
 
-class GetScheduledAgent(implicit system: ActorSystem, ec: ExecutionContext) {
+object ScheduledAgent {
 
-  def apply[T](initialDelay: FiniteDuration, frequency: FiniteDuration, initialValue: T)(block: => Future[T]): ScheduledAgent[T] = {
+  def apply[T](initialDelay: FiniteDuration, frequency: FiniteDuration, initialValue: T)(block: => Future[T])
+    (implicit system: ActorSystem, ec: ExecutionContext): ScheduledAgent[T] = {
     new ScheduledAgent(initialDelay, frequency, initialValue, block, system)
   }
 }
