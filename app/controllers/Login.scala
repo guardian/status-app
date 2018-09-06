@@ -27,7 +27,7 @@ class StatusAppAuthAction[A](authConfig: GoogleAuthConfig,
 
 }
 
-object AuthorisationValidatior {
+object AuthorisationValidator {
   def isAuthorised(id: UserIdentity) = authorisationError(id).isEmpty
 
   def authorisationError(id: UserIdentity): Option[String] = if (id.emailDomain != "guardian.co.uk") Some(s"The email you are using to login: ${id.email}. Please try again with another email") else None
@@ -67,9 +67,9 @@ class Login(
     (for {
       identity <- checkIdentity()
       _ <- EitherT.fromEither[Future] {
-        if (AuthorisationValidatior.isAuthorised(identity))
+        if (AuthorisationValidator.isAuthorised(identity))
           Right(())
-        else Left(redirectWithError(failureRedirectTarget, AuthorisationValidatior.authorisationError(identity).getOrElse("Bad, unknown error"), authConfig.antiForgeryKey, request.session))
+        else Left(redirectWithError(failureRedirectTarget, AuthorisationValidator.authorisationError(identity).getOrElse("Bad, unknown error"), authConfig.antiForgeryKey, request.session))
       }
     } yield {
       setupSessionWhenSuccessful(identity)

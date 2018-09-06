@@ -17,7 +17,6 @@ class Application(
   authAction: AuthAction[AnyContent],
   awsCost: AWSCost,
   getEstate: GetEstate,
-  googleAuthConfig: GoogleAuthConfig,
   controllerComponents: ControllerComponents)
   extends AbstractController(controllerComponents) {
 
