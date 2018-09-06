@@ -48,7 +48,6 @@ class Application(
     if (getEstate().populated)
       Ok(views.html.index(
         stage,
-        getEstate(),
         awsCost.totalSunkCost,
         getEstate
       ))
