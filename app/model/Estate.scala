@@ -81,7 +81,7 @@ class GetEstate(
       instances <- instancesFuture
       nonTerminatedInstances = instances.filterNot(i => i.getState.getName=="terminated")
       tagsToInstances = EstateInstances.groupInstancesByTag(nonTerminatedInstances)
-      asgs <- Future.traverse(tagsToInstances)({case(_, instances) => asgSource.fromApp(instances)})
+      asgs <- Future.traverse(tagsToInstances)({case(_, i) => asgSource.fromApp(i)})
       queueResult <- queuesFuture.recover {
         case NonFatal(e) => {
           log.logger.error("Error retrieving queues", e)

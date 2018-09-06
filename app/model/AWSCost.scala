@@ -53,10 +53,8 @@ class AWSCost(implicit wsClient: WSClient, system: ActorSystem) {
   val typeCounts = ScheduledAgent[Map[EC2CostingType, Int]](0.seconds, 5.minutes, Map()) {
     for {
       reservations <- AWS.futureOf(awsConnection.ec2.describeInstancesAsync, new DescribeInstancesRequest())
-      instances <- Future.sequence {
-        reservations.getReservations flatMap (_.getInstances) map (Instance.from(_, this))
-      }
-    } yield instances.groupBy(_.costingType).mapValues(_.size)
+      instances =  reservations.getReservations flatMap (_.getInstances)
+    } yield instances.groupBy(i => EC2CostingType(i.getInstanceType, i.getPlacement.getAvailabilityZone)).mapValues(_.size)
   }
 
   lazy val reservationsAgent = ScheduledAgent[Map[EC2CostingType, Seq[Reservation]]](0.seconds, 5.minutes, Map()) {
