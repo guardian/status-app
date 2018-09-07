@@ -3,14 +3,15 @@ package lib
 import java.io.File
 
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import play.api.{ Configuration, Mode}
+import play.api.{Configuration, Mode}
 import com.typesafe.config.ConfigFactory
 import com.amazonaws.ClientConfiguration
-import com.gu.googleauth.GoogleAuthConfig
+import com.gu.googleauth.{AntiForgeryChecker, GoogleAuthConfig}
+import play.api.http.HttpConfiguration
 
 import collection.convert.decorateAll._
 
-class DynamoConfig(mode: Mode) {
+class DynamoConfig(mode: Mode, httpConfiguration: HttpConfiguration) {
   def get(key: String) = AWS.connection.dynamo.getItem(
     "StatusAppConfig", Map("key" -> new AttributeValue(key)).asJava).getItem.asScala
 
@@ -23,18 +24,21 @@ class DynamoConfig(mode: Mode) {
     val clientId = oauthConfig("clientId").getS
     val clientSecret = oauthConfig("clientSecret").getS
     val redirectUrl = s"$protocol://$host/oauth2callback"
-    oauthConfig.get("allowedDomain").map(_.getS).map { domain =>
+    val antiForgeryChecker = AntiForgeryChecker.borrowSettingsFromPlay(httpConfiguration) // TODO add play secret rotation
+     oauthConfig.get("allowedDomain").map(_.getS).map { domain =>
       GoogleAuthConfig(
         clientId = clientId,
         clientSecret = clientSecret,
         redirectUrl = redirectUrl,
-        domain = domain // Google App domain to restrict login
+        domain = domain, // Google App domain to restrict login,
+        antiForgeryChecker = antiForgeryChecker
       )
     } getOrElse {
       GoogleAuthConfig.withNoDomainRestriction(
         clientId = clientId,
         clientSecret = clientSecret,
-        redirectUrl = redirectUrl
+        redirectUrl = redirectUrl,
+        antiForgeryChecker = antiForgeryChecker
       )
     }
 

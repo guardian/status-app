@@ -40,13 +40,10 @@ class Login(
   val authAction: AuthAction[AnyContent])
   (implicit val executionContext: ExecutionContext) extends AbstractController(controllerComponents) with LoginSupport {
 
-  implicit val wsClient = client
-
-  val ANTI_FORGERY_KEY = "antiForgeryToken"
-
+  override implicit val wsClient = client
   override val authConfig = googleAuthConfig
   override val failureRedirectTarget: Call = routes.Application.index()
-  override val defaultRedirectTarget: Call = routes.Application.index() // not sure what this is
+  override val defaultRedirectTarget: Call = routes.Application.index()
 
 
   def login = Action { request =>
@@ -69,7 +66,7 @@ class Login(
       _ <- EitherT.fromEither[Future] {
         if (AuthorisationValidator.isAuthorised(identity))
           Right(())
-        else Left(redirectWithError(failureRedirectTarget, AuthorisationValidator.authorisationError(identity).getOrElse("Bad, unknown error"), authConfig.antiForgeryKey, request.session))
+        else Left(redirectWithError(failureRedirectTarget, AuthorisationValidator.authorisationError(identity).getOrElse("Bad, unknown error")))
       }
     } yield {
       setupSessionWhenSuccessful(identity)

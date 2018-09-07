@@ -25,27 +25,27 @@ class MyComponents(context: Context)
   extends BuiltInComponentsFromContext(context)
     with AhcWSComponents
     with EhCacheComponents
-    with controllers.AssetsComponents
-  {
+    with controllers.AssetsComponents {
   override def httpFilters: Seq[EssentialFilter] = Seq.empty
 
   implicit val system: ActorSystem = actorSystem
-  val dynamoConfig = new DynamoConfig(environment.mode)
+  val dynamoConfig = new DynamoConfig(environment.mode, httpConfiguration)
+
   implicit val ws = wsClient
   val awsCost = new AWSCost
   val asgSource = new ASGSource(awsCost)
   val getEstate = new GetEstate(asgSource)
   val googleAuthConfig = dynamoConfig.googleAuthConfig
-    val authAction = new StatusAppAuthAction[AnyContent](
-      googleAuthConfig,
+  val authAction = new StatusAppAuthAction[AnyContent](
+    googleAuthConfig,
     routes.Login.login(),
     controllerComponents.parsers.default
-  ) (executionContext)
+  )(executionContext)
 
-    lazy val router: Routes = new Routes(
+  lazy val router: Routes = new Routes(
     httpErrorHandler,
     new ApplicationController(wsClient, authAction, awsCost, getEstate, controllerComponents),
-    new Login( googleAuthConfig, wsClient, controllerComponents, authAction ),
+    new Login(googleAuthConfig, wsClient, controllerComponents, authAction),
     assets,
     new Management(getEstate)
   )
