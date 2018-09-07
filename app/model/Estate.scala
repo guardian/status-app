@@ -1,19 +1,14 @@
 package model
 
-import akka.actor.ActorSystem
-import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
-import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AwsEc2Instance}
-import com.amazonaws.services.sqs.model.{ListQueuesRequest, ListQueuesResult}
+import com.amazonaws.services.ec2.model.{Instance => AwsEc2Instance, DescribeInstancesRequest}
 import lib.{AWS, ScheduledAgent}
-import org.joda.time.DateTime
+import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import play.api.Logger
-import play.api.libs.json.{Json, Writes}
-import play.api.libs.ws.WSClient
-
-import scala.collection.convert.wrapAll._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration._
+import com.amazonaws.services.sqs.model.{ListQueuesResult, ListQueuesRequest}
+import org.joda.time.DateTime
+import play.api.libs.json.{Writes, Json}
+
 import scala.util.control.NonFatal
 
 trait Estate extends Map[String, Stage] {
@@ -68,35 +63,14 @@ case object PendingEstate extends Estate {
   def lastUpdated = None
 }
 
-class EstateProvider(
-  asgSource: ASGSource,
-)(implicit wsClient: WSClient, actorSystem: ActorSystem) {
-  val log = Logger(classOf[EstateProvider])
-  implicit val conn = AWS.connection
-  val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
-    val instancesFuture: Future[List[AwsEc2Instance]] = EstateInstances.fetchAllInstances()
-    val queuesFuture: Future[ListQueuesResult] = AWS.futureOf[ListQueuesRequest,ListQueuesResult](conn.sqs.listQueuesAsync, new ListQueuesRequest())
+object Estate {
+  import scala.concurrent.duration._
+  import scala.concurrent.ExecutionContext.Implicits.global
+  import collection.convert.wrapAll._
 
-    for {
-      instances <- instancesFuture
-      nonTerminatedInstances = instances.filterNot(i => i.getState.getName=="terminated")
-      tagsToInstances = EstateInstances.groupInstancesByTag(nonTerminatedInstances)
-      asgs <- Future.traverse(tagsToInstances)({case(_, i) => asgSource.fromApp(i)})
-      queueResult <- queuesFuture.recover {
-        case NonFatal(e) => {
-          log.logger.error("Error retrieving queues", e)
-          new ListQueuesResult().withQueueUrls(Seq(s"/ERROR ${e.getMessage}"))
-        }
-      }
-      queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
-    } yield PopulatedEstate(asgs.seq.toList.flatten, queues, DateTime.now)
-  }
-  def apply(): Estate = estateAgent()
-}
+  import play.api.Play.current
 
-object EstateInstances {
-
-  val log = Logger(classOf[Estate])
+  val log = Logger[Estate](classOf[Estate])
 
   implicit val conn = AWS.connection
 
@@ -107,7 +81,7 @@ object EstateInstances {
     }
   }
 
-  def fetchAllInstances(nextToken: Option[String] = None): Future[List[com.amazonaws.services.ec2.model.Instance]] = {
+  private def fetchAllInstances(nextToken: Option[String] = None): Future[List[com.amazonaws.services.ec2.model.Instance]] = {
     val request = new DescribeInstancesRequest
     nextToken.foreach(request.setNextToken)
     AWS.futureOf(conn.ec2.describeInstancesAsync, request).flatMap { result =>
@@ -126,5 +100,23 @@ object EstateInstances {
     })
   }
 
+  val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
+    val instancesFuture = fetchAllInstances()
+    val queuesFuture = AWS.futureOf[ListQueuesRequest,ListQueuesResult](conn.sqs.listQueuesAsync, new ListQueuesRequest())
 
+    for {
+      instances <- instancesFuture
+      nonTerminatedInstances = instances.filterNot(i => i.getState.getName=="terminated")
+      tagsToInstances = groupInstancesByTag(nonTerminatedInstances)
+      asgs <- Future.traverse(tagsToInstances)({case(_, instances) => ASG.fromApp(instances)})
+      queueResult <- queuesFuture.recover {
+        case NonFatal(e) => {
+          log.logger.error("Error retrieving queues", e)
+          new ListQueuesResult().withQueueUrls(Seq(s"/ERROR ${e.getMessage}"))
+        }
+      }
+      queues <- Future.traverse(queueResult.getQueueUrls.toSeq)(Queue.from)
+    } yield PopulatedEstate(asgs.seq.toList.flatten, queues, DateTime.now)
+  }
+  def apply() = estateAgent()
 }

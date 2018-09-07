@@ -13,11 +13,8 @@ import scala.annotation.tailrec
 
 case class ELB(name: String, members: List[ELBMember], latency: Seq[Datapoint], errorCount: Seq[Datapoint], active: Boolean)
 case class ELBMember(id: String, state: String, description: Option[String], reasonCode: Option[String])
-object ELB {
-  import AWS.Writes._
-  implicit val elbMemberWrites = Json.writes[ELBMember]
-  implicit val elbWrites = Json.writes[ELB]
 
+object ELB {
   import ExecutionContext.Implicits.global
 
   val timeSpan: DateTime => DateTime = _.minusHours(3)
@@ -61,6 +58,9 @@ object ELB {
     ELB(lbName, members, latencyInMs, zeroFillPerMinute(start, end)(errorCount.getDatapoints), active)
   }
 
+  import AWS.Writes._
+  implicit val elbMemberWrites = Json.writes[ELBMember]
+  implicit val elbWrites = Json.writes[ELB]
 
 
   def extremeTime(series: Seq[Datapoint])(f: Seq[Datapoint] => Datapoint): DateTime =

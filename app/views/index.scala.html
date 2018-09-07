@@ -1,10 +1,8 @@
-@import model.EstateProvider
-
-@(stage: String, totalSunkCost: Float, estateProvider: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], money: java.text.DecimalFormat)
+ @(stage: String, estate: model.Estate, totalSunkCost: Float)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], money: java.text.DecimalFormat)
 
 @import model._
 
-@main("Status Monitor",estateProvider, stage=Some(stage), refreshSecs = None, scripts = List("assets/js/settings.js")) {
+@main("Status Monitor", stage=Some(stage), refreshSecs = None, scripts = List("assets/js/settings.js")) {
 
      <script src='@routes.Assets.at("lib/d3js/d3.min.js")'></script>
      <script src='@routes.Assets.at("lib/zeroclipboard/ZeroClipboard.min.js")'></script>
@@ -29,9 +27,7 @@
             </script>
         </div>
 
-        @defining(estateProvider()) { estate =>
         <div id="stage" class="row">
-
             @for(asg <- estate(stage).asgs) {
                 @snippets.renderASG(asg)
             }
@@ -69,7 +65,6 @@
                         </div>
                     }
                 </div>
-                }
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     <button type="button" id="save-setttings" class="btn btn-primary">Save changes</button>

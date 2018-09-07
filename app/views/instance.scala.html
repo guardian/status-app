@@ -1,7 +1,6 @@
-@import model.EstateProvider
-@(instance: model.Instance, estateProvider: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
+@(instance: model.Instance)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
 
-@main("Instance info for " + instance.id, estateProvider, refreshSecs = Some(15)) {
+@main("Instance info for " + instance.id, refreshSecs = Some(15)) {
 
     <div class="container instance-info">
         <div class="page-header">

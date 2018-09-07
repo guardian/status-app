@@ -1,75 +1,72 @@
 package controllers
 
-
-import cats.data.EitherT
-import com.gu.googleauth.{AuthAction, GoogleAuthConfig, GoogleAuthFilters, UserIdentity}
-import play.api.mvc.Results.{Redirect, Unauthorized}
-import play.api.mvc.{BodyParser, Call, RequestHeader}
-import com.gu.googleauth._
-import play.api.libs.ws.WSClient
+import lib.Config
 import play.api.mvc._
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.json.Json
+import scala.concurrent.Future
+import com.gu.googleauth._
+import play.api.Play.current
 
-import scala.concurrent.{ExecutionContext, Future}
+trait AuthActions extends Actions {
+  val loginTarget: Call = routes.Login.loginAction()
 
-class StatusAppAuthAction[A](authConfig: GoogleAuthConfig,
-  loginTarget: Call,
-  bodyParser: BodyParser[A])
-  (implicit ex: ExecutionContext) extends AuthAction[A](authConfig, loginTarget, bodyParser)(ex) {
-  override def sendForAuth[A](request: RequestHeader)(implicit ec: ExecutionContext) = {
-    if (request.accepts("text/html")) {
-      Redirect(loginTarget).withSession {
-        request.session + (GoogleAuthFilters.LOGIN_ORIGIN_KEY -> request.uri)
-      }
-    } else {
-      Unauthorized
-    }
-  }
-
+  val authConfig = Config.googleAuthConfig
 }
 
-object AuthorisationValidator {
-  def isAuthorised(id: UserIdentity) = authorisationError(id).isEmpty
-
-  def authorisationError(id: UserIdentity): Option[String] = if (id.emailDomain != "guardian.co.uk") Some(s"The email you are using to login: ${id.email}. Please try again with another email") else None
-}
-
-class Login(
-  googleAuthConfig: GoogleAuthConfig,
-  client: WSClient,
-  controllerComponents: ControllerComponents,
-  val authAction: AuthAction[AnyContent])
-  (implicit val executionContext: ExecutionContext) extends AbstractController(controllerComponents) with LoginSupport {
-
-  override implicit val wsClient = client
-  override val authConfig = googleAuthConfig
-  override val failureRedirectTarget: Call = routes.Application.index()
-  override val defaultRedirectTarget: Call = routes.Application.index()
-
+object Login extends Controller with AuthActions {
+  val ANTI_FORGERY_KEY = "antiForgeryToken"
 
   def login = Action { request =>
     val error = request.flash.get("error")
     Ok(views.html.login(error))
   }
 
-  def logout = Action { implicit request =>
-    Redirect(routes.Application.index()).flashing("error" -> s"User logged out").withNewSession
-  }
-
+  /*
+  Redirect to Google with anti forgery token (that we keep in session storage - note that flashing is NOT secure)
+   */
   def loginAction = Action.async { implicit request =>
-    startGoogleLogin()
+    val antiForgeryToken = GoogleAuth.generateAntiForgeryToken()
+    GoogleAuth.redirectToGoogle(authConfig, antiForgeryToken).map {
+      _.withSession { request.session + (ANTI_FORGERY_KEY -> antiForgeryToken) }
+    }
   }
 
+
+  /*
+  User comes back from Google.
+  We must ensure we have the anti forgery token from the loginAction call and pass this into a verification call which
+  will return a Future[UserIdentity] if the authentication is successful. If unsuccessful then the Future will fail.
+
+   */
   def oauth2Callback = Action.async { implicit request =>
-    import cats.instances.future._
-    (for {
-      identity <- checkIdentity()
-      _ <- EitherT.fromEither[Future] {
-        if (AuthorisationValidator.isAuthorised(identity))
-          Right(())
-        else Left(redirectWithError(failureRedirectTarget, AuthorisationValidator.authorisationError(identity).getOrElse("Bad, unknown error")))
-      }
-    } yield {
-      setupSessionWhenSuccessful(identity)
-    }).merge
+    val session = request.session
+    session.get(ANTI_FORGERY_KEY) match {
+      case None =>
+        Future.successful(Redirect(routes.Login.login()).flashing("error" -> "Anti forgery token missing in session"))
+      case Some(token) =>
+        GoogleAuth.validatedUserIdentity(authConfig, token).map { identity =>
+          // We store the URL a user was trying to get to in the LOGIN_ORIGIN_KEY in AuthAction
+          // Redirect a user back there now if it exists
+          val redirect = session.get(LOGIN_ORIGIN_KEY) match {
+            case Some(url) => Redirect(url)
+            case None => Redirect(routes.Application.index())
+          }
+          // Store the JSON representation of the identity in the session - this is checked by AuthAction later
+          redirect.withSession {
+            session + (UserIdentity.KEY -> Json.toJson(identity).toString) - ANTI_FORGERY_KEY - LOGIN_ORIGIN_KEY
+          }
+        } recover {
+          case t =>
+            // you might want to record login failures here - we just redirect to the login page
+            Redirect(routes.Login.login())
+              .withSession(session - ANTI_FORGERY_KEY)
+              .flashing("error" -> s"Login failure: ${t.toString}")
+        }
+    }
+  }
+
+  def logout = Action { implicit request =>
+    Redirect(routes.Application.index()).withNewSession
   }
 }
