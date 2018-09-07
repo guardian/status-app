@@ -34,7 +34,7 @@ class MyComponents(context: Context)
   implicit val ws = wsClient
   val awsCost = new AWSCost
   val asgSource = new ASGSource(awsCost)
-  val getEstate = new EstateProvider(asgSource)
+  val estateProvider = new EstateProvider(asgSource)
   val googleAuthConfig = dynamoConfig.googleAuthConfig
   val authAction = new StatusAppAuthAction[AnyContent](
     googleAuthConfig,
@@ -44,9 +44,9 @@ class MyComponents(context: Context)
 
   lazy val router: Routes = new Routes(
     httpErrorHandler,
-    new ApplicationController(wsClient, authAction, awsCost, getEstate, controllerComponents),
+    new ApplicationController(wsClient, authAction, awsCost, estateProvider, controllerComponents),
     new Login(googleAuthConfig, wsClient, controllerComponents, authAction),
     assets,
-    new Management(getEstate)
+    new Management(estateProvider)
   )
 }

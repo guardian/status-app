@@ -1,7 +1,7 @@
 @import model.EstateProvider
-@(getEstate: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
+@(estateProvider: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
 
-@main("Status Monitor loading...", getEstate, refreshSecs = Some(2)) {
+@main("Status Monitor loading...", estateProvider, refreshSecs = Some(2)) {
     <div class="progress progress-striped active loading">
         <div class="progress-bar"  role="progressbar" style="width: 100%">
             <span class='sr-only'>loading..</span>

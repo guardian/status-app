@@ -1,10 +1,10 @@
 @import model.EstateProvider
 
-@(stage: String, totalSunkCost: Float, getEstate: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], money: java.text.DecimalFormat)
+@(stage: String, totalSunkCost: Float, estateProvider: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], money: java.text.DecimalFormat)
 
 @import model._
 
-@main("Status Monitor",getEstate, stage=Some(stage), refreshSecs = None, scripts = List("assets/js/settings.js")) {
+@main("Status Monitor",estateProvider, stage=Some(stage), refreshSecs = None, scripts = List("assets/js/settings.js")) {
 
      <script src='@routes.Assets.at("lib/d3js/d3.min.js")'></script>
      <script src='@routes.Assets.at("lib/zeroclipboard/ZeroClipboard.min.js")'></script>
@@ -29,7 +29,7 @@
             </script>
         </div>
 
-        @defining(getEstate()) { estate =>
+        @defining(estateProvider()) { estate =>
         <div id="stage" class="row">
 
             @for(asg <- estate(stage).asgs) {
