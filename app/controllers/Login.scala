@@ -27,22 +27,21 @@ class StatusAppAuthAction[A](authConfig: GoogleAuthConfig,
 
 }
 
-object AuthorisationValidator {
-  def isAuthorised(id: UserIdentity) = authorisationError(id).isEmpty
-
-  def authorisationError(id: UserIdentity): Option[String] = if (id.emailDomain != "guardian.co.uk") Some(s"The email you are using to login: ${id.email}. Please try again with another email") else None
-}
+//object AuthorisationValidator {
+//  def isAuthorised(id: UserIdentity) = authorisationError(id).isEmpty
+//
+//  def authorisationError(id: UserIdentity): Option[String] = if (id.emailDomain != "guardian.co.uk") Some(s"The email you are using to login: ${id.email}. Please try again with another email") else None
+//}
 
 class Login(
   googleAuthConfig: GoogleAuthConfig,
-  client: WSClient,
+  override val wsClient: WSClient,
   controllerComponents: ControllerComponents,
   val authAction: AuthAction[AnyContent])
   (implicit val executionContext: ExecutionContext) extends AbstractController(controllerComponents) with LoginSupport {
 
-  override implicit val wsClient = client
   override val authConfig = googleAuthConfig
-  override val failureRedirectTarget: Call = routes.Application.index()
+  override val failureRedirectTarget: Call = routes.Login.login()
   override val defaultRedirectTarget: Call = routes.Application.index()
 
 
@@ -60,16 +59,6 @@ class Login(
   }
 
   def oauth2Callback = Action.async { implicit request =>
-    import cats.instances.future._
-    (for {
-      identity <- checkIdentity()
-      _ <- EitherT.fromEither[Future] {
-        if (AuthorisationValidator.isAuthorised(identity))
-          Right(())
-        else Left(redirectWithError(failureRedirectTarget, AuthorisationValidator.authorisationError(identity).getOrElse("Bad, unknown error")))
-      }
-    } yield {
-      setupSessionWhenSuccessful(identity)
-    }).merge
+    processOauth2Callback()
   }
 }
