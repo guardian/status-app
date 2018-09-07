@@ -1,6 +1,8 @@
-@(instanceId: String)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
+@import model.EstateProvider
 
-@main(s"Instance $instanceId not found", refreshSecs = Some(15)) {
+@(instanceId: String, estateProvider: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
+
+@main(s"Instance $instanceId not found", estateProvider, refreshSecs = Some(15)) {
 
     <div class="container instance-info">
         <div class="page-header">

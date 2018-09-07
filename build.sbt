@@ -1,21 +1,23 @@
 name := "status-app"
 
 version := "1.0"
+import com.typesafe.sbt.packager.archetypes.systemloader.SystemdPlugin
+import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 
-enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging)
+enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging, SystemdPlugin)
 
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 
-scalaVersion := "2.11.12"
+scalaVersion := "2.12.6"
 scalacOptions ++= List("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk" % "1.11.283",
-  "com.typesafe.akka" %% "akka-agent" % "2.3.14",
+  "com.typesafe.akka" %% "akka-agent" % "2.5.6",
   specs2 % Test,
-  cache,
+  ehcache,
   ws,
-  "com.gu" %% "play-googleauth" % "0.3.7",
+  "com.gu" %% "play-googleauth" % "0.7.7",
   "com.google.guava" % "guava" % "25.0-jre", //-- added explicitly - snyk report avoid logback vulnerability
   "org.webjars.bower" % "react" % "0.13.3",
   "org.webjars" % "bootstrap" % "3.3.7",
@@ -38,13 +40,10 @@ javaOptions in Universal ++= Seq(
   "-J-XX:+PrintGCDateStamps",
   s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
 )
-
-import com.typesafe.sbt.packager.archetypes.ServerLoader.Systemd
-serverLoading in Debian := Systemd
+serverLoading in Debian := Some(Systemd)
 riffRaffPackageType := (packageBin in Debian).value
 
-riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV")
-riffRaffManifestBranch := env("TRAVIS_BRANCH").getOrElse(git.gitCurrentBranch.value)
+
 riffRaffUploadArtifactBucket := Some("riffraff-artifact")
 riffRaffUploadManifestBucket := Some("riffraff-builds")
 

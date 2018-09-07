@@ -2,12 +2,13 @@ package controllers
 
 import play.api.mvc._
 import java.util.Date
-import model.Estate
+
+import model.EstateProvider
 import org.joda.time.DateTime
 
-object Management extends Controller {
+class Management(estateProvider: EstateProvider) extends ControllerHelpers {
   def healthcheck = Action {
-    Estate().lastUpdated match {
+    estateProvider().lastUpdated match {
       case Some(dt) if dt.isBefore(DateTime.now().minusMinutes(5)) => InternalServerError("Out of date data")
       case _ => Ok("")
     }

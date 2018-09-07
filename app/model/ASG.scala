@@ -4,10 +4,8 @@ import scala.concurrent.Future
 import lib.{AWS, AmazonConnection, FutureO}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.amazonaws.services.autoscaling.model.{Instance => AwsAsgInstance, _}
-
 import collection.JavaConversions._
-import scala.util.{Random, Try}
+import scala.util.Try
 import play.api.Logger
 import play.api.libs.json._
 import controllers.routes
@@ -15,31 +13,40 @@ import com.amazonaws.services.cloudwatch.model.{Datapoint, Dimension, GetMetricS
 import com.amazonaws.services.cloudwatch.model.Statistic._
 import com.amazonaws.services.ec2
 import org.joda.time.DateTime
+import play.api.libs.ws.WSClient
 
 case class ASG(name: Option[String], stage: Option[String], app: Option[String], stack: Option[String],
-                 elb: Option[ELB], members: Seq[ASGMember], recentActivity: Seq[ScalingAction],
-                 cpu: Seq[Datapoint],suspendedActivities: Seq[String], approxMonthlyCost: Option[BigDecimal],
-                 moreDetailsLink: Option[String])
+  elb: Option[ELB], members: Seq[ASGMember], recentActivity: Seq[ScalingAction],
+  cpu: Seq[Datapoint], suspendedActivities: Seq[String], approxMonthlyCost: Option[BigDecimal],
+  moreDetailsLink: Option[String])
 
 object ASG {
-  val log = Logger[ASG](classOf[ASG])
 
-  def fromApp(instances: List[com.amazonaws.services.ec2.model.Instance])(implicit conn: AmazonConnection): Future[Seq[ASG]] = {
+  import AWS.Writes._
+
+  implicit val writes = Json.writes[ASG]
+}
+
+class ASGSource(cost: AWSCost) {
+  val log = Logger(classOf[ASGSource])
+
+  def fromApp(instances: List[com.amazonaws.services.ec2.model.Instance])(implicit conn: AmazonConnection, ws: WSClient): Future[Seq[ASG]] = {
 
     val instancesByAutoScalingGroupName: Map[Option[String], Seq[ec2.model.Instance]] =
       instances.groupBy(_.getTags.toList.find(_.getKey == "aws:autoscaling:groupName").map(_.getValue))
 
-    Future.traverse(instancesByAutoScalingGroupName.toSeq){
+    Future.traverse(instancesByAutoScalingGroupName.toSeq) {
       case (autoScalingGroupNameOpt, instancesOfGroupName) => fromInstancesWithAutoscalingGroupName(autoScalingGroupNameOpt, instancesOfGroupName)
     }
   }
 
-  private def fromInstancesWithAutoscalingGroupName(autoScalingGroupNameOpt: Option[String],instances: Seq[ec2.model.Instance])(implicit conn: AmazonConnection): Future[ASG]  = {
+  private def fromInstancesWithAutoscalingGroupName(autoScalingGroupNameOpt: Option[String], instances: Seq[ec2.model.Instance])
+    (implicit conn: AmazonConnection, ws: WSClient): Future[ASG] = {
     val tags = instances.flatMap(i => i.getTags.toList.map(t => t.getKey -> t.getValue)).toMap
 
     val asgFtO = for {
       asgName <- FutureO.toFut(autoScalingGroupNameOpt)
-      asg <- FutureO(Estate.fetchAsgByName(asgName))
+      asg <- FutureO(EstateInstances.fetchAsgByName(asgName))
     } yield asg
 
     val awsAsgInstances = for {
@@ -77,7 +84,7 @@ object ASG {
       membersOfElb = elbOpt.map(_.members).getOrElse(Nil)
       membersOfASGOpt <- awsAsgInstances.futureOption
       membersOfASG = membersOfASGOpt.getOrElse(Nil)
-      clusterMembers = Future.sequence(instances.map(i => Instance.from(i).map(i => ASGMember.from(i, membersOfASG.find(_.getInstanceId == i.id), membersOfElb.find(_.id == i.id)))))
+      clusterMembers = Future.sequence(instances.map(i => Instance.from(i, cost).map(i => ASGMember.from(i, membersOfASG.find(_.getInstanceId == i.id), membersOfElb.find(_.id == i.id)))))
       members <- clusterMembers
       activities <- recentActivity.futureOption
       cpu <- cpuFtO.futureOption
@@ -89,17 +96,21 @@ object ASG {
         } else None
       }
       ASG(
-        autoScalingGroupNameOpt, tags.get("Stage"), tags.get("App") orElse tags.get("Role"), tags.get("Stack"),
-        elbOpt, members.sortBy(_.instance.availabilityZone), activities.getOrElse(Nil),
-        cpu.getOrElse(Nil), susPro.getOrElse(Nil),
-        Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption, moreDetailsLink
+        name = autoScalingGroupNameOpt,
+        stage = tags.get("Stage"),
+        app = tags.get("App") orElse tags.get("Role"),
+        stack = tags.get("Stack"),
+        elb = elbOpt,
+        members = members.sortBy(_.instance.availabilityZone),
+        recentActivity = activities.getOrElse(Nil),
+        cpu = cpu.getOrElse(Nil),
+        suspendedActivities = susPro.getOrElse(Nil),
+        approxMonthlyCost = Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption,
+        moreDetailsLink = moreDetailsLink
       )
     }
   }
 
-  import AWS.Writes._
-
-  implicit val writes = Json.writes[ASG]
 }
 
 object FutureOption {
