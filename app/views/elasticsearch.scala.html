@@ -1,5 +1,5 @@
-@import model.GetEstate
-@(elasticSearchStats: List[model.ElasticsearchStatsGroups.Node], getEstate: GetEstate)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], human: java.text.DecimalFormat)
+@import model.EstateProvider
+@(elasticSearchStats: List[model.ElasticsearchStatsGroups.Node], getEstate: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], human: java.text.DecimalFormat)
 
 @main("elasticsearch status", getEstate) {
 

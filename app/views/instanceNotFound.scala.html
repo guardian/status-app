@@ -1,6 +1,6 @@
-@import model.GetEstate
+@import model.EstateProvider
 
-@(instanceId: String, getEstate: GetEstate)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
+@(instanceId: String, getEstate: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
 
 @main(s"Instance $instanceId not found", getEstate, refreshSecs = Some(15)) {
 

@@ -1,5 +1,5 @@
-@import model.GetEstate
-@(title: String, getEstate:GetEstate, stage: Option[String] = None, refreshSecs: Option[Int] = None,
+@import model.EstateProvider
+@(title: String, getEstate:EstateProvider, stage: Option[String] = None, refreshSecs: Option[Int] = None,
         scripts: List[String] = Nil)(content: Html)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
 
 <!DOCTYPE html>

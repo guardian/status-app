@@ -1,6 +1,6 @@
-@import model.GetEstate
+@import model.EstateProvider
 
-@(stage: String, totalSunkCost: Float, getEstate: GetEstate)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], money: java.text.DecimalFormat)
+@(stage: String, totalSunkCost: Float, getEstate: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity], money: java.text.DecimalFormat)
 
 @import model._
 

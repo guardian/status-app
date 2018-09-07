@@ -68,10 +68,10 @@ case object PendingEstate extends Estate {
   def lastUpdated = None
 }
 
-class GetEstate(
+class EstateProvider(
   asgSource: ASGSource,
 )(implicit wsClient: WSClient, actorSystem: ActorSystem) {
-  val log = Logger(classOf[GetEstate])
+  val log = Logger(classOf[EstateProvider])
   implicit val conn = AWS.connection
   val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
     val instancesFuture: Future[List[AwsEc2Instance]] = EstateInstances.fetchAllInstances()

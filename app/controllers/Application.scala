@@ -16,7 +16,7 @@ class Application(
   wsClient:WSClient,
   authAction: AuthAction[AnyContent],
   awsCost: AWSCost,
-  getEstate: GetEstate,
+  getEstate: EstateProvider,
   controllerComponents: ControllerComponents)
   extends AbstractController(controllerComponents) {
 

@@ -1,5 +1,5 @@
-@import model.GetEstate
-@(instance: model.Instance, getEstate: GetEstate)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
+@import model.EstateProvider
+@(instance: model.Instance, getEstate: EstateProvider)(implicit request: play.api.mvc.Security.AuthenticatedRequest[_, com.gu.googleauth.UserIdentity])
 
 @main("Instance info for " + instance.id, getEstate, refreshSecs = Some(15)) {
 

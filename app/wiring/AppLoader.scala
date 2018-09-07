@@ -34,7 +34,7 @@ class MyComponents(context: Context)
   implicit val ws = wsClient
   val awsCost = new AWSCost
   val asgSource = new ASGSource(awsCost)
-  val getEstate = new GetEstate(asgSource)
+  val getEstate = new EstateProvider(asgSource)
   val googleAuthConfig = dynamoConfig.googleAuthConfig
   val authAction = new StatusAppAuthAction[AnyContent](
     googleAuthConfig,
