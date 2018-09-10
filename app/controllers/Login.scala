@@ -35,12 +35,10 @@ object AuthorisationValidator {
 
 class Login(
   googleAuthConfig: GoogleAuthConfig,
-  client: WSClient,
-  controllerComponents: ControllerComponents,
-  val authAction: AuthAction[AnyContent])
+  override val wsClient: WSClient,
+  controllerComponents: ControllerComponents)
   (implicit val executionContext: ExecutionContext) extends AbstractController(controllerComponents) with LoginSupport {
 
-  override implicit val wsClient = client
   override val authConfig = googleAuthConfig
   override val failureRedirectTarget: Call = routes.Application.index()
   override val defaultRedirectTarget: Call = routes.Application.index()

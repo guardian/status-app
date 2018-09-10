@@ -45,7 +45,7 @@ class MyComponents(context: Context)
   lazy val router: Routes = new Routes(
     httpErrorHandler,
     new ApplicationController(wsClient, authAction, awsCost, estateProvider, controllerComponents),
-    new Login(googleAuthConfig, wsClient, controllerComponents, authAction),
+    new Login(googleAuthConfig, wsClient, controllerComponents),
     assets,
     new Management(estateProvider)
   )
