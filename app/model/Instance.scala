@@ -14,7 +14,7 @@ import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 case class Instance(
   id: String,
@@ -119,14 +119,18 @@ trait AppSpecifics {
 
   def versionExtractor: WSResponse => Option[String]
 
-  def version(implicit wsClient: WSClient) = wsClient.url(versionUrl).withRequestTimeout(200.milliseconds).get() map (versionExtractor) recover {
-    case _: ConnectException => {
-      log.error(s"Couldn't retrieve $versionUrl")
-      None
-    }
-    case e => {
-      log.error(s"Couldn't retrieve $versionUrl", e)
-      None
+  def version(implicit wsClient: WSClient) :Future[Option[String]] = {
+
+    (for {
+      wsWithUrl <- Future.fromTry(Try(wsClient.url(versionUrl)))
+      response <- wsWithUrl.withRequestTimeout(200.milliseconds).get() map (versionExtractor)
+    } yield response) recover {
+      case _: ConnectException =>
+        log.error(s"Couldn't retrieve $versionUrl")
+        None
+      case e =>
+        log.error(s"Couldn't retrieve $versionUrl", e)
+        None
     }
   }
 }
