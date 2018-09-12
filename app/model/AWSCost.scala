@@ -51,6 +51,7 @@ class AWSCost(implicit wsClient: WSClient, system: ActorSystem) {
   def reservations = reservationsAgent()
 
   val typeCounts = ScheduledAgent[Map[EC2CostingType, Int]](0.seconds, 5.minutes, Map()) {
+    logger.info(s"Starting typecountsAgent")
     for {
       reservations <- AWS.futureOf(awsConnection.ec2.describeInstancesAsync, new DescribeInstancesRequest())
       instances =  reservations.getReservations flatMap (_.getInstances)

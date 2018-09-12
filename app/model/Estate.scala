@@ -74,6 +74,8 @@ class EstateProvider(
   val log = Logger(classOf[EstateProvider])
   implicit val conn = AWS.connection
   val estateAgent = ScheduledAgent[Estate](0.seconds, 30.seconds, PendingEstate) {
+    log.info(s"Starting estateAgent")
+
     val instancesFuture: Future[List[AwsEc2Instance]] = EstateInstances.fetchAllInstances()
     val queuesFuture: Future[ListQueuesResult] = AWS.futureOf[ListQueuesRequest,ListQueuesResult](conn.sqs.listQueuesAsync, new ListQueuesRequest())
 
