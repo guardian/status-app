@@ -21,7 +21,10 @@ class ScheduledAgent[T](initialDelay: FiniteDuration, frequency: FiniteDuration,
 
   val agentSchedule = system.scheduler.schedule(initialDelay, frequency) {
     block.onComplete {
-      case Failure(e) => Logger.warn("scheduled agent failed", e)
+      case Failure(e) => {
+        Logger.error(s"scheduled agent failed with exception ${e.getClass.getName} ${e.getMessage}",e)
+        Logger.warn("scheduled agent failed", e)
+      }
       case Success(result) => agent send result
     }
   }
