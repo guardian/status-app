@@ -12,8 +12,8 @@ scalaVersion := "2.12.6"
 scalacOptions ++= List("-feature", "-deprecation")
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.11.283",
-  "com.typesafe.akka" %% "akka-agent" % "2.5.6",
+  "com.amazonaws" % "aws-java-sdk" % "1.11.408",
+  "com.typesafe.akka" %% "akka-agent" % "2.5.16",
   specs2 % Test,
   ehcache,
   ws,
