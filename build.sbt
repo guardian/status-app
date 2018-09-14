@@ -4,8 +4,8 @@ version := "1.0"
 import com.typesafe.sbt.packager.archetypes.systemloader.SystemdPlugin
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 
-enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging, SystemdPlugin)
-
+enablePlugins(PlayScala,PlayNettyServer, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging, SystemdPlugin)
+disablePlugins(PlayAkkaHttpServer)
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 
 scalaVersion := "2.12.6"
