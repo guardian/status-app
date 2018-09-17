@@ -69,7 +69,7 @@ case object PendingEstate extends Estate {
 }
 
 class EstateProvider(
-  asgSource: ASGSource,
+  asgSource: ASGSource
 )(implicit wsClient: WSClient, actorSystem: ActorSystem) {
   val log = Logger(classOf[EstateProvider])
   implicit val conn = AWS.connection
