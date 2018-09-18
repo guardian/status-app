@@ -43,7 +43,8 @@ javaOptions in Universal ++= Seq(
 serverLoading in Debian := Some(Systemd)
 riffRaffPackageType := (packageBin in Debian).value
 
-
+riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV")
+riffRaffManifestBranch := env("TRAVIS_BRANCH").getOrElse(git.gitCurrentBranch.value)
 riffRaffUploadArtifactBucket := Some("riffraff-artifact")
 riffRaffUploadManifestBucket := Some("riffraff-builds")
 
