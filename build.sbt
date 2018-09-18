@@ -42,8 +42,6 @@ javaOptions in Universal ++= Seq(
 )
 serverLoading in Debian := Some(Systemd)
 riffRaffPackageType := (packageBin in Debian).value
-
-
 riffRaffUploadArtifactBucket := Some("riffraff-artifact")
 riffRaffUploadManifestBucket := Some("riffraff-builds")
 
