@@ -48,7 +48,7 @@ riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV")
 def branch(): Option[String] = {
   env("TRAVIS_PULL_REQUEST") match {
     case Some("false") => env("TRAVIS_BRANCH")
-    case _ => env("TRAVIS_PULL_REQUEST").map(pullRequestNumber => s"PullRequest#$pullRequestNumber")
+    case travisPR => travisPR.map(pullRequestNumber => s"PullRequest#$pullRequestNumber")
   }
 }
 
