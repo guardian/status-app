@@ -1,6 +1,8 @@
 Guardian Status App
 =====================================
 
+[![Join the chat at https://gitter.im/guardian/status-app](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/guardian/status-app?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Shows an overview of the status of autoscaling groups in an AWS account:
 
 ![Status app in action](screenshot.png)
