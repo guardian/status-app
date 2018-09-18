@@ -42,18 +42,6 @@ javaOptions in Universal ++= Seq(
 )
 serverLoading in Debian := Some(Systemd)
 riffRaffPackageType := (packageBin in Debian).value
-
-riffRaffBuildIdentifier := env("TRAVIS_BUILD_NUMBER").getOrElse("DEV")
-
-def branch(): Option[String] = {
-  env("TRAVIS_PULL_REQUEST") match {
-    case Some("false") => env("TRAVIS_BRANCH")
-    case travisPR => travisPR.map(pullRequestNumber => s"pullRequest#$pullRequestNumber")
-  }
-}
-
-riffRaffManifestBranch := branch().getOrElse(git.gitCurrentBranch.value)
-
 riffRaffUploadArtifactBucket := Some("riffraff-artifact")
 riffRaffUploadManifestBucket := Some("riffraff-builds")
 
