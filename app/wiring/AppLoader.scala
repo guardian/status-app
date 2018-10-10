@@ -2,6 +2,7 @@ package wiring
 
 import akka.actor.ActorSystem
 import controllers.{Login, Management, StatusAppAuthAction, routes, Application => ApplicationController}
+import filters.HSTSFilter
 import lib.DynamoConfig
 import model._
 import play.api.ApplicationLoader.Context
@@ -26,7 +27,7 @@ class MyComponents(context: Context)
     with AhcWSComponents
     with EhCacheComponents
     with controllers.AssetsComponents {
-  override def httpFilters: Seq[EssentialFilter] = Seq.empty
+  override def httpFilters: Seq[EssentialFilter] = Seq(new HSTSFilter)
 
   implicit val system: ActorSystem = actorSystem
   val dynamoConfig = new DynamoConfig(environment.mode, httpConfiguration)
