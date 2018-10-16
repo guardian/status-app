@@ -39,7 +39,7 @@ class MyComponents(context: Context)
   val googleAuthConfig = dynamoConfig.googleAuthConfig
   val authAction = new StatusAppAuthAction[AnyContent](
     googleAuthConfig,
-    routes.Login.login(),
+    routes.Login.loginAction(),
     controllerComponents.parsers.default
   )(executionContext)
 
