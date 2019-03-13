@@ -19,7 +19,7 @@ class DynamoConfig(mode: Mode, httpConfiguration: HttpConfiguration) {
   lazy val googleAuthConfig: GoogleAuthConfig = {
     val oauthConfig = get("oauth")
     val host = if (mode == Mode.Dev) "status.thegulocal.com" else oauthConfig("host").getS
-    val protocol = if (mode == Mode.Dev) "https" else oauthConfig.get("protocol").map(_.getS).getOrElse("http")
+    val protocol = if (mode == Mode.Dev) "https" else oauthConfig.get("protocol").map(_.getS).getOrElse("https")
 
     val clientId = oauthConfig("clientId").getS
     val clientSecret = oauthConfig("clientSecret").getS
