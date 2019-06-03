@@ -11,10 +11,10 @@ resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 scalaVersion := "2.12.6"
 scalacOptions ++= List("-feature", "-deprecation")
 
-val jacksonVersion = "2.9.8"
+val jacksonVersion = "2.9.9"
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.11.283",
+  "com.amazonaws" % "aws-java-sdk" % "1.11.563",
   "com.typesafe.akka" %% "akka-agent" % "2.5.6",
   specs2 % Test,
   ehcache,
