@@ -12,9 +12,10 @@ scalaVersion := "2.12.6"
 scalacOptions ++= List("-feature", "-deprecation")
 
 val jacksonVersion = "2.9.9"
+val jacksonVersionBump = "2.9.9.1"
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.11.563",
+  "com.amazonaws" % "aws-java-sdk" % "1.11.591",
   "com.typesafe.akka" %% "akka-agent" % "2.5.6",
   specs2 % Test,
   ehcache,
@@ -25,7 +26,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "bootstrap" % "3.3.7",
   "org.webjars" % "d3js" % "3.5.17",
   "org.webjars" % "zeroclipboard" % "2.2.0",
-  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersionBump,
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % jacksonVersion,
