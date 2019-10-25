@@ -1,7 +1,7 @@
 language: scala
 sudo: false
 jdk:
-- oraclejdk9
+- openjdk8
 script:
 - sbt clean test riffRaffUpload
 env:
