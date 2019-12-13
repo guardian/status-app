@@ -16,7 +16,7 @@ val jacksonVersionBump = "2.9.10.1"
 
 libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk" % "1.11.591",
-  "com.typesafe.akka" %% "akka-agent" % "2.5.6",
+  "com.typesafe.akka" %% "akka-agent" % "2.5.16",
   specs2 % Test,
   ehcache,
   ws,
@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion
 )
 
-maintainer := "Phil Wills <philip.wills@theguardian.com>"
+maintainer := "Paul Brown <paul.brown@theguardian.com>"
 packageSummary := "AWS status web-app"
 packageDescription := """Web app that shows an overview of the status of autoscaling groups in an AWS account"""
 debianPackageDependencies := Seq("openjdk-8-jre-headless")
