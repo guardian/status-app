@@ -16,13 +16,13 @@ val jacksonVersionBump = "2.9.10.1"
 
 libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk" % "1.11.591",
-  "com.typesafe.akka" %% "akka-agent" % "2.5.6",
+  "com.typesafe.akka" %% "akka-agent" % "2.5.16",
   specs2 % Test,
   ehcache,
   ws,
   "com.gu" %% "play-googleauth" % "0.7.7",
   "com.google.guava" % "guava" % "25.0-jre", //-- added explicitly - snyk report avoid logback vulnerability
-  "org.webjars.bower" % "react" % "0.13.3",
+  "org.webjars.bower" % "react" % "0.14.0",
   "org.webjars" % "bootstrap" % "3.4.1",
   "org.webjars" % "d3js" % "3.5.17",
   "org.webjars" % "zeroclipboard" % "2.2.0",
@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion
 )
 
-maintainer := "Phil Wills <philip.wills@theguardian.com>"
+maintainer := "Paul Brown <paul.brown@theguardian.com>"
 packageSummary := "AWS status web-app"
 packageDescription := """Web app that shows an overview of the status of autoscaling groups in an AWS account"""
 debianPackageDependencies := Seq("openjdk-8-jre-headless")
