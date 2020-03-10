@@ -8,7 +8,7 @@ enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackagin
 
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.10"
 scalacOptions ++= List("-feature", "-deprecation")
 
 val jacksonVersion = "2.9.10"
