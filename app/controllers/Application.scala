@@ -72,7 +72,6 @@ class Application(
 
   def es(name: String) = authAction.async { implicit req =>
     import scala.concurrent.ExecutionContext.Implicits.global
-
     (for {
       asg <- estateProvider().asgs if asg.name.exists(_ == name)
       stats <- Random.shuffle(asg.members).headOption map (m => wsClient.url(s"http://${m.instance.publicDns}:9200/_nodes/stats?groups=_all").get())

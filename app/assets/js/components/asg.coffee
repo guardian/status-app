@@ -95,6 +95,7 @@ AutoScalingGroup = React.createClass
         app: @props.group.app
         approxMonthlyCost: @props.group.approxMonthlyCost
         moreDetailsLink: @props.group.moreDetailsLink
+        hint: @props.group.hint
       })
       if @props.group.suspendedActivities?.length > 0
         (div { className: 'panel-body alert-info' }, [
@@ -142,6 +143,7 @@ ClusterTitle = React.createClass
     (div { className: "panel-heading" }, [
       (h4 { className: "panel-title" }, [
         (div { className: "pull-right" }, [
+          (span { className: "asg-hint asg-hint-" + (@props.hint || "-none") }, [ @props.hint || "" ]),
           (button {
             id: @props.name + "-copy"
             'data-clipboard-text': @props.name
