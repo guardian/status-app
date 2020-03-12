@@ -1,0 +1,6 @@
+# see: https://github.com/guardian/dev-nginx
+name: status-app
+# domain-root: foobar.co.uk
+mappings:
+  - port: 9000
+    prefix: status

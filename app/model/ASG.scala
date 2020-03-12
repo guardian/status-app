@@ -18,13 +18,30 @@ import play.api.libs.ws.WSClient
 case class ASG(name: Option[String], stage: Option[String], app: Option[String], stack: Option[String],
   elb: Option[ELB], members: Seq[ASGMember], recentActivity: Seq[ScalingAction],
   cpu: Seq[Datapoint], suspendedActivities: Seq[String], approxMonthlyCost: Option[BigDecimal],
-  moreDetailsLink: Option[String])
+  moreDetailsLink: Option[String], hint: Option[String])
 
 object ASG {
 
   import AWS.Writes._
 
   implicit val writes = Json.writes[ASG]
+
+  type ASGHint = PartialFunction[Map[String, String], String]
+
+  def tagMatcher(tagName: String)(pf: PartialFunction[String, String]): ASGHint = {
+    case tags if tags.contains(tagName) && pf.isDefinedAt(tags(tagName)) => pf(tags(tagName))
+  }
+
+  val elasticsearchMaster = tagMatcher("es-config:node.master") {
+    case "true" => "es-master"
+  }
+
+  val elasticsearchHotWarm = tagMatcher("es-config:node.attr.data") {
+    case s => "es-" + s
+  }
+
+  val hintProvider: ASGHint = elasticsearchMaster orElse elasticsearchHotWarm
+
 }
 
 class ASGSource(cost: AWSCost) {
@@ -106,7 +123,8 @@ class ASGSource(cost: AWSCost) {
         cpu = cpu.getOrElse(Nil),
         suspendedActivities = susPro.getOrElse(Nil),
         approxMonthlyCost = Try(members.flatMap(_.instance.approxMonthlyCost).sum).toOption,
-        moreDetailsLink = moreDetailsLink
+        moreDetailsLink = moreDetailsLink,
+        hint = ASG.hintProvider.lift(tags)
       )
     }
   }
@@ -117,4 +135,3 @@ object FutureOption {
   def apply[T](of: Option[Future[T]]): Future[Option[T]] =
     of.map(f => f.map(Some(_))) getOrElse (Future.successful(None))
 }
-
