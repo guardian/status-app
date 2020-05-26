@@ -39,35 +39,33 @@ credentials via 'export to shell' in Janus as status-app doesn't currently handl
 
 #### Nginx setup
 
-You'll need to perform the Nginx setup for 
-[identity-platform](https://github.com/guardian/identity-platform/blob/master/nginx/README.md) 
-first, before you do anything else.
+You'll need to do the [dev-nginx](https://github.com/guardian/dev-nginx) installation, before you do anything else.
+* In this repository's root directory, run:
+```
+$ dev-nginx setup-app ./nginx/nginx-mapping.yml
+```
+You will need to provide your sudo password.
 
-##### Status-app specific setup
-Update your hosts file
-
-Add the following local development domain to your hosts file in /etc/hosts:
-
-`127.0.0.1   status.thegulocal.com`
-
-Run status-app's Nginx setup script
-Run the status-app setup.sh script from the root of the support-frontend project:
-
-`./nginx/setup.sh`
-
-The script doesn't start Nginx. To manually start it run `sudo nginx` or `sudo systemctl start nginx` depending on your system.
-
+#### JDK setup
+* Ensure you are using Java 8, if you are using Java 9+ via Homebrew, you may want to use [https://sdkman.io/](sdkman.io) 
+instead to be sure that Java 8 is wired up to your $JAVA_HOME. This app has been tested with AdoptOpenJDK8, installed via
+```
+sdk install java 8.0.252.hs-adpt
+```
+ 
 #### Start the app
 If you just want to run it locally, it's a standard [Play 2](http://www.playframework.com/) 
 app and can be run with the 'run' command from an [SBT](http://www.scala-sbt.org/) prompt.
 
 `sbt run` 
 
-this defaults to port 9000
+the app runs on port 9000 but is proxied via nginx running as root on port 80
 
-visit 
+visit: 
 
-`https://status.thegulocal.com`
+`https://status.local.dev-gutools.co.uk/` 
+
+unless you've set up a different `domain-root` set up in your `./nginx/nginx-mapping.yml` 
 
 Contributing
 ------------
