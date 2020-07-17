@@ -12,15 +12,15 @@ scalaVersion := "2.12.10"
 scalacOptions ++= List("-feature", "-deprecation")
 
 val jacksonVersion = "2.9.10"
-val jacksonVersionBump = "2.9.10.4"
+val jacksonVersionBump = "2.9.10.5"
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.11.591",
+  "com.amazonaws" % "aws-java-sdk" % "1.11.821",
   "com.typesafe.akka" %% "akka-agent" % "2.5.16",
   specs2 % Test,
   ehcache,
   ws,
-  "com.gu" %% "play-googleauth" % "0.7.7",
+  "com.gu" %% "play-googleauth" % "0.7.9",
   "com.google.guava" % "guava" % "25.0-jre", //-- added explicitly - snyk report avoid logback vulnerability
   "org.webjars.bower" % "react" % "0.14.0",
   "org.webjars" % "bootstrap" % "3.4.1",
