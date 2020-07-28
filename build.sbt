@@ -11,11 +11,10 @@ resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 scalaVersion := "2.12.10"
 scalacOptions ++= List("-feature", "-deprecation")
 
-val jacksonVersion = "2.9.10"
-val jacksonVersionBump = "2.9.10.4"
+val jacksonVersion = "2.10.5"
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.11.591",
+  "com.amazonaws" % "aws-java-sdk" % "1.11.827",
   "com.typesafe.akka" %% "akka-agent" % "2.5.16",
   specs2 % Test,
   ehcache,
@@ -26,9 +25,10 @@ libraryDependencies ++= Seq(
   "org.webjars" % "bootstrap" % "3.4.1",
   "org.webjars" % "d3js" % "3.5.17",
   "org.webjars" % "zeroclipboard" % "2.2.0",
-  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersionBump,
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
+  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor" % jacksonVersion,
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % jacksonVersion,
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion
 )
