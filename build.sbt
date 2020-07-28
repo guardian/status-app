@@ -12,7 +12,7 @@ scalaVersion := "2.12.10"
 scalacOptions ++= List("-feature", "-deprecation")
 
 val jacksonVersion = "2.9.10"
-val jacksonVersionBump = "2.9.10.4"
+val jacksonVersionBump = "2.9.10.5"
 
 libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk" % "1.11.591",
