@@ -30,7 +30,7 @@ class DynamoConfig(mode: Mode, httpConfiguration: HttpConfiguration) {
         clientId = clientId,
         clientSecret = clientSecret,
         redirectUrl = redirectUrl,
-        domain = domain, // Google App domain to restrict login,
+        domains = List(domain), // Google App domain to restrict login,
         antiForgeryChecker = antiForgeryChecker
       )
     } getOrElse {
