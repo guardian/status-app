@@ -6,8 +6,8 @@ script:
 - sbt clean test riffRaffUpload
 env:
   global:
-  - secure: X6j0ahKpblAMtXoorOERx92bRH/GM7KFW+0atmm6SKQwpc4/Qo9qfPnD1iLdleb7UGHtFrY/uKegCEOZ7ripAQL1+j3byGT0tPe6SHaEyazWkp8YE7B/qbS0673fUTFoERET5SFJ62+PmVXonZvq6wqbQoDcexFFK8amN4dSlTc=
-  - secure: c2CFeIy89vLrSFWfadpi6OKgPSo4N80uRIL76vraKR4YWe7CMInkrdVz0xxzQNaLnqmDp5fBtajTb2MVZJOQfr358asba3T/jg3u+9nFvM6IV8MN4Ld4US1T2u+jnE32df0v7DxuhnVZKhUYmCFM4hH1xzcTwvq2hOH2wnmrg/k=
+  - secure: IIDM/UtdYRB2Htllow2WuGi5sR05WiSlxiwJPcdH1/sA1jFW49LPywOT36uAFiCW6FFRn1hfmRcdyrwRVkd+4fDWEx9ECwt1N/6GtsZa1sDQSrFa880s3L4BZ2u11aeMSneOOMXqRkZpDlXKKcHgWKxcNUP4yMkjrzWcOTx0cus=
+  - secure: dPMGRyoBKFpVkSFdeqAvQuhH4S/1GfI2pZ/+F6e2lzybCLHXlFymIpBvdkF7dtI5zvbUXNr42zg4kF2hj3w1g748LnLD9MwDdzXi8iIlBJdk2nYRRAJQm35ExP3W6KJisIylwcUtUXzufeUHg70QeRWpwnQ6OuPZFY3b/uH4Gdg=
 cache:
   directories:
   - $HOME/.sbt/0.13
