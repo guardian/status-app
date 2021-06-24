@@ -65,6 +65,13 @@ Resources:
               - logs:PutLogEvents
               - logs:DescribeLogStreams
               Resource: arn:aws:logs:*:*:*
+        - PolicyName: s3Deploy
+          PolicyDocument:
+            Statement:
+              Effect: Allow
+              Action: s3:GetObject
+              Resource:
+                - arn:aws:s3::*:membership-dist/*
       ManagedPolicyArns:
       - !Sub arn:aws:iam::${AWS::AccountId}:policy/guardian-ec2-role-for-ssm
   StatusAppReadMetadataPolicy:
