@@ -1,6 +1,5 @@
 stacks:
 - ophan
-- membership
 deployments:
   ami:
     type: ami-cloudformation-parameter
