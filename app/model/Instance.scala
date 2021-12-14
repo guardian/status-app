@@ -105,7 +105,7 @@ case class StandardWebApp(versionUrl: String) extends AppSpecifics {
   )
 
   val versionExtractor = { r: WSResponse =>
-    val values = r.body.lines.map(_.split(':').map(_.trim)).collect { case Array(k, v) => k -> v }.toMap
+    val values = r.body.linesIterator.map(_.split(':').map(_.trim)).collect { case Array(k, v) => k -> v }.toMap
     values.get("Build")
   }
 }

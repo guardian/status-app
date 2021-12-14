@@ -39,7 +39,7 @@ class MyComponents(context: Context)
   val googleAuthConfig = dynamoConfig.googleAuthConfig
   val authAction = new StatusAppAuthAction[AnyContent](
     googleAuthConfig,
-    routes.Login.loginAction(),
+    routes.Login.loginAction,
     controllerComponents.parsers.default
   )(executionContext)
 
@@ -48,6 +48,6 @@ class MyComponents(context: Context)
     new ApplicationController(wsClient, authAction, awsCost, estateProvider, controllerComponents),
     new Login(googleAuthConfig, wsClient, controllerComponents),
     assets,
-    new Management(estateProvider)
+    new Management(estateProvider, controllerComponents)
   )
 }
