@@ -10,7 +10,7 @@ env:
   - secure: c2CFeIy89vLrSFWfadpi6OKgPSo4N80uRIL76vraKR4YWe7CMInkrdVz0xxzQNaLnqmDp5fBtajTb2MVZJOQfr358asba3T/jg3u+9nFvM6IV8MN4Ld4US1T2u+jnE32df0v7DxuhnVZKhUYmCFM4hH1xzcTwvq2hOH2wnmrg/k=
 cache:
   directories:
-  - $HOME/.sbt/0.13
+  - $HOME/.sbt/1.0
   - $HOME/.sbt/boot/scala*
   - $HOME/.sbt/cache
   - $HOME/.sbt/launchers

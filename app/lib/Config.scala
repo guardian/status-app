@@ -52,15 +52,15 @@ object Config {
   def configuration =
     Configuration(fileConfig(localPropsFile).withFallback(ConfigFactory.load()))
 
-  lazy val proxyHost = configuration.getString("proxyHost")
-  lazy val proxyPort = configuration.getInt("proxyPort")
+  lazy val proxyHost = configuration.getOptional[String]("proxyHost")
+  lazy val proxyPort = configuration.getOptional[Int]("proxyPort")
 
-  lazy val managementPort = configuration.getInt("managementPort")
+  lazy val managementPort = configuration.getOptional[Int]("managementPort")
 
   def clientConfiguration() = {
     val client = new ClientConfiguration()
-    if (proxyHost.isDefined) client.setProxyHost(proxyHost.get)
-    if (proxyPort.isDefined) client.setProxyPort(proxyPort.get)
+    proxyHost.foreach(client.setProxyHost)
+    proxyPort.foreach(client.setProxyPort)
     client
   }
 

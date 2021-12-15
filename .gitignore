@@ -5,3 +5,5 @@ logs
 .idea
 .idea_modules
 test-reports
+.bsp/
+

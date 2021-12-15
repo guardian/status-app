@@ -1,11 +1,12 @@
 package lib
 
 import akka.actor.ActorSystem
-import akka.agent.Agent
-import concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
 import play.Logger
+
+import java.util.concurrent.atomic.AtomicReference
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 object ScheduledAgent {
 
@@ -17,16 +18,16 @@ object ScheduledAgent {
 
 class ScheduledAgent[T](initialDelay: FiniteDuration, frequency: FiniteDuration, initialValue: T, block: => Future[T], system: ActorSystem)(implicit ec: ExecutionContext) {
 
-  val agent = Agent[T](initialValue)
+  val agent = new AtomicReference[T](initialValue)
 
   val agentSchedule = system.scheduler.schedule(initialDelay, frequency) {
     block.onComplete {
       case Failure(e) => Logger.warn("scheduled agent failed", e)
-      case Success(result) => agent send result
+      case Success(result) => agent.set(result)
     }
   }
 
-  def get(): T = agent()
+  def get(): T = agent.get()
 
   def apply(): T = get()
 

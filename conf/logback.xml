@@ -2,7 +2,7 @@
 
     <contextName>status-app</contextName>
 
-    <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
+    <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
 
     <appender name="LOGFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/status-app.log</file>

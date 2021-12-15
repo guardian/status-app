@@ -40,8 +40,8 @@ class Login(
   (implicit val executionContext: ExecutionContext) extends AbstractController(controllerComponents) with LoginSupport {
 
   override val authConfig = googleAuthConfig
-  override val failureRedirectTarget: Call = routes.Application.index()
-  override val defaultRedirectTarget: Call = routes.Application.index()
+  override val failureRedirectTarget: Call = routes.Application.index
+  override val defaultRedirectTarget: Call = routes.Application.index
 
 
   def login = Action { request =>
@@ -50,7 +50,7 @@ class Login(
   }
 
   def logout = Action { implicit request =>
-    Redirect(routes.Application.index()).flashing("error" -> s"User logged out").withNewSession
+    Redirect(routes.Application.index).flashing("error" -> s"User logged out").withNewSession
   }
 
   def loginAction = Action.async { implicit request =>

@@ -6,7 +6,10 @@ import java.util.Date
 import model.EstateProvider
 import org.joda.time.DateTime
 
-class Management(estateProvider: EstateProvider) extends ControllerHelpers {
+class Management(
+  estateProvider: EstateProvider,
+  controllerComponents: ControllerComponents
+) extends AbstractController(controllerComponents) {
   def healthcheck = Action {
     estateProvider().lastUpdated match {
       case Some(dt) if dt.isBefore(DateTime.now().minusMinutes(5)) => InternalServerError("Out of date data")
