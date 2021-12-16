@@ -6,7 +6,7 @@ deployments:
     app: status-app
     parameters:
       amiTags:
-        Recipe: ubuntu-xenial-status-app
+        Recipe: ophan-ubuntu-bionic-ARM
         AmigoStage: PROD
       amiParameter: ImageId
       amiEncrypted: true

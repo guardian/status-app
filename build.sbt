@@ -1,12 +1,11 @@
 name := "status-app"
 
 version := "1.0"
+import com.gu.riffraff.artifact.BuildInfo
 import com.typesafe.sbt.packager.archetypes.systemloader.SystemdPlugin
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 
 enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging, SystemdPlugin)
-
-resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
 
 scalaVersion := "2.12.15"
 scalacOptions ++= List("-feature", "-deprecation")
@@ -39,15 +38,12 @@ libraryDependencies ++= Seq(
 maintainer := "Paul Brown <paul.brown@theguardian.com>"
 packageSummary := "AWS status web-app"
 packageDescription := """Web app that shows an overview of the status of autoscaling groups in an AWS account"""
-debianPackageDependencies := Seq("openjdk-8-jre-headless")
 
 Universal / javaOptions ++= Seq(
   "-Dpidfile.path=/dev/null",
-  "-J-XX:MaxRAMFraction=2",
-  "-J-XX:InitialRAMFraction=2",
+  "-J-XX:MaxRAMPercentage=50",
+  "-J-XX:InitialRAMPercentage=50",
   "-J-XX:MaxMetaspaceSize=500m",
-  "-J-XX:+PrintGCDetails",
-  "-J-XX:+PrintGCDateStamps",
   s"-J-Xloggc:/var/log/${packageName.value}/gc.log"
 )
 Debian / serverLoading := Some(Systemd)
@@ -57,17 +53,20 @@ riffRaffUploadManifestBucket := Some("riffraff-builds")
 
 buildInfoPackage := "controllers"
 def env(key: String): Option[String] = Option(System.getenv(key))
-buildInfoKeys := Seq[BuildInfoKey](
-  Compile / libraryDependencies,
-  name,
-  version,
-  "buildNumber" -> (env("BUILD_NUMBER") orElse env("TRAVIS_BUILD_NUMBER") getOrElse "DEV"),
-  "gitCommitId" -> (env("TRAVIS_COMMIT") getOrElse "DEV"),
-  // so this next one is constant to avoid it always recompiling on dev machines.
-  // we only really care about build time on teamcity, when a constant based on when
-  // it was loaded is just fine
-  "buildTime" -> System.currentTimeMillis
-)
+buildInfoKeys := {
+  lazy val buildInfo = BuildInfo(baseDirectory.value)
+  Seq[BuildInfoKey](
+    Compile / libraryDependencies,
+    name,
+    version,
+    "buildNumber" -> buildInfo.buildIdentifier,
+    "gitCommitId" -> buildInfo.revision,
+    // so this next one is constant to avoid it always recompiling on dev machines.
+    // we only really care about build time on teamcity, when a constant based on when
+    // it was loaded is just fine
+    "buildTime" -> System.currentTimeMillis
+  )
+}
 
 testListeners += new JUnitXmlTestsListener(
   env("CI_REPORTS").getOrElse(s"${baseDirectory.value}/shippable/testresults"))
