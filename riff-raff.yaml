@@ -12,6 +12,8 @@ deployments:
       amiEncrypted: true
   status-app:
     type: autoscaling
+    parameters:
+      bucketSsmLookup: true
     dependencies: [ami]
 regions:
 - eu-west-1
