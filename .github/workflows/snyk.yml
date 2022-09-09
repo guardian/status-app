@@ -1,10 +1,9 @@
-# This action runs snyk monitor on every push to main
 name: Snyk
 
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -12,7 +11,7 @@ jobs:
     uses: guardian/.github/.github/workflows/sbt-node-snyk.yml@main
     with:
       DEBUG: true
-      ORG: guardian-capi 
+      ORG: guardian-capi
       SKIP_NODE: true
     secrets:
        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
