@@ -3,7 +3,7 @@ package model
 import akka.actor.ActorSystem
 import play.api.libs.json._
 
-import collection.convert.wrapAll._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
@@ -53,22 +53,22 @@ class AWSCost(implicit wsClient: WSClient, system: ActorSystem) {
   val typeCounts = ScheduledAgent[Map[EC2CostingType, Int]](0.seconds, 5.minutes, Map()) {
     for {
       reservations <- AWS.futureOf(awsConnection.ec2.describeInstancesAsync, new DescribeInstancesRequest())
-      instances =  reservations.getReservations flatMap (_.getInstances)
-    } yield instances.groupBy(i => EC2CostingType(i.getInstanceType, i.getPlacement.getAvailabilityZone)).mapValues(_.size)
+      instances =  reservations.getReservations.asScala flatMap (_.getInstances.asScala)
+    } yield instances.groupBy(i => EC2CostingType(i.getInstanceType, i.getPlacement.getAvailabilityZone)).view.mapValues(_.size).toMap
   }
 
   lazy val reservationsAgent = ScheduledAgent[Map[EC2CostingType, Seq[Reservation]]](0.seconds, 5.minutes, Map()) {
     logger.info("Starting reservationsAgent")
     for {
       reservations <- AWS.futureOf(awsConnection.ec2.describeReservedInstancesAsync,
-        new DescribeReservedInstancesRequest().withFilters(new Filter("state", List("active"))))
+        new DescribeReservedInstancesRequest().withFilters(new Filter("state", List("active").asJava)))
     } yield {
-      val reservs = reservations.getReservedInstances map { r =>
+      val reservs = reservations.getReservedInstances.asScala.toSeq map { r =>
         EC2CostingType(r.getInstanceType, r.getAvailabilityZone) ->
-          Reservation(r.getInstanceCount, r.getFixedPrice, r.getRecurringCharges.headOption.map(_.getAmount.toDouble).getOrElse(0d))
+          Reservation(r.getInstanceCount, r.getFixedPrice, r.getRecurringCharges.asScala.headOption.map(_.getAmount.toDouble).getOrElse(0d))
       }
       reservs.foreach{ res => logger.info("Reservation: "+res)}
-      reservs.groupBy { case (costType, _) => costType } mapValues (_ map { case (_, res) => res })
+      reservs.groupBy { case (costType, _) => costType }.view.mapValues(_ map { case (_, res) => res }).toMap
     }
   }
 
@@ -92,7 +92,7 @@ class AWSCost(implicit wsClient: WSClient, system: ActorSystem) {
             (s \ "size").as[String] -> (c.head \ "prices" \ "USD").as[BigDecimal]
           }
 
-          JsSuccess(RegionPrices(Map(typeToCost: _*)))
+          JsSuccess(RegionPrices(typeToCost.toMap))
         }
       }
       implicit object OnDemandPricesReads extends Reads[OnDemandPrices] {
@@ -101,7 +101,7 @@ class AWSCost(implicit wsClient: WSClient, system: ActorSystem) {
           val regions = regionsJs.map { r =>
             (r \ "region").as[String] -> (r \ "instanceTypes").as[RegionPrices]
           }
-          JsSuccess(OnDemandPrices(Map(regions: _*)))
+          JsSuccess(OnDemandPrices(regions.toMap))
         }
       }
       Json.parse(response.body.dropWhile(_ != '{').takeWhile(_ != ')')).as[OnDemandPrices]

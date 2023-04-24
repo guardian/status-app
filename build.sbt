@@ -7,7 +7,7 @@ import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 
 enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging, SystemdPlugin)
 
-scalaVersion := "2.12.15"
+scalaVersion := "2.13.10"
 scalacOptions ++= List("-feature", "-deprecation")
 
 val jacksonVersion = "2.12.3"

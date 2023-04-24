@@ -9,7 +9,7 @@ import com.amazonaws.ClientConfiguration
 import com.gu.googleauth.{AntiForgeryChecker, GoogleAuthConfig}
 import play.api.http.HttpConfiguration
 
-import collection.convert.decorateAll._
+import scala.jdk.CollectionConverters._
 
 class DynamoConfig(mode: Mode, httpConfiguration: HttpConfiguration) {
   def get(key: String) = AWS.connection.dynamo.getItem(
