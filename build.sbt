@@ -7,7 +7,7 @@ import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 
 enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackaging, SystemdPlugin)
 
-scalaVersion := "2.12.15"
+scalaVersion := "2.13.10"
 scalacOptions ++= List("-feature", "-deprecation")
 
 val jacksonVersion = "2.12.3"
@@ -19,7 +19,7 @@ libraryDependencies ++= Seq(
   specs2 % Test,
   ehcache,
   ws,
-  "com.gu.play-googleauth" %% "play-v28" % "2.1.1",
+  "com.gu.play-googleauth" %% "play-v28" % "2.2.7",
   "org.webjars.bower" % "react" % "0.14.0",
   "org.webjars" % "bootstrap" % "3.4.1",
   "org.webjars" % "d3js" % "3.5.17",

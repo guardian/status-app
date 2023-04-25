@@ -6,7 +6,7 @@ deployments:
     app: status-app
     parameters:
       amiTags:
-        Recipe: ophan-ubuntu-bionic-ARM
+        Recipe: ophan-ubuntu-jammy-ARM-CDK
         AmigoStage: PROD
       amiParameter: ImageId
       amiEncrypted: true

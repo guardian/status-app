@@ -4,7 +4,7 @@ import com.amazonaws.services.elasticloadbalancing.model.{DescribeInstanceHealth
 import lib.{AmazonConnection, AWS}
 import com.amazonaws.services.cloudwatch.model.Statistic._
 
-import collection.convert.wrapAsScala._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import com.amazonaws.services.cloudwatch.model.{Statistic, Datapoint, Dimension, GetMetricStatisticsRequest}
 import org.joda.time.DateTime
@@ -45,20 +45,20 @@ object ELB {
     requestCount <- requestCount(lbName)
     errorCount <- errorCount(lbName)
   } yield {
-    val members = elbHealths.getInstanceStates.toList.map(i => ELBMember(
+    val members = elbHealths.getInstanceStates.asScala.toList.map(i => ELBMember(
       i.getInstanceId, i.getState,
       Option(i.getDescription).filter(_ != "N/A"),
       Option(i.getReasonCode).filter(_ != "N/A")
     ))
-    val active = requestCount.getDatapoints.nonEmpty && requestCount.getDatapoints.map(_.getSum).max > 10
-    val latencyInMs = latency.getDatapoints.sortBy(_.getTimestamp).map(p =>
+    val active = requestCount.getDatapoints.asScala.nonEmpty && requestCount.getDatapoints.asScala.map(_.getSum).max > 10
+    val latencyInMs = latency.getDatapoints.asScala.toSeq.sortBy(_.getTimestamp).map(p =>
       new Datapoint().withTimestamp(p.getTimestamp).withAverage(p.getAverage * 1000)
     )
 
     val start = extremeTime(latencyInMs)(_.minBy(_.getTimestamp))
     val end = extremeTime(latencyInMs)(_.maxBy(_.getTimestamp))
 
-    ELB(lbName, members, latencyInMs, zeroFillPerMinute(start, end)(errorCount.getDatapoints), active)
+    ELB(lbName, members, latencyInMs, zeroFillPerMinute(start, end)(errorCount.getDatapoints.asScala.toSeq), active)
   }
 
 

@@ -10,7 +10,7 @@ import play.api.cache.SyncCacheApi
 import play.api.libs.json.Json
 import play.api.libs.ws.{WSClient, WSResponse}
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -48,7 +48,7 @@ case class Instance(
 
 object EC2Instance {
   def apply(awsInstance: AwsEc2Instance, version: Option[String], usefulUrls: Seq[(String, String)], awsCost: AWSCost, flag:Boolean = false) = {
-    val tags = awsInstance.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
+    val tags = awsInstance.getTags.asScala.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
     val costingType = EC2CostingType(awsInstance.getInstanceType, awsInstance.getPlacement.getAvailabilityZone)
     val cost: Option[BigDecimal] = Try(awsCost(costingType)).toOption
     Instance(
@@ -143,7 +143,7 @@ object Instance {
   private def uncachedGet(id: String, awsCost: AWSCost)(implicit awsConn: AmazonConnection, wsClient: WSClient): Future[Instance] = {
     (for {
       result <- AWS.futureOf(awsConn.ec2.describeInstancesAsync, new DescribeInstancesRequest().withInstanceIds(id))
-      i <- (result.getReservations flatMap (_.getInstances) map (from(_, awsCost))).head
+      i <- (result.getReservations.asScala flatMap (_.getInstances.asScala) map (from(_, awsCost))).head
     } yield i) recover {
       case e => {
         log.error(s"Unable to retrieve details for instance: $id")
@@ -161,7 +161,7 @@ object Instance {
     }
 
   def from(i: AwsEc2Instance, awsCost: AWSCost)(implicit wsClient: WSClient): Future[Instance] = {
-    val tags = i.getTags.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
+    val tags = i.getTags.asScala.map(t => t.getKey -> t.getValue).toMap.withDefaultValue("")
     val dns = i.getPublicDnsName
 
     val managementTag = ManagementTag(tags.get("Management"))

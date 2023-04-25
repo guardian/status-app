@@ -4,7 +4,7 @@ import scala.concurrent.Future
 import lib.{AWS, AmazonConnection, FutureO}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 import play.api.Logger
 import play.api.libs.json._
@@ -50,7 +50,7 @@ class ASGSource(cost: AWSCost) {
   def fromApp(instances: List[com.amazonaws.services.ec2.model.Instance])(implicit conn: AmazonConnection, ws: WSClient): Future[Seq[ASG]] = {
 
     val instancesByAutoScalingGroupName: Map[Option[String], Seq[ec2.model.Instance]] =
-      instances.groupBy(_.getTags.toList.find(_.getKey == "aws:autoscaling:groupName").map(_.getValue))
+      instances.groupBy(_.getTags.asScala.find(_.getKey == "aws:autoscaling:groupName").map(_.getValue))
 
     Future.traverse(instancesByAutoScalingGroupName.toSeq) {
       case (autoScalingGroupNameOpt, instancesOfGroupName) => fromInstancesWithAutoscalingGroupName(autoScalingGroupNameOpt, instancesOfGroupName)
@@ -59,7 +59,7 @@ class ASGSource(cost: AWSCost) {
 
   private def fromInstancesWithAutoscalingGroupName(autoScalingGroupNameOpt: Option[String], instances: Seq[ec2.model.Instance])
     (implicit conn: AmazonConnection, ws: WSClient): Future[ASG] = {
-    val tags = instances.flatMap(i => i.getTags.toList.map(t => t.getKey -> t.getValue)).toMap
+    val tags = instances.flatMap(i => i.getTags.asScala.toList.map(t => t.getKey -> t.getValue)).toMap
 
     val asgFtO = for {
       asgName <- FutureO.toFut(autoScalingGroupNameOpt)
@@ -68,11 +68,11 @@ class ASGSource(cost: AWSCost) {
 
     val awsAsgInstances = for {
       asg <- asgFtO
-    } yield asg.getInstances.toList
+    } yield asg.getInstances.asScala.toList
 
     val elbOptFt: FutureO[ELB] = for {
       asg <- asgFtO
-      elbName <- FutureO.toFut(asg.getLoadBalancerNames.headOption)
+      elbName <- FutureO.toFut(asg.getLoadBalancerNames.asScala.headOption)
       elb <- FutureO.toOpt(ELB.forName(elbName))
     } yield elb
 
@@ -89,11 +89,11 @@ class ASGSource(cost: AWSCost) {
         .withStatistics(Maximum, Average)
         .withStartTime(DateTime.now().minusHours(3).toDate).withEndTime(DateTime.now().toDate)
       ))
-    } yield stats.getDatapoints.sortBy(_.getTimestamp)
+    } yield stats.getDatapoints.asScala.toList.sortBy(_.getTimestamp)
 
     val suspendedProcesses = for {
       asg <- asgFtO
-      processes = asg.getSuspendedProcesses.toList.map(_.getProcessName).sorted
+      processes = asg.getSuspendedProcesses.asScala.toList.map(_.getProcessName).sorted
     } yield processes
 
     for {

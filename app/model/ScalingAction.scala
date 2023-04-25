@@ -4,7 +4,7 @@ import com.amazonaws.services.autoscaling.model.{DescribeScalingActivitiesReques
 import org.joda.time.{Duration, DateTime}
 import lib.{AmazonConnection, AWS, UptimeDisplay}
 
-import collection.convert.wrapAsScala._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 case class ScalingAction(a: Activity) {
@@ -23,6 +23,6 @@ object ScalingAction {
     for {
       activities <- AWS.futureOf(conn.autoscaling.describeScalingActivitiesAsync,
         new DescribeScalingActivitiesRequest().withAutoScalingGroupName(asgName))
-    } yield activities.getActivities map (new ScalingAction(_))
+    } yield activities.getActivities.asScala.toSeq map (new ScalingAction(_))
   }
 }
