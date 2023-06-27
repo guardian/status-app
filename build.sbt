@@ -10,7 +10,7 @@ enablePlugins(PlayScala, SbtWeb, RiffRaffArtifact, BuildInfoPlugin, JDebPackagin
 scalaVersion := "2.13.10"
 scalacOptions ++= List("-feature", "-deprecation")
 
-val jacksonVersion = "2.15.0"
+val jacksonVersion = "2.15.2"
 
 // Until all dependencies are on scala-java8-compat v1.x, this avoids unnecessary fatal eviction errors
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % VersionScheme.Always
