@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "bootstrap" % "3.4.1",
   "org.webjars" % "d3js" % "3.5.17",
   "org.webjars" % "zeroclipboard" % "2.2.0",
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.15.0",
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.15.2",
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
