@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "com.gu.play-googleauth" %% "play-v28" % "2.2.7",
   "org.webjars.bower" % "react" % "0.14.0",
   "org.webjars" % "bootstrap" % "5.3.0",
-  "org.webjars" % "d3js" % "3.5.17",
+  "org.webjars" % "d3js" % "6.7.0",
   "org.webjars" % "zeroclipboard" % "2.2.0",
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.15.2",
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
