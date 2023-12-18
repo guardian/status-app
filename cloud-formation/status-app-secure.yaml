@@ -206,6 +206,10 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: '1'
         WriteCapacityUnits: '1'
+      Tags:
+        # TODO - add opt-out reason here
+        - Key: devx-backup-enabled
+          Value: false
   MainDnsEntry:
     Type: 'AWS::Route53::RecordSet'
     Condition: HasDNS
