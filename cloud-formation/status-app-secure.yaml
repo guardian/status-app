@@ -207,7 +207,7 @@ Resources:
         ReadCapacityUnits: '1'
         WriteCapacityUnits: '1'
       Tags:
-        # TODO - add opt-out reason here
+        # We are opting out of backups for this table because we believe it to be non-critical
         - Key: devx-backup-enabled
           Value: false
   MainDnsEntry:
