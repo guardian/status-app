@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion
 ) ++ Seq(
   "dynamodb", "ec2", "elasticloadbalancing", "s3", "autoscaling", "cloudwatch", "sqs"
-).map(artifact => "com.amazonaws" % s"aws-java-sdk-$artifact" % "1.12.122")
+).map(artifact => "com.amazonaws" % s"aws-java-sdk-$artifact" % "1.12.496")
 
 maintainer := "Paul Brown <paul.brown@theguardian.com>"
 packageSummary := "AWS status web-app"
