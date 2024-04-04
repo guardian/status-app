@@ -19,7 +19,7 @@ libraryDependencies ++= Seq(
   specs2 % Test,
   ehcache,
   ws,
-  "com.gu.play-googleauth" %% "play-v28" % "2.2.7",
+  "com.gu.play-googleauth" %% "play-v30" % "6.0.0",
   "org.webjars.bower" % "react" % "0.14.0",
   "org.webjars" % "bootstrap" % "3.4.1",
   "org.webjars" % "d3js" % "3.5.17",
@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion
 ) ++ Seq(
   "dynamodb", "ec2", "elasticloadbalancing", "s3", "autoscaling", "cloudwatch", "sqs"
-).map(artifact => "com.amazonaws" % s"aws-java-sdk-$artifact" % "1.12.496")
+).map(artifact => "com.amazonaws" % s"aws-java-sdk-$artifact" % "1.12.694")
 
 maintainer := "Paul Brown <paul.brown@theguardian.com>"
 packageSummary := "AWS status web-app"

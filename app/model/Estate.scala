@@ -1,6 +1,6 @@
 package model
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.amazonaws.services.autoscaling.model.{AutoScalingGroup, DescribeAutoScalingGroupsRequest}
 import com.amazonaws.services.ec2.model.{DescribeInstancesRequest, Instance => AwsEc2Instance}
 import com.amazonaws.services.sqs.model.{ListQueuesRequest, ListQueuesResult}

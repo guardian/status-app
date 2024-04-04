@@ -1,6 +1,6 @@
 package lib
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import play.Logger
 
 import java.util.concurrent.atomic.AtomicReference
