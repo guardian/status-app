@@ -1,6 +1,6 @@
 package wiring
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import controllers.{Login, Management, StatusAppAuthAction, routes, Application => ApplicationController}
 import filters.HSTSFilter
 import lib.DynamoConfig

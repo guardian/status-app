@@ -1,6 +1,6 @@
 package model
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import play.api.libs.json._
 
 import scala.jdk.CollectionConverters._
