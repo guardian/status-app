@@ -189,10 +189,6 @@ Resources:
         FromPort: 9000
         ToPort: 9000
         SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
-      - IpProtocol: tcp
-        FromPort: 22
-        ToPort: 22
-        CidrIp: !Ref 'AllowedIngressIps'
   ConfigTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
