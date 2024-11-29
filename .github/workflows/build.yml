@@ -31,7 +31,6 @@ jobs:
       run: |
         cd cdk
         npm install
-        npm ci
         npm run lint
         npm run test-junit
         npm run synth
