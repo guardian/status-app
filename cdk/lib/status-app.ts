@@ -1,18 +1,18 @@
+import { GuEc2App } from '@guardian/cdk';
+import { AccessScope } from '@guardian/cdk/lib/constants';
 import type { GuStackProps } from '@guardian/cdk/lib/constructs/core';
 import { GuStack, GuStringParameter } from '@guardian/cdk/lib/constructs/core';
-import { Tags, type App, Duration } from 'aws-cdk-lib';
+import { GuCname } from '@guardian/cdk/lib/constructs/dns';
+import { GuDynamoTable } from '@guardian/cdk/lib/constructs/dynamodb';
+import { GuAllowPolicy } from '@guardian/cdk/lib/constructs/iam';
+import { type App, Duration, Tags } from 'aws-cdk-lib';
+import { AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 import {
 	InstanceClass,
 	InstanceSize,
 	InstanceType,
 	UserData,
 } from 'aws-cdk-lib/aws-ec2';
-import { AccessScope } from '@guardian/cdk/lib/constants';
-import { GuEc2App } from '@guardian/cdk';
-import { GuAllowPolicy } from '@guardian/cdk/lib/constructs/iam';
-import { GuDynamoTable } from '@guardian/cdk/lib/constructs/dynamodb';
-import { AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
-import { GuCname } from '@guardian/cdk/lib/constructs/dns';
 
 export class StatusApp extends GuStack {
 	constructor(scope: App, id: string, props: GuStackProps) {
