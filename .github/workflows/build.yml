@@ -27,6 +27,15 @@ jobs:
     - name: build steps
       run: sbt clean test debian:packageBin
 
+    - name: Build CDK
+      run: |
+        cd cdk
+        npm install
+        npm ci
+        npm run lint
+        npm run test-junit
+        npm run synth
+
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: success() || failure()
@@ -46,7 +55,7 @@ jobs:
     - name: Upload to riff-raff
       uses: guardian/actions-riff-raff@v2
       with:
-        configPath: riff-raff.yaml
+        configPath: cdk/cdk.out/riff-raff.yaml
         projectName: status-app
         buildNumberOffset: 180
         contentDirectories: |
