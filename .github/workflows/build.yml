@@ -30,7 +30,7 @@ jobs:
     - name: Build CDK
       run: |
         cd cdk
-        npm install
+        npm ci
         npm run lint
         npm run test
         npm run synth

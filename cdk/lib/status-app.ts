@@ -2,7 +2,6 @@ import { GuEc2App } from '@guardian/cdk';
 import { AccessScope } from '@guardian/cdk/lib/constants';
 import type { GuStackProps } from '@guardian/cdk/lib/constructs/core';
 import { GuStack, GuStringParameter } from '@guardian/cdk/lib/constructs/core';
-import { GuCname } from '@guardian/cdk/lib/constructs/dns';
 import { GuDynamoTable } from '@guardian/cdk/lib/constructs/dynamodb';
 import { GuAllowPolicy } from '@guardian/cdk/lib/constructs/iam';
 import { type App, Duration, Tags } from 'aws-cdk-lib';
@@ -13,6 +12,8 @@ import {
 	InstanceType,
 	UserData,
 } from 'aws-cdk-lib/aws-ec2';
+import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
+import { LoadBalancerTarget } from 'aws-cdk-lib/aws-route53-targets';
 
 export class StatusApp extends GuStack {
 	constructor(scope: App, id: string, props: GuStackProps) {
@@ -86,11 +87,15 @@ export class StatusApp extends GuStack {
 		});
 
 		if (hostedZone.valueAsString) {
-			new GuCname(this, 'MainDnsEntry', {
-				app,
-				domainName: hostedZone.valueAsString,
-				resourceRecord: ec2.loadBalancer.loadBalancerDnsName,
-				ttl: Duration.seconds(900),
+			const zone = HostedZone.fromLookup(this, 'Zone', {
+				domainName: hostedZone.valueAsString
+			});
+
+			new ARecord(this, "MainDnsEntry", {
+				zone,
+				recordName: `status.${hostedZone.valueAsString}`,
+				target: RecordTarget.fromAlias(new LoadBalancerTarget(ec2.loadBalancer)),
+				ttl: Duration.seconds(900)
 			});
 		}
 	}
