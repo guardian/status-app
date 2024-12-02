@@ -27,7 +27,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       "GuApplicationTargetGroup",
       "GuHttpsApplicationListener",
       "GuDynamoTable",
-      "GuCname",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -122,16 +121,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
             "Value": {
               "Ref": "LoggingStreamName",
             },
-          },
-          {
-            "Key": "Management",
-            "PropagateAtLaunch": true,
-            "Value": "port=9000",
-          },
-          {
-            "Key": "Role",
-            "PropagateAtLaunch": true,
-            "Value": "ophan-status-app",
           },
           {
             "Key": "Stack",
@@ -553,25 +542,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       },
       "Type": "AWS::EC2::SecurityGroupEgress",
     },
-    "MainDnsEntry": {
-      "Properties": {
-        "Name": {
-          "Ref": "HostedZone",
-        },
-        "RecordType": "CNAME",
-        "ResourceRecords": [
-          {
-            "Fn::GetAtt": [
-              "LoadBalancerStatusapp1F67D563",
-              "DNSName",
-            ],
-          },
-        ],
-        "Stage": "TEST",
-        "TTL": 900,
-      },
-      "Type": "Guardian::DNS::RecordSet",
-    },
     "ParameterStoreReadStatusapp44EB488E": {
       "Properties": {
         "PolicyDocument": {
@@ -779,6 +749,36 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
         "ToPort": 9000,
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "foo": {
+      "Properties": {
+        "Comment": "CNAME for status app",
+        "HostedZoneName": {
+          "Ref": "HostedZone",
+        },
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              "status.",
+              {
+                "Ref": "HostedZone",
+              },
+            ],
+          ],
+        },
+        "ResourceRecords": [
+          {
+            "Fn::GetAtt": [
+              "LoadBalancerStatusapp1F67D563",
+              "DNSName",
+            ],
+          },
+        ],
+        "TTL": "900",
+        "Type": "CNAME",
+      },
+      "Type": "AWS::Route53::RecordSet",
     },
     "ophanTESTstatusappB56EA109": {
       "DependsOn": [
