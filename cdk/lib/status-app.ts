@@ -1,19 +1,13 @@
-import { GuEc2App } from '@guardian/cdk';
-import { AccessScope } from '@guardian/cdk/lib/constants';
-import type { GuStackProps } from '@guardian/cdk/lib/constructs/core';
-import { GuStack, GuStringParameter } from '@guardian/cdk/lib/constructs/core';
-import { GuDynamoTable } from '@guardian/cdk/lib/constructs/dynamodb';
-import { GuAllowPolicy } from '@guardian/cdk/lib/constructs/iam';
-import { type App, Duration, Tags } from 'aws-cdk-lib';
-import { AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
-import {
-	InstanceClass,
-	InstanceSize,
-	InstanceType,
-	UserData,
-} from 'aws-cdk-lib/aws-ec2';
-import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
-import { LoadBalancerTarget } from 'aws-cdk-lib/aws-route53-targets';
+import {GuEc2App} from '@guardian/cdk';
+import {AccessScope} from '@guardian/cdk/lib/constants';
+import type {GuStackProps} from '@guardian/cdk/lib/constructs/core';
+import {GuStack, GuStringParameter} from '@guardian/cdk/lib/constructs/core';
+import {GuDynamoTable} from '@guardian/cdk/lib/constructs/dynamodb';
+import {GuAllowPolicy} from '@guardian/cdk/lib/constructs/iam';
+import {type App, Duration, Tags} from 'aws-cdk-lib';
+import {AttributeType, BillingMode} from 'aws-cdk-lib/aws-dynamodb';
+import {InstanceClass, InstanceSize, InstanceType, UserData,} from 'aws-cdk-lib/aws-ec2';
+import {CfnRecordSet, RecordType} from 'aws-cdk-lib/aws-route53';
 
 export class StatusApp extends GuStack {
 	constructor(scope: App, id: string, props: GuStackProps) {
@@ -72,8 +66,6 @@ export class StatusApp extends GuStack {
 		};
 
 		Tags.of(ec2.autoScalingGroup).add('SystemdUnit', `${stack}.service`);
-		Tags.of(ec2.autoScalingGroup).add('Management', 'port=9000');
-		Tags.of(ec2.autoScalingGroup).add('Role', `${stack}-status-app`);
 
 		new GuDynamoTable(this, 'ConfigTable', {
 			devXBackups: {
@@ -87,16 +79,16 @@ export class StatusApp extends GuStack {
 		});
 
 		if (hostedZone.valueAsString) {
-			const zone = HostedZone.fromLookup(this, 'Zone', {
-				domainName: hostedZone.valueAsString
-			});
-
-			new ARecord(this, "MainDnsEntry", {
-				zone,
-				recordName: `status.${hostedZone.valueAsString}`,
-				target: RecordTarget.fromAlias(new LoadBalancerTarget(ec2.loadBalancer)),
-				ttl: Duration.seconds(900)
-			});
+			new CfnRecordSet(this, "foo", {
+				name:  `status.${hostedZone.valueAsString}`,
+				comment: "CNAME for status app",
+				type: RecordType.CNAME,
+				hostedZoneName: hostedZone.valueAsString,
+				ttl: "900",
+				resourceRecords: [
+					ec2.loadBalancer.loadBalancerDnsName
+				],
+			})
 		}
 	}
 }
