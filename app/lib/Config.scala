@@ -1,39 +1,47 @@
 package lib
 
-import java.io.File
-
-import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import play.api.{Configuration, Mode}
-import com.typesafe.config.ConfigFactory
 import com.amazonaws.ClientConfiguration
 import com.gu.googleauth.{AntiForgeryChecker, GoogleAuthConfig}
+import com.typesafe.config.ConfigFactory
+import play.api.{Configuration, Mode}
 import play.api.http.HttpConfiguration
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.ssm.SsmClient
+import software.amazon.awssdk.services.ssm.model.GetParameterRequest
 
-import scala.jdk.CollectionConverters._
+import java.io.File
 
-class DynamoConfig(mode: Mode, httpConfiguration: HttpConfiguration) {
-  def get(key: String) = AWS.connection.dynamo.getItem(
-    "StatusAppConfig", Map("key" -> new AttributeValue(key)).asJava).getItem.asScala
+class ParameterStoreConfig(mode: Mode, httpConfiguration: HttpConfiguration) {
+  private val ssmClient = SsmClient.builder()
+    .region(Region.EU_WEST_1)
+    .build()
 
+  private def getParameter(parameterName: String): String = {
+    val request = GetParameterRequest.builder()
+      .name(parameterName)
+      .withDecryption(true)
+      .build()
+    ssmClient.getParameter(request).parameter().value()
+  }
 
   lazy val googleAuthConfig: GoogleAuthConfig = {
-    val oauthConfig = get("oauth")
-    val host = if (mode == Mode.Dev) "status.local.dev-gutools.co.uk" else oauthConfig("host").getS
-    val protocol = if (mode == Mode.Dev) "https" else oauthConfig.get("protocol").map(_.getS).getOrElse("https")
+    val host = if (mode == Mode.Dev) "status.local.dev-gutools.co.uk" else getParameter("/status-app/oauth/host")
+    val protocol = if (mode == Mode.Dev) "https" else getParameter("/status-app/oauth/protocol")
 
-    val clientId = oauthConfig("clientId").getS
-    val clientSecret = oauthConfig("clientSecret").getS
+    val clientId = getParameter("/status-app/oauth/clientId")
+    val clientSecret = getParameter("/status-app/oauth/clientSecret")
     val redirectUrl = s"$protocol://$host/oauth2callback"
-    val antiForgeryChecker = AntiForgeryChecker.borrowSettingsFromPlay(httpConfiguration) // TODO add play secret rotation
-     oauthConfig.get("allowedDomain").map(_.getS).map { domain =>
+    val antiForgeryChecker = AntiForgeryChecker.borrowSettingsFromPlay(httpConfiguration)
+
+    Option(getParameter("/status-app/oauth/allowedDomain")).map { domain =>
       GoogleAuthConfig(
         clientId = clientId,
         clientSecret = clientSecret,
         redirectUrl = redirectUrl,
-        domains = List(domain), // Google App domain to restrict login,
+        domains = List(domain),
         antiForgeryChecker = antiForgeryChecker
       )
-    } getOrElse {
+    }.getOrElse {
       GoogleAuthConfig.withNoDomainRestriction(
         clientId = clientId,
         clientSecret = clientSecret,
@@ -41,12 +49,10 @@ class DynamoConfig(mode: Mode, httpConfiguration: HttpConfiguration) {
         antiForgeryChecker = antiForgeryChecker
       )
     }
-
   }
 }
 
 object Config {
-
   private lazy val localPropsFile = System.getProperty("user.home") + "/.gu/statusapp.conf"
 
   def configuration =
@@ -64,13 +70,9 @@ object Config {
     client
   }
 
-  def fileConfig(filePath: String) = {
+  private def fileConfig(filePath: String) = {
     val file = new File(filePath)
-    if (file.exists)
-      ConfigFactory.parseFile(file)
-    else
-      ConfigFactory.empty()
+    if (file.exists) ConfigFactory.parseFile(file)
+    else ConfigFactory.empty()
   }
-
-
 }

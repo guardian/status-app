@@ -1,11 +1,9 @@
 import {GuEc2App} from '@guardian/cdk';
 import {AccessScope} from '@guardian/cdk/lib/constants';
 import type {GuStackProps} from '@guardian/cdk/lib/constructs/core';
-import {GuStack, GuStringParameter} from '@guardian/cdk/lib/constructs/core';
-import {GuDynamoTable} from '@guardian/cdk/lib/constructs/dynamodb';
+import {GuParameter, GuStack, GuStringParameter} from '@guardian/cdk/lib/constructs/core';
 import {GuAllowPolicy} from '@guardian/cdk/lib/constructs/iam';
 import {type App, Duration, Tags} from 'aws-cdk-lib';
-import {AttributeType, BillingMode} from 'aws-cdk-lib/aws-dynamodb';
 import {InstanceClass, InstanceSize, InstanceType, UserData,} from 'aws-cdk-lib/aws-ec2';
 import {CfnRecordSet, RecordType} from 'aws-cdk-lib/aws-route53';
 
@@ -17,6 +15,36 @@ export class StatusApp extends GuStack {
 
 		const app = 'status-app';
 		const region = 'eu-west-1';
+
+		new GuParameter(this, 'OAuthHost', {
+			description: 'Host domain for the Status App',
+			default: `/${stage}/status-app/oauth/host`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthProtocol', {
+			description: 'Protocol for the Status App',
+			default: `/${stage}/status-app/oauth/protocol`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthClientId', {
+			description: 'Google OAuth client ID for authentication',
+			default: `/${stage}/status-app/oauth/clientId`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthClientSecret', {
+			description: 'Google OAuth client secret for authentication',
+			default: `/${stage}/status-app/oauth/clientSecret`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthAllowedDomain', {
+			description: 'Allowed domain for Google OAuth authentication',
+			default: `/${stage}/status-app/oauth/allowedDomain`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
 
 		const hostedZone = new GuStringParameter(this, 'HostedZone', {
 			description:
@@ -66,17 +94,6 @@ export class StatusApp extends GuStack {
 		};
 
 		Tags.of(ec2.autoScalingGroup).add('SystemdUnit', `${stack}.service`);
-
-		new GuDynamoTable(this, 'ConfigTable', {
-			devXBackups: {
-				enabled: true,
-			},
-			tableName: 'StatusAppConfig',
-			partitionKey: { name: 'key', type: AttributeType.STRING },
-			billingMode: BillingMode.PROVISIONED,
-			readCapacity: 1,
-			writeCapacity: 1,
-		});
 
 		if (hostedZone.valueAsString) {
 			new CfnRecordSet(this, "foo", {

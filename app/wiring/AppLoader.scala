@@ -3,7 +3,7 @@ package wiring
 import org.apache.pekko.actor.ActorSystem
 import controllers.{Login, Management, StatusAppAuthAction, routes, Application => ApplicationController}
 import filters.HSTSFilter
-import lib.DynamoConfig
+import lib.ParameterStoreConfig
 import model._
 import play.api.ApplicationLoader.Context
 import play.api.cache.ehcache.EhCacheComponents
@@ -30,7 +30,7 @@ class MyComponents(context: Context)
   override def httpFilters: Seq[EssentialFilter] = Seq(new HSTSFilter)
 
   implicit val system: ActorSystem = actorSystem
-  val dynamoConfig = new DynamoConfig(environment.mode, httpConfiguration)
+  val dynamoConfig = new ParameterStoreConfig(environment.mode, httpConfiguration)
 
   implicit val ws = wsClient
   val awsCost = new AWSCost
