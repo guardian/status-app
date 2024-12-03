@@ -18,7 +18,7 @@ export class StatusApp extends GuStack {
 		const app = 'status-app';
 		const region = 'eu-west-1';
 
-		const hostedZone = new GuStringParameter(this, 'HostedZone', {
+		const hostedZone = new GuStringParameter(this, 'hosted-zone', {
 			description:
 				"DNS hosted zone for which A CNAME will be created. e.g. example.com (note, no trailing full-stop) for status.example.com. Leave empty if you don't want to add a CNAME to the status app",
 		});
@@ -42,11 +42,11 @@ export class StatusApp extends GuStack {
 			imageRecipe: 'ophan-ubuntu-jammy-ARM-CDK',
 			roleConfiguration: {
 				additionalPolicies: [
-					new GuAllowPolicy(this, 'status-app-s3-access', {
+					new GuAllowPolicy(this, 's3-access', {
 						resources: [`arn:aws:s3::*:membership-dist/*`],
 						actions: ['s3:GetObject'],
 					}),
-					new GuAllowPolicy(this, 'status-app-dynamo-access', {
+					new GuAllowPolicy(this, 'dynamo-access', {
 						resources: [
 							`arn:aws:dynamodb:${region}:${this.account}:table/StatusAppConfig`,
 						],
@@ -79,7 +79,7 @@ export class StatusApp extends GuStack {
 		});
 
 		if (hostedZone.valueAsString) {
-			new CfnRecordSet(this, "foo", {
+			new CfnRecordSet(this, "cname-record", {
 				name:  `status.${hostedZone.valueAsString}`,
 				comment: "CNAME for status app",
 				type: RecordType.CNAME,
