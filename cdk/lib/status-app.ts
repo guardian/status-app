@@ -18,31 +18,31 @@ export class StatusApp extends GuStack {
 
 		new GuParameter(this, 'OAuthHost', {
 			description: 'Host domain for the Status App',
-			default: `/${stage}/status-app/oauth/host`,
+			default: `/status-app/oauth/host`,
 			type: 'AWS::SSM::Parameter::Value<String>',
 		});
 
 		new GuParameter(this, 'OAuthProtocol', {
 			description: 'Protocol for the Status App',
-			default: `/${stage}/status-app/oauth/protocol`,
+			default: `/status-app/oauth/protocol`,
 			type: 'AWS::SSM::Parameter::Value<String>',
 		});
 
 		new GuParameter(this, 'OAuthClientId', {
 			description: 'Google OAuth client ID for authentication',
-			default: `/${stage}/status-app/oauth/clientId`,
+			default: `/status-app/oauth/clientId`,
 			type: 'AWS::SSM::Parameter::Value<String>',
 		});
 
 		new GuParameter(this, 'OAuthClientSecret', {
 			description: 'Google OAuth client secret for authentication',
-			default: `/${stage}/status-app/oauth/clientSecret`,
+			default: `/status-app/oauth/clientSecret`,
 			type: 'AWS::SSM::Parameter::Value<String>',
 		});
 
 		new GuParameter(this, 'OAuthAllowedDomain', {
 			description: 'Allowed domain for Google OAuth authentication',
-			default: `/${stage}/status-app/oauth/allowedDomain`,
+			default: `/status-app/oauth/allowedDomain`,
 			type: 'AWS::SSM::Parameter::Value<String>',
 		});
 
@@ -80,6 +80,12 @@ export class StatusApp extends GuStack {
 						],
 						actions: ['dynamodb:GetItem'],
 					}),
+					new GuAllowPolicy(this, 'status-app-parameter-store-access', {
+						resources: [
+							`arn:aws:ssm:${region}:${this.account}:parameter/status-app/*`
+						],
+						actions: ['ssm:GetParameter', 'ssm:GetParameters']
+					})
 				],
 			},
 		});
