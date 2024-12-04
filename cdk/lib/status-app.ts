@@ -18,9 +18,14 @@ export class StatusApp extends GuStack {
 		const app = 'status-app';
 		const region = 'eu-west-1';
 
-		const hostedZone = new GuStringParameter(this, 'hosted-zone', {
+		const hostedZoneName = new GuStringParameter(this, 'hosted-zone-name', {
 			description:
 				"DNS hosted zone for which A CNAME will be created. e.g. example.com (note, no trailing full-stop) for status.example.com. Leave empty if you don't want to add a CNAME to the status app",
+		});
+
+		const hostedZoneId = new GuStringParameter(this, 'hosted-zone-id', {
+			description:
+				"ID for the hosted zone",
 		});
 
 		const userData = UserData.custom(`#!/bin/bash -ev
@@ -28,6 +33,8 @@ export class StatusApp extends GuStack {
           dpkg -i status-app_1.0_all.deb
           /opt/cloudwatch-logs/configure-logs application ${stack} ${stage} status-app /var/log/status-app/status-app.log
           `);
+
+		const domainName = `status-app.ophan.co.uk`;
 
 		const ec2 = new GuEc2App(this, {
 			app,
@@ -38,13 +45,17 @@ export class StatusApp extends GuStack {
 			applicationPort: 9000,
 			monitoringConfiguration: { noMonitoring: true },
 			scaling: { minimumInstances: 1, maximumInstances: 2 },
+			certificateProps: { domainName: domainName, hostedZoneId: hostedZoneId.valueAsString },
 			userData,
 			imageRecipe: 'ophan-ubuntu-jammy-ARM-CDK',
 			roleConfiguration: {
 				additionalPolicies: [
 					new GuAllowPolicy(this, 's3-access', {
-						resources: [`arn:aws:s3::*:membership-dist/*`],
-						actions: ['s3:GetObject'],
+						resources: [
+							'arn:aws:s3:::membership-dist',
+							'arn:aws:s3:::membership-dist/*'
+						],
+						actions: ['s3:GetObject', 's3:ListBucket']
 					}),
 					new GuAllowPolicy(this, 'dynamo-access', {
 						resources: [
@@ -71,19 +82,19 @@ export class StatusApp extends GuStack {
 			devXBackups: {
 				enabled: true,
 			},
-			tableName: 'StatusAppConfig',
+			tableName: `StatusAppConfig-${stage}`,
 			partitionKey: { name: 'key', type: AttributeType.STRING },
 			billingMode: BillingMode.PROVISIONED,
 			readCapacity: 1,
 			writeCapacity: 1,
 		});
 
-		if (hostedZone.valueAsString) {
+		if (hostedZoneName.valueAsString) {
 			new CfnRecordSet(this, "cname-record", {
-				name:  `status.${hostedZone.valueAsString}`,
+				name:  `status-app.${hostedZoneName.valueAsString}`,
 				comment: "CNAME for status app",
 				type: RecordType.CNAME,
-				hostedZoneName: hostedZone.valueAsString,
+				hostedZoneName: `${hostedZoneName.valueAsString}.`,
 				ttl: "900",
 				resourceRecords: [
 					ec2.loadBalancer.loadBalancerDnsName

@@ -5,12 +5,14 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
   "Metadata": {
     "gu:cdk:constructs": [
       "GuStringParameter",
+      "GuStringParameter",
       "GuAllowPolicy",
       "GuAllowPolicy",
       "GuVpcParameter",
       "GuSubnetListParameter",
       "GuSubnetListParameter",
       "GuEc2App",
+      "GuCertificate",
       "GuInstanceRole",
       "GuSsmSshPolicy",
       "GuDescribeEC2Policy",
@@ -51,10 +53,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       "Description": "SSM parameter containing the S3 bucket name holding distribution artifacts",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
-    "HostedZone": {
-      "Description": "DNS hosted zone for which A CNAME will be created. e.g. example.com (note, no trailing full-stop) for status.example.com. Leave empty if you don't want to add a CNAME to the status app",
-      "Type": "String",
-    },
     "LoggingStreamName": {
       "Default": "/account/services/logging.stream.name",
       "Description": "SSM parameter containing the Name (not ARN) on the kinesis stream",
@@ -64,6 +62,14 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       "Default": "/account/vpc/primary/id",
       "Description": "Virtual Private Cloud to run EC2 instances within. Should NOT be the account default VPC.",
       "Type": "AWS::SSM::Parameter::Value<AWS::EC2::VPC::Id>",
+    },
+    "hostedzoneid": {
+      "Description": "ID for the hosted zone",
+      "Type": "String",
+    },
+    "hostedzonename": {
+      "Description": "DNS hosted zone for which A CNAME will be created. e.g. example.com (note, no trailing full-stop) for status.example.com. Leave empty if you don't want to add a CNAME to the status app",
+      "Type": "String",
     },
     "statusappPrivateSubnets": {
       "Default": "/account/vpc/primary/subnets/private",
@@ -149,6 +155,49 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       },
       "Type": "AWS::AutoScaling::AutoScalingGroup",
     },
+    "CertificateStatusapp6FD8E329": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "DomainName": "status-app.ophan.co.uk",
+        "DomainValidationOptions": [
+          {
+            "DomainName": "status-app.ophan.co.uk",
+            "HostedZoneId": {
+              "Ref": "hostedzoneid",
+            },
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "App",
+            "Value": "status-app",
+          },
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/status-app",
+          },
+          {
+            "Key": "Name",
+            "Value": "StatusApp/CertificateStatusapp",
+          },
+          {
+            "Key": "Stack",
+            "Value": "ophan",
+          },
+          {
+            "Key": "Stage",
+            "Value": "TEST",
+          },
+        ],
+        "ValidationMethod": "DNS",
+      },
+      "Type": "AWS::CertificateManager::Certificate",
+      "UpdateReplacePolicy": "Retain",
+    },
     "ConfigTable5CD72349": {
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -169,7 +218,7 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
           "ReadCapacityUnits": 1,
           "WriteCapacityUnits": 1,
         },
-        "TableName": "StatusAppConfig",
+        "TableName": "StatusAppConfig-TEST",
         "Tags": [
           {
             "Key": "devx-backup-enabled",
@@ -399,6 +448,13 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
     },
     "ListenerStatusappC9B42FDB": {
       "Properties": {
+        "Certificates": [
+          {
+            "CertificateArn": {
+              "Ref": "CertificateStatusapp6FD8E329",
+            },
+          },
+        ],
         "DefaultActions": [
           {
             "TargetGroupArn": {
@@ -410,8 +466,9 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
         "LoadBalancerArn": {
           "Ref": "LoadBalancerStatusapp1F67D563",
         },
-        "Port": 8080,
-        "Protocol": "HTTP",
+        "Port": 443,
+        "Protocol": "HTTPS",
+        "SslPolicy": "ELBSecurityPolicy-TLS13-1-2-2021-06",
       },
       "Type": "AWS::ElasticLoadBalancingV2::Listener",
     },
@@ -472,6 +529,15 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
     "LoadBalancerStatusappSecurityGroupF1642DB8": {
       "Properties": {
         "GroupDescription": "Automatically created Security Group for ELB StatusAppLoadBalancerStatusappD77C3F64",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow from anyone on port 443",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
         "Tags": [
           {
             "Key": "App",
@@ -750,19 +816,27 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
     },
-    "foo": {
+    "cnamerecord": {
       "Properties": {
         "Comment": "CNAME for status app",
         "HostedZoneName": {
-          "Ref": "HostedZone",
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "hostedzonename",
+              },
+              ".",
+            ],
+          ],
         },
         "Name": {
           "Fn::Join": [
             "",
             [
-              "status.",
+              "status-app.",
               {
-                "Ref": "HostedZone",
+                "Ref": "hostedzonename",
               },
             ],
           ],
@@ -779,6 +853,38 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
         "Type": "CNAME",
       },
       "Type": "AWS::Route53::RecordSet",
+    },
+    "dynamoaccess94F8BF99": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:GetItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:dynamodb:eu-west-1:",
+                    {
+                      "Ref": "AWS::AccountId",
+                    },
+                    ":table/StatusAppConfig",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "dynamoaccess94F8BF99",
+        "Roles": [
+          {
+            "Ref": "InstanceRoleStatusapp3C847643",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
     },
     "ophanTESTstatusappB56EA109": {
       "DependsOn": [
@@ -928,51 +1034,25 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       },
       "Type": "AWS::IAM::InstanceProfile",
     },
-    "statusappdynamoaccessEECD337C": {
+    "s3access10FD00AA": {
       "Properties": {
         "PolicyDocument": {
           "Statement": [
             {
-              "Action": "dynamodb:GetItem",
+              "Action": [
+                "s3:GetObject",
+                "s3:ListBucket",
+              ],
               "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:aws:dynamodb:eu-west-1:",
-                    {
-                      "Ref": "AWS::AccountId",
-                    },
-                    ":table/StatusAppConfig",
-                  ],
-                ],
-              },
+              "Resource": [
+                "arn:aws:s3:::membership-dist",
+                "arn:aws:s3:::membership-dist/*",
+              ],
             },
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "statusappdynamoaccessEECD337C",
-        "Roles": [
-          {
-            "Ref": "InstanceRoleStatusapp3C847643",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
-    "statusapps3access29FD99D7": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": "s3:GetObject",
-              "Effect": "Allow",
-              "Resource": "arn:aws:s3::*:membership-dist/*",
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "statusapps3access29FD99D7",
+        "PolicyName": "s3access10FD00AA",
         "Roles": [
           {
             "Ref": "InstanceRoleStatusapp3C847643",
