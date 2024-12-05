@@ -34,7 +34,7 @@ export class StatusApp extends GuStack {
           /opt/cloudwatch-logs/configure-logs application ${stack} ${stage} status-app /var/log/status-app/status-app.log
           `);
 
-		const domainName = `status-app.ophan.co.uk`;
+		const domainName = `status.ophan.co.uk`;
 
 		const ec2 = new GuEc2App(this, {
 			app,
@@ -63,6 +63,16 @@ export class StatusApp extends GuStack {
 						],
 						actions: ['dynamodb:GetItem'],
 					}),
+					new GuAllowPolicy(this, 'read-metadata', {
+						resources: ['*'],
+						actions: [
+							'ec2:describe*',
+							'autoscaling:Describe*',
+							'elasticloadbalancing:Describe*',
+							'cloudwatch:Get*',
+							'sqs:ListQueues'
+						]
+					})
 				],
 			},
 		});
@@ -77,8 +87,6 @@ export class StatusApp extends GuStack {
 		};
 
 		Tags.of(ec2.autoScalingGroup).add('SystemdUnit', `${app}.service`);
-		Tags.of(ec2.autoScalingGroup).add('Management', 'port=9000');
-		Tags.of(ec2.autoScalingGroup).add('Role', `${stack}-status-app`);
 
 		new GuDynamoTable(this, 'ConfigTable', {
 			devXBackups: {
@@ -93,7 +101,7 @@ export class StatusApp extends GuStack {
 
 		if (hostedZoneName.valueAsString) {
 			new CfnRecordSet(this, "cname-record", {
-				name:  `status-app.${hostedZoneName.valueAsString}`,
+				name:  `status.${hostedZoneName.valueAsString}`,
 				comment: "CNAME for status app",
 				type: RecordType.CNAME,
 				hostedZoneName: `${hostedZoneName.valueAsString}.`,

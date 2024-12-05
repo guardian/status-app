@@ -8,6 +8,7 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       "GuStringParameter",
       "GuAllowPolicy",
       "GuAllowPolicy",
+      "GuAllowPolicy",
       "GuVpcParameter",
       "GuSubnetListParameter",
       "GuSubnetListParameter",
@@ -141,7 +142,7 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
           {
             "Key": "SystemdUnit",
             "PropagateAtLaunch": true,
-            "Value": "ophan.service",
+            "Value": "status-app.service",
           },
         ],
         "TargetGroupARNs": [
@@ -158,10 +159,10 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
     "CertificateStatusapp6FD8E329": {
       "DeletionPolicy": "Retain",
       "Properties": {
-        "DomainName": "status-app.ophan.co.uk",
+        "DomainName": "status.ophan.co.uk",
         "DomainValidationOptions": [
           {
-            "DomainName": "status-app.ophan.co.uk",
+            "DomainName": "status.ophan.co.uk",
             "HostedZoneId": {
               "Ref": "hostedzoneid",
             },
@@ -834,7 +835,7 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
           "Fn::Join": [
             "",
             [
-              "status-app.",
+              "status.",
               {
                 "Ref": "hostedzonename",
               },
@@ -1033,6 +1034,33 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
         ],
       },
       "Type": "AWS::IAM::InstanceProfile",
+    },
+    "readmetadata4512F3FD": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ec2:describe*",
+                "autoscaling:Describe*",
+                "elasticloadbalancing:Describe*",
+                "cloudwatch:Get*",
+                "sqs:ListQueues",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "readmetadata4512F3FD",
+        "Roles": [
+          {
+            "Ref": "InstanceRoleStatusapp3C847643",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
     },
     "s3access10FD00AA": {
       "Properties": {
