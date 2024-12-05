@@ -8,7 +8,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       "GuStringParameter",
       "GuAllowPolicy",
       "GuAllowPolicy",
-      "GuAllowPolicy",
       "GuVpcParameter",
       "GuSubnetListParameter",
       "GuSubnetListParameter",
@@ -988,7 +987,7 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
           aws --region eu-west-1 s3 cp s3://ophan-dist/ophan/TEST/status-app/status-app_1.0_all.deb .
           dpkg -i status-app_1.0_all.deb
           /opt/cloudwatch-logs/configure-logs application ophan TEST status-app /var/log/status-app/status-app.log
-          ",
+         ",
           },
         },
         "TagSpecifications": [
@@ -1054,33 +1053,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
           "Version": "2012-10-17",
         },
         "PolicyName": "readmetadata4512F3FD",
-        "Roles": [
-          {
-            "Ref": "InstanceRoleStatusapp3C847643",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
-    "s3access10FD00AA": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "s3:GetObject",
-                "s3:ListBucket",
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                "arn:aws:s3:::ophan-dist",
-                "arn:aws:s3:::ophan-dist/*",
-              ],
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "s3access10FD00AA",
         "Roles": [
           {
             "Ref": "InstanceRoleStatusapp3C847643",
