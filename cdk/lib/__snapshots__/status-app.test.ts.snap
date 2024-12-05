@@ -984,7 +984,7 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
           ],
           "UserData": {
             "Fn::Base64": "#!/bin/bash -ev
-          aws --region eu-west-1 s3 cp s3://membership-dist/ophan/TEST/status-app/status-app_1.0_all.deb .
+          aws --region eu-west-1 s3 cp s3://ophan-dist/ophan/TEST/status-app/status-app_1.0_all.deb .
           dpkg -i status-app_1.0_all.deb
           /opt/cloudwatch-logs/configure-logs application ophan TEST status-app /var/log/status-app/status-app.log
           ",
@@ -1045,8 +1045,8 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
               ],
               "Effect": "Allow",
               "Resource": [
-                "arn:aws:s3:::membership-dist",
-                "arn:aws:s3:::membership-dist/*",
+                "arn:aws:s3:::ophan-dist",
+                "arn:aws:s3:::ophan-dist/*",
               ],
             },
           ],

@@ -13,7 +13,7 @@ import scala.jdk.CollectionConverters._
 
 class DynamoConfig(mode: Mode, httpConfiguration: HttpConfiguration) {
   def get(key: String) = AWS.connection.dynamo.getItem(
-    "StatusAppConfig", Map("key" -> new AttributeValue(key)).asJava).getItem.asScala
+    "StatusAppConfig-PROD", Map("key" -> new AttributeValue(key)).asJava).getItem.asScala
 
 
   lazy val googleAuthConfig: GoogleAuthConfig = {

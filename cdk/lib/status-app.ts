@@ -29,7 +29,7 @@ export class StatusApp extends GuStack {
 		});
 
 		const userData = UserData.custom(`#!/bin/bash -ev
-          aws --region ${region} s3 cp s3://membership-dist/${stack}/${stage}/status-app/status-app_1.0_all.deb .
+          aws --region ${region} s3 cp s3://ophan-dist/ophan/${stage}/status-app/status-app_1.0_all.deb .
           dpkg -i status-app_1.0_all.deb
           /opt/cloudwatch-logs/configure-logs application ${stack} ${stage} status-app /var/log/status-app/status-app.log
           `);
@@ -52,8 +52,8 @@ export class StatusApp extends GuStack {
 				additionalPolicies: [
 					new GuAllowPolicy(this, 's3-access', {
 						resources: [
-							'arn:aws:s3:::membership-dist',
-							'arn:aws:s3:::membership-dist/*'
+							'arn:aws:s3:::ophan-dist',
+							'arn:aws:s3:::ophan-dist/*'
 						],
 						actions: ['s3:GetObject', 's3:ListBucket']
 					}),
@@ -76,7 +76,9 @@ export class StatusApp extends GuStack {
 			timeout: Duration.seconds(5),
 		};
 
-		Tags.of(ec2.autoScalingGroup).add('SystemdUnit', `${stack}.service`);
+		Tags.of(ec2.autoScalingGroup).add('SystemdUnit', `${app}.service`);
+		Tags.of(ec2.autoScalingGroup).add('Management', 'port=9000');
+		Tags.of(ec2.autoScalingGroup).add('Role', `${stack}-status-app`);
 
 		new GuDynamoTable(this, 'ConfigTable', {
 			devXBackups: {
