@@ -32,7 +32,7 @@ export class StatusApp extends GuStack {
           aws --region ${region} s3 cp s3://ophan-dist/ophan/${stage}/status-app/status-app_1.0_all.deb .
           dpkg -i status-app_1.0_all.deb
           /opt/cloudwatch-logs/configure-logs application ${stack} ${stage} status-app /var/log/status-app/status-app.log
-          `);
+         `);
 
 		const domainName = `status.ophan.co.uk`;
 
@@ -50,13 +50,6 @@ export class StatusApp extends GuStack {
 			imageRecipe: 'ophan-ubuntu-jammy-ARM-CDK',
 			roleConfiguration: {
 				additionalPolicies: [
-					new GuAllowPolicy(this, 's3-access', {
-						resources: [
-							'arn:aws:s3:::ophan-dist',
-							'arn:aws:s3:::ophan-dist/*'
-						],
-						actions: ['s3:GetObject', 's3:ListBucket']
-					}),
 					new GuAllowPolicy(this, 'dynamo-access', {
 						resources: [
 							`arn:aws:dynamodb:${region}:${this.account}:table/StatusAppConfig`,
