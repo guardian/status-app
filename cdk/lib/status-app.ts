@@ -52,7 +52,7 @@ export class StatusApp extends GuStack {
 				additionalPolicies: [
 					new GuAllowPolicy(this, 'dynamo-access', {
 						resources: [
-							`arn:aws:dynamodb:${region}:${this.account}:table/StatusAppConfig`,
+							`arn:aws:dynamodb:${region}:${this.account}:table/StatusAppConfig-${stage}`,
 						],
 						actions: ['dynamodb:GetItem'],
 					}),

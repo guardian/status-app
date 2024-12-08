@@ -869,7 +869,7 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
                     {
                       "Ref": "AWS::AccountId",
                     },
-                    ":table/StatusAppConfig",
+                    ":table/StatusAppConfig-TEST",
                   ],
                 ],
               },
