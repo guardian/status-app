@@ -92,10 +92,15 @@ export class StatusApp extends GuStack {
 			esTargetSecurityGroup.valueAsString
 		);
 
-		ec2.autoScalingGroup.connections.allowTo(
+		const asgSecurityGroup = ec2.autoScalingGroup.connections.securityGroups[0];
+		if (!asgSecurityGroup) {
+			throw new Error('No security group found for auto scaling group');
+		}
+
+		asgSecurityGroup.addEgressRule(
 			targetSecurityGroup,
 			Port.tcp(9200),
-			'Allow outbound traffic to Elasticsearch instances'
+			'Allow outbound traffic to Elasticsearch'
 		);
 
 		new GuDynamoTable(this, 'ConfigTable', {
