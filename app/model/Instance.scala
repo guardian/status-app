@@ -81,8 +81,8 @@ object EC2Instance {
   }
 }
 
-case class ElasticSearchInstance(publicDns: String) extends AppSpecifics {
-  val baseUrl = s"http://$publicDns:9200"
+case class ElasticSearchInstance(privateDns: String) extends AppSpecifics {
+  val baseUrl = s"http://$privateDns:9200"
   val versionUrl = baseUrl
 
   def usefulUrls = List(
@@ -168,8 +168,10 @@ object Instance {
     val managementEndpoint = managementTag map (ManagementEndpoint(dns, _))
 
     val specifics =
-      if (managementTag.flatMap(_.format).exists(_ == "elasticsearch")) new ElasticSearchInstance(dns)
-      else new StandardWebApp(s"${managementEndpoint.get.url}/manifest")
+      if (managementTag.flatMap(_.format).exists(_ == "elasticsearch"))
+        new ElasticSearchInstance(i.getPrivateDnsName)
+      else
+        new StandardWebApp(s"${managementEndpoint.get.url}/manifest")
 
     log.debug(s"Retrieving version of instance with tags: $tags")
     specifics.version map {

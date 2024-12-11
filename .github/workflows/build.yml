@@ -17,15 +17,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
-    - uses: actions/setup-java@v3
-      with:
-        distribution: 'corretto'
-        java-version: '11'
-        cache: 'sbt'
+
+      # See https://github.com/guardian/setup-java
+    - name: Setup Java and sbt
+      uses: guardian/setup-scala@v1
 
     - name: build steps
       run: sbt clean test debian:packageBin
+
+    - name: Build CDK
+      run: |
+        cd cdk
+        npm ci
+        npm run lint
+        npm run test
+        npm run synth
 
     - name: Test Report
       uses: dorny/test-reporter@v1
@@ -46,10 +52,12 @@ jobs:
     - name: Upload to riff-raff
       uses: guardian/actions-riff-raff@v2
       with:
-        configPath: riff-raff.yaml
+        configPath: cdk/cdk.out/riff-raff.yaml
         projectName: status-app
         buildNumberOffset: 180
         contentDirectories: |
           status-app:
           - target/status-app_1.0_all.deb
           - status-app.conf
+          cdk.out:
+          - cdk/cdk.out/StatusApp-PROD.template.json
