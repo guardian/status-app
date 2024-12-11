@@ -6,6 +6,7 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
     "gu:cdk:constructs": [
       "GuStringParameter",
       "GuStringParameter",
+      "GuStringParameter",
       "GuAllowPolicy",
       "GuAllowPolicy",
       "GuVpcParameter",
@@ -62,6 +63,10 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       "Default": "/account/vpc/primary/id",
       "Description": "Virtual Private Cloud to run EC2 instances within. Should NOT be the account default VPC.",
       "Type": "AWS::SSM::Parameter::Value<AWS::EC2::VPC::Id>",
+    },
+    "elasticsearchtargetsecuritygroup": {
+      "Description": "security group we want to direct to for the ElasticSearch instances",
+      "Type": "String",
     },
     "hostedzoneid": {
       "Description": "ID for the hosted zone",
@@ -271,6 +276,42 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "ElasticsearchSecurityGroupfromStatusAppGuHttpsEgressSecurityGroupStatusappA0F9CBB692002BD95205": {
+      "Properties": {
+        "Description": "Allow outbound traffic to Elasticsearch instances",
+        "FromPort": 9200,
+        "GroupId": {
+          "Ref": "elasticsearchtargetsecuritygroup",
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "GuHttpsEgressSecurityGroupStatusappBB2B54EA",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9200,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "ElasticsearchSecurityGroupfromStatusAppWazuhSecurityGroup83D60B6C9200C31A690B": {
+      "Properties": {
+        "Description": "Allow outbound traffic to Elasticsearch instances",
+        "FromPort": 9200,
+        "GroupId": {
+          "Ref": "elasticsearchtargetsecuritygroup",
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9200,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
     "GetDistributablePolicyStatusappC309984D": {
       "Properties": {
         "PolicyDocument": {
@@ -363,6 +404,24 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
         "ToPort": 9000,
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "GuHttpsEgressSecurityGroupStatusapptoStatusAppElasticsearchSecurityGroupBEA0C56992007B8B8592": {
+      "Properties": {
+        "Description": "Allow outbound traffic to Elasticsearch instances",
+        "DestinationSecurityGroupId": {
+          "Ref": "elasticsearchtargetsecuritygroup",
+        },
+        "FromPort": 9200,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "GuHttpsEgressSecurityGroupStatusappBB2B54EA",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 9200,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
     },
     "GuLogShippingPolicy981BFE5A": {
       "Properties": {
@@ -815,6 +874,24 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
         "ToPort": 9000,
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "WazuhSecurityGrouptoStatusAppElasticsearchSecurityGroupBEA0C5699200176CCE5A": {
+      "Properties": {
+        "Description": "Allow outbound traffic to Elasticsearch instances",
+        "DestinationSecurityGroupId": {
+          "Ref": "elasticsearchtargetsecuritygroup",
+        },
+        "FromPort": 9200,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 9200,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
     },
     "cnamerecord": {
       "Properties": {

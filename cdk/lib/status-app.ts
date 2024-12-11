@@ -6,7 +6,7 @@ import {GuDynamoTable} from '@guardian/cdk/lib/constructs/dynamodb';
 import {GuAllowPolicy} from '@guardian/cdk/lib/constructs/iam';
 import {type App, Duration, Tags} from 'aws-cdk-lib';
 import {AttributeType, BillingMode} from 'aws-cdk-lib/aws-dynamodb';
-import {InstanceClass, InstanceSize, InstanceType, UserData,} from 'aws-cdk-lib/aws-ec2';
+import {InstanceClass, InstanceSize, InstanceType, Port, SecurityGroup, UserData,} from 'aws-cdk-lib/aws-ec2';
 import {CfnRecordSet, RecordType} from 'aws-cdk-lib/aws-route53';
 
 export class StatusApp extends GuStack {
@@ -26,6 +26,11 @@ export class StatusApp extends GuStack {
 		const hostedZoneId = new GuStringParameter(this, 'hosted-zone-id', {
 			description:
 				"ID for the hosted zone",
+		});
+
+		const esTargetSecurityGroup = new GuStringParameter(this, 'elasticsearch-target-security-group', {
+			description:
+				"security group we want to direct to for the ElasticSearch instances",
 		});
 
 		const userData = UserData.custom(`#!/bin/bash -ev
@@ -80,6 +85,18 @@ export class StatusApp extends GuStack {
 		};
 
 		Tags.of(ec2.autoScalingGroup).add('SystemdUnit', `${app}.service`);
+
+		const targetSecurityGroup = SecurityGroup.fromSecurityGroupId(
+			this,
+			'ElasticsearchSecurityGroup',
+			esTargetSecurityGroup.valueAsString
+		);
+
+		ec2.autoScalingGroup.connections.allowTo(
+			targetSecurityGroup,
+			Port.tcp(9200),
+			'Allow outbound traffic to Elasticsearch instances'
+		);
 
 		new GuDynamoTable(this, 'ConfigTable', {
 			devXBackups: {
