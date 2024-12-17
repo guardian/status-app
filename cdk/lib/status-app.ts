@@ -1,13 +1,21 @@
-import {GuEc2App} from '@guardian/cdk';
-import {AccessScope} from '@guardian/cdk/lib/constants';
-import type {GuStackProps} from '@guardian/cdk/lib/constructs/core';
-import {GuStack, GuStringParameter} from '@guardian/cdk/lib/constructs/core';
-import {GuDynamoTable} from '@guardian/cdk/lib/constructs/dynamodb';
-import {GuAllowPolicy} from '@guardian/cdk/lib/constructs/iam';
-import {type App, Duration, Tags} from 'aws-cdk-lib';
-import {AttributeType, BillingMode} from 'aws-cdk-lib/aws-dynamodb';
-import {InstanceClass, InstanceSize, InstanceType, Port, SecurityGroup, UserData,} from 'aws-cdk-lib/aws-ec2';
-import {CfnRecordSet, RecordType} from 'aws-cdk-lib/aws-route53';
+import { GuEc2App } from '@guardian/cdk';
+import { AccessScope } from '@guardian/cdk/lib/constants';
+import type { GuStackProps } from '@guardian/cdk/lib/constructs/core';
+import { GuStack, GuStringParameter } from '@guardian/cdk/lib/constructs/core';
+import { GuDynamoTable } from '@guardian/cdk/lib/constructs/dynamodb';
+import { GuSecurityGroup } from '@guardian/cdk/lib/constructs/ec2';
+import { GuAllowPolicy } from '@guardian/cdk/lib/constructs/iam';
+import { type App, Duration, Tags } from 'aws-cdk-lib';
+import { AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
+import {
+	InstanceClass,
+	InstanceSize,
+	InstanceType,
+	Peer,
+	Port,
+	UserData,
+} from 'aws-cdk-lib/aws-ec2';
+import { CfnRecordSet, RecordType } from 'aws-cdk-lib/aws-route53';
 
 export class StatusApp extends GuStack {
 	constructor(scope: App, id: string, props: GuStackProps) {
@@ -24,13 +32,7 @@ export class StatusApp extends GuStack {
 		});
 
 		const hostedZoneId = new GuStringParameter(this, 'hosted-zone-id', {
-			description:
-				"ID for the hosted zone",
-		});
-
-		const esTargetSecurityGroup = new GuStringParameter(this, 'elasticsearch-target-security-group', {
-			description:
-				"security group we want to direct to for the ElasticSearch instances",
+			description: 'ID for the hosted zone',
 		});
 
 		const userData = UserData.custom(`#!/bin/bash -ev
@@ -50,7 +52,10 @@ export class StatusApp extends GuStack {
 			applicationPort: 9000,
 			monitoringConfiguration: { noMonitoring: true },
 			scaling: { minimumInstances: 1, maximumInstances: 2 },
-			certificateProps: { domainName: domainName, hostedZoneId: hostedZoneId.valueAsString },
+			certificateProps: {
+				domainName: domainName,
+				hostedZoneId: hostedZoneId.valueAsString,
+			},
 			userData,
 			imageRecipe: 'ophan-ubuntu-jammy-ARM-CDK',
 			roleConfiguration: {
@@ -68,9 +73,9 @@ export class StatusApp extends GuStack {
 							'autoscaling:Describe*',
 							'elasticloadbalancing:Describe*',
 							'cloudwatch:Get*',
-							'sqs:ListQueues'
-						]
-					})
+							'sqs:ListQueues',
+						],
+					}),
 				],
 			},
 		});
@@ -86,21 +91,20 @@ export class StatusApp extends GuStack {
 
 		Tags.of(ec2.autoScalingGroup).add('SystemdUnit', `${app}.service`);
 
-		const targetSecurityGroup = SecurityGroup.fromSecurityGroupId(
-			this,
-			'ElasticsearchSecurityGroup',
-			esTargetSecurityGroup.valueAsString
-		);
-
-		const asgSecurityGroup = ec2.autoScalingGroup.connections.securityGroups[0];
-		if (!asgSecurityGroup) {
-			throw new Error('No security group found for auto scaling group');
-		}
-
-		asgSecurityGroup.addEgressRule(
-			targetSecurityGroup,
-			Port.tcp(9200),
-			'Allow outbound traffic to Elasticsearch'
+		ec2.autoScalingGroup.instanceLaunchTemplate.addSecurityGroup(
+			new GuSecurityGroup(this, `ElasticSearchEgressSecurityGroup`, {
+				app,
+				vpc: ec2.vpc,
+				description: 'Allow outbound traffic to Elasticsearch',
+				allowAllOutbound: false,
+				egresses: [
+					{
+						range: Peer.anyIpv4(),
+						port: Port.tcp(9200),
+						description: 'Allow outbound traffic to Elasticsearch on port 9200',
+					},
+				],
+			}),
 		);
 
 		new GuDynamoTable(this, 'ConfigTable', {
@@ -115,16 +119,14 @@ export class StatusApp extends GuStack {
 		});
 
 		if (hostedZoneName.valueAsString) {
-			new CfnRecordSet(this, "cname-record", {
-				name:  `status.${hostedZoneName.valueAsString}`,
-				comment: "CNAME for status app",
+			new CfnRecordSet(this, 'cname-record', {
+				name: `status.${hostedZoneName.valueAsString}`,
+				comment: 'CNAME for status app',
 				type: RecordType.CNAME,
 				hostedZoneName: `${hostedZoneName.valueAsString}.`,
-				ttl: "900",
-				resourceRecords: [
-					ec2.loadBalancer.loadBalancerDnsName
-				],
-			})
+				ttl: '900',
+				resourceRecords: [ec2.loadBalancer.loadBalancerDnsName],
+			});
 		}
 	}
 }
