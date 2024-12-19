@@ -2,9 +2,11 @@ import {GuEc2App} from '@guardian/cdk';
 import {AccessScope} from '@guardian/cdk/lib/constants';
 import type {GuStackProps} from '@guardian/cdk/lib/constructs/core';
 import {GuParameter, GuStack, GuStringParameter} from '@guardian/cdk/lib/constructs/core';
+import {GuDynamoTable} from "@guardian/cdk/lib/constructs/dynamodb";
 import {GuSecurityGroup} from "@guardian/cdk/lib/constructs/ec2";
 import {GuAllowPolicy} from '@guardian/cdk/lib/constructs/iam';
 import {type App, Duration, Tags} from 'aws-cdk-lib';
+import {AttributeType, BillingMode} from "aws-cdk-lib/aws-dynamodb";
 import {
 	InstanceClass,
 	InstanceSize,
@@ -140,6 +142,17 @@ export class StatusApp extends GuStack {
 				],
 			}),
 		);
+
+		new GuDynamoTable(this, 'ConfigTable', {
+			devXBackups: {
+				enabled: true,
+			},
+			tableName: `StatusAppConfig-${stage}`,
+			partitionKey: { name: 'key', type: AttributeType.STRING },
+			billingMode: BillingMode.PROVISIONED,
+			readCapacity: 1,
+			writeCapacity: 1,
+		});
 
 		if (hostedZoneName.valueAsString) {
 			new CfnRecordSet(this, 'cname-record', {
