@@ -35,7 +35,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       "GuApplicationTargetGroup",
       "GuHttpsApplicationListener",
       "GuSecurityGroup",
-      "GuDynamoTable",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -228,53 +227,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
         "ValidationMethod": "DNS",
       },
       "Type": "AWS::CertificateManager::Certificate",
-      "UpdateReplacePolicy": "Retain",
-    },
-    "ConfigTable5CD72349": {
-      "DeletionPolicy": "Retain",
-      "Properties": {
-        "AttributeDefinitions": [
-          {
-            "AttributeName": "key",
-            "AttributeType": "S",
-          },
-        ],
-        "DeletionProtectionEnabled": true,
-        "KeySchema": [
-          {
-            "AttributeName": "key",
-            "KeyType": "HASH",
-          },
-        ],
-        "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1,
-        },
-        "TableName": "StatusAppConfig-TEST",
-        "Tags": [
-          {
-            "Key": "devx-backup-enabled",
-            "Value": "true",
-          },
-          {
-            "Key": "gu:cdk:version",
-            "Value": "TEST",
-          },
-          {
-            "Key": "gu:repo",
-            "Value": "guardian/status-app",
-          },
-          {
-            "Key": "Stack",
-            "Value": "ophan",
-          },
-          {
-            "Key": "Stage",
-            "Value": "TEST",
-          },
-        ],
-      },
-      "Type": "AWS::DynamoDB::Table",
       "UpdateReplacePolicy": "Retain",
     },
     "DescribeEC2PolicyFF5F9295": {
