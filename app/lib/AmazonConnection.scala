@@ -1,22 +1,22 @@
 package lib
 
-import com.amazonaws.auth.{DefaultAWSCredentialsProviderChain, AWSCredentialsProvider, AWSCredentials}
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.handlers.AsyncHandler
+import com.amazonaws.regions.{Region, Regions}
+import com.amazonaws.services.autoscaling.AmazonAutoScalingAsyncClient
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClient
+import com.amazonaws.services.cloudwatch.model.Datapoint
 import com.amazonaws.services.ec2.AmazonEC2AsyncClient
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingAsyncClient
-import com.amazonaws.services.autoscaling.AmazonAutoScalingAsyncClient
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.{AmazonWebServiceRequest, ClientConfiguration}
-import com.amazonaws.handlers.AsyncHandler
-import java.util.concurrent.{Future => JuncFuture}
-import scala.concurrent.{Promise, Future}
-import scala.util.{Success, Failure}
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClient
-import com.amazonaws.regions.{Regions, Region}
 import com.amazonaws.services.sqs.AmazonSQSAsyncClient
-import play.api.libs.json.{Json, Writes}
-import com.amazonaws.services.cloudwatch.model.Datapoint
+import com.amazonaws.{AmazonWebServiceRequest, ClientConfiguration}
 import model.ScalingAction
+import play.api.libs.json.{Json, Writes}
+
+import java.util.concurrent.{Future => JuncFuture}
+import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success}
 
 class AmazonConnection(clientConfig: ClientConfiguration) {
   val credentialsProvider =  new DefaultAWSCredentialsProviderChain()
@@ -29,8 +29,6 @@ class AmazonConnection(clientConfig: ClientConfiguration) {
     classOf[AmazonCloudWatchAsyncClient], credentialsProvider, clientConfig)
   val sqs = Region.getRegion(Regions.EU_WEST_1).createClient(
     classOf[AmazonSQSAsyncClient], credentialsProvider, clientConfig)
-  val dynamo = Region.getRegion(Regions.EU_WEST_1).createClient(
-    classOf[AmazonDynamoDBAsyncClient], credentialsProvider, clientConfig)
 
   ec2.setEndpoint("ec2.eu-west-1.amazonaws.com")
   elb.setEndpoint("elasticloadbalancing.eu-west-1.amazonaws.com")
