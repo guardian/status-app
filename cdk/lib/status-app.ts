@@ -94,12 +94,6 @@ export class StatusApp extends GuStack {
 						],
 						actions: ['dynamodb:GetItem'],
 					}),
-					new GuAllowPolicy(this, 'status-app-parameter-store-access', {
-						resources: [
-							`arn:aws:ssm:${region}:${this.account}:parameter/status-app/*`
-						],
-						actions: ['ssm:GetParameter', 'ssm:GetParameters']
-					}),
 					new GuAllowPolicy(this, 'read-metadata', {
 						resources: ['*'],
 						actions: [
