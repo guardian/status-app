@@ -88,12 +88,6 @@ export class StatusApp extends GuStack {
 			imageRecipe: 'ophan-ubuntu-jammy-ARM-CDK',
 			roleConfiguration: {
 				additionalPolicies: [
-					new GuAllowPolicy(this, 'dynamo-access', {
-						resources: [
-							`arn:aws:dynamodb:${region}:${this.account}:table/StatusAppConfig-${stage}`,
-						],
-						actions: ['dynamodb:GetItem'],
-					}),
 					new GuAllowPolicy(this, 'read-metadata', {
 						resources: ['*'],
 						actions: [
