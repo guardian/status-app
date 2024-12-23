@@ -1,10 +1,14 @@
-import {GuEc2App} from '@guardian/cdk';
-import {AccessScope} from '@guardian/cdk/lib/constants';
-import type {GuStackProps} from '@guardian/cdk/lib/constructs/core';
-import {GuParameter, GuStack, GuStringParameter} from '@guardian/cdk/lib/constructs/core';
-import {GuSecurityGroup} from "@guardian/cdk/lib/constructs/ec2";
-import {GuAllowPolicy} from '@guardian/cdk/lib/constructs/iam';
-import {type App, Duration, Tags} from 'aws-cdk-lib';
+import { GuEc2App } from '@guardian/cdk';
+import { AccessScope } from '@guardian/cdk/lib/constants';
+import type { GuStackProps } from '@guardian/cdk/lib/constructs/core';
+import {
+	GuParameter,
+	GuStack,
+	GuStringParameter,
+} from '@guardian/cdk/lib/constructs/core';
+import { GuSecurityGroup } from '@guardian/cdk/lib/constructs/ec2';
+import { GuAllowPolicy } from '@guardian/cdk/lib/constructs/iam';
+import { type App, Duration, Tags } from 'aws-cdk-lib';
 import {
 	InstanceClass,
 	InstanceSize,
