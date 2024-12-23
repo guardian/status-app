@@ -30,9 +30,10 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
   "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor" % jacksonVersion,
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % jacksonVersion,
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
+  "software.amazon.awssdk" % "ssm" % "2.29.24"
 ) ++ Seq(
-  "dynamodb", "ec2", "elasticloadbalancing", "s3", "autoscaling", "cloudwatch", "sqs"
+  "ec2", "elasticloadbalancing", "s3", "autoscaling", "cloudwatch", "sqs"
 ).map(artifact => "com.amazonaws" % s"aws-java-sdk-$artifact" % "1.12.694")
 
 maintainer := "Paul Brown <paul.brown@theguardian.com>"

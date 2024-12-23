@@ -1,13 +1,23 @@
-import {GuEc2App} from '@guardian/cdk';
-import {AccessScope} from '@guardian/cdk/lib/constants';
-import type {GuStackProps} from '@guardian/cdk/lib/constructs/core';
-import {GuStack, GuStringParameter} from '@guardian/cdk/lib/constructs/core';
-import {GuDynamoTable} from '@guardian/cdk/lib/constructs/dynamodb';
-import {GuAllowPolicy} from '@guardian/cdk/lib/constructs/iam';
-import {type App, Duration, Tags} from 'aws-cdk-lib';
-import {AttributeType, BillingMode} from 'aws-cdk-lib/aws-dynamodb';
-import {InstanceClass, InstanceSize, InstanceType, UserData,} from 'aws-cdk-lib/aws-ec2';
-import {CfnRecordSet, RecordType} from 'aws-cdk-lib/aws-route53';
+import { GuEc2App } from '@guardian/cdk';
+import { AccessScope } from '@guardian/cdk/lib/constants';
+import type { GuStackProps } from '@guardian/cdk/lib/constructs/core';
+import {
+	GuParameter,
+	GuStack,
+	GuStringParameter,
+} from '@guardian/cdk/lib/constructs/core';
+import { GuSecurityGroup } from '@guardian/cdk/lib/constructs/ec2';
+import { GuAllowPolicy } from '@guardian/cdk/lib/constructs/iam';
+import { type App, Duration, Tags } from 'aws-cdk-lib';
+import {
+	InstanceClass,
+	InstanceSize,
+	InstanceType,
+	Peer,
+	Port,
+	UserData,
+} from 'aws-cdk-lib/aws-ec2';
+import { CfnRecordSet, RecordType } from 'aws-cdk-lib/aws-route53';
 
 export class StatusApp extends GuStack {
 	constructor(scope: App, id: string, props: GuStackProps) {
@@ -18,14 +28,43 @@ export class StatusApp extends GuStack {
 		const app = 'status-app';
 		const region = 'eu-west-1';
 
+		new GuParameter(this, 'OAuthHost', {
+			description: 'Host domain for the Status App',
+			default: `/status-app/oauth/host`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthProtocol', {
+			description: 'Protocol for the Status App',
+			default: `/status-app/oauth/protocol`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthClientId', {
+			description: 'Google OAuth client ID for authentication',
+			default: `/status-app/oauth/clientId`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthClientSecret', {
+			description: 'Google OAuth client secret for authentication',
+			default: `/status-app/oauth/clientSecret`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthAllowedDomain', {
+			description: 'Allowed domain for Google OAuth authentication',
+			default: `/status-app/oauth/allowedDomain`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
 		const hostedZoneName = new GuStringParameter(this, 'hosted-zone-name', {
 			description:
 				"DNS hosted zone for which A CNAME will be created. e.g. example.com (note, no trailing full-stop) for status.example.com. Leave empty if you don't want to add a CNAME to the status app",
 		});
 
 		const hostedZoneId = new GuStringParameter(this, 'hosted-zone-id', {
-			description:
-				"ID for the hosted zone",
+			description: 'ID for the hosted zone',
 		});
 
 		const userData = UserData.custom(`#!/bin/bash -ev
@@ -45,17 +84,14 @@ export class StatusApp extends GuStack {
 			applicationPort: 9000,
 			monitoringConfiguration: { noMonitoring: true },
 			scaling: { minimumInstances: 1, maximumInstances: 2 },
-			certificateProps: { domainName: domainName, hostedZoneId: hostedZoneId.valueAsString },
+			certificateProps: {
+				domainName: domainName,
+				hostedZoneId: hostedZoneId.valueAsString,
+			},
 			userData,
 			imageRecipe: 'ophan-ubuntu-jammy-ARM-CDK',
 			roleConfiguration: {
 				additionalPolicies: [
-					new GuAllowPolicy(this, 'dynamo-access', {
-						resources: [
-							`arn:aws:dynamodb:${region}:${this.account}:table/StatusAppConfig-${stage}`,
-						],
-						actions: ['dynamodb:GetItem'],
-					}),
 					new GuAllowPolicy(this, 'read-metadata', {
 						resources: ['*'],
 						actions: [
@@ -63,9 +99,9 @@ export class StatusApp extends GuStack {
 							'autoscaling:Describe*',
 							'elasticloadbalancing:Describe*',
 							'cloudwatch:Get*',
-							'sqs:ListQueues'
-						]
-					})
+							'sqs:ListQueues',
+						],
+					}),
 				],
 			},
 		});
@@ -81,28 +117,31 @@ export class StatusApp extends GuStack {
 
 		Tags.of(ec2.autoScalingGroup).add('SystemdUnit', `${app}.service`);
 
-		new GuDynamoTable(this, 'ConfigTable', {
-			devXBackups: {
-				enabled: true,
-			},
-			tableName: `StatusAppConfig-${stage}`,
-			partitionKey: { name: 'key', type: AttributeType.STRING },
-			billingMode: BillingMode.PROVISIONED,
-			readCapacity: 1,
-			writeCapacity: 1,
-		});
+		ec2.autoScalingGroup.instanceLaunchTemplate.addSecurityGroup(
+			new GuSecurityGroup(this, `ElasticSearchEgressSecurityGroup`, {
+				app,
+				vpc: ec2.vpc,
+				description: 'Allow outbound traffic to Elasticsearch',
+				allowAllOutbound: false,
+				egresses: [
+					{
+						range: Peer.anyIpv4(),
+						port: Port.tcp(9200),
+						description: 'Allow outbound traffic to Elasticsearch on port 9200',
+					},
+				],
+			}),
+		);
 
 		if (hostedZoneName.valueAsString) {
-			new CfnRecordSet(this, "cname-record", {
-				name:  `status.${hostedZoneName.valueAsString}`,
-				comment: "CNAME for status app",
+			new CfnRecordSet(this, 'cname-record', {
+				name: `status.${hostedZoneName.valueAsString}`,
+				comment: 'CNAME for status app',
 				type: RecordType.CNAME,
 				hostedZoneName: `${hostedZoneName.valueAsString}.`,
-				ttl: "900",
-				resourceRecords: [
-					ec2.loadBalancer.loadBalancerDnsName
-				],
-			})
+				ttl: '900',
+				resourceRecords: [ec2.loadBalancer.loadBalancerDnsName],
+			});
 		}
 	}
 }
