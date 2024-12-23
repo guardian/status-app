@@ -4,8 +4,14 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
 {
   "Metadata": {
     "gu:cdk:constructs": [
+      "GuParameter",
+      "GuParameter",
+      "GuParameter",
+      "GuParameter",
+      "GuParameter",
       "GuStringParameter",
       "GuStringParameter",
+      "GuAllowPolicy",
       "GuAllowPolicy",
       "GuAllowPolicy",
       "GuVpcParameter",
@@ -29,7 +35,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
       "GuApplicationTargetGroup",
       "GuHttpsApplicationListener",
       "GuSecurityGroup",
-      "GuDynamoTable",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -57,6 +62,31 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
     "LoggingStreamName": {
       "Default": "/account/services/logging.stream.name",
       "Description": "SSM parameter containing the Name (not ARN) on the kinesis stream",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "OAuthAllowedDomain": {
+      "Default": "/status-app/oauth/allowedDomain",
+      "Description": "Allowed domain for Google OAuth authentication",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "OAuthClientId": {
+      "Default": "/status-app/oauth/clientId",
+      "Description": "Google OAuth client ID for authentication",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "OAuthClientSecret": {
+      "Default": "/status-app/oauth/clientSecret",
+      "Description": "Google OAuth client secret for authentication",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "OAuthHost": {
+      "Default": "/status-app/oauth/host",
+      "Description": "Host domain for the Status App",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "OAuthProtocol": {
+      "Default": "/status-app/oauth/protocol",
+      "Description": "Protocol for the Status App",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
     "VpcId": {
@@ -197,53 +227,6 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
         "ValidationMethod": "DNS",
       },
       "Type": "AWS::CertificateManager::Certificate",
-      "UpdateReplacePolicy": "Retain",
-    },
-    "ConfigTable5CD72349": {
-      "DeletionPolicy": "Retain",
-      "Properties": {
-        "AttributeDefinitions": [
-          {
-            "AttributeName": "key",
-            "AttributeType": "S",
-          },
-        ],
-        "DeletionProtectionEnabled": true,
-        "KeySchema": [
-          {
-            "AttributeName": "key",
-            "KeyType": "HASH",
-          },
-        ],
-        "ProvisionedThroughput": {
-          "ReadCapacityUnits": 1,
-          "WriteCapacityUnits": 1,
-        },
-        "TableName": "StatusAppConfig-TEST",
-        "Tags": [
-          {
-            "Key": "devx-backup-enabled",
-            "Value": "true",
-          },
-          {
-            "Key": "gu:cdk:version",
-            "Value": "TEST",
-          },
-          {
-            "Key": "gu:repo",
-            "Value": "guardian/status-app",
-          },
-          {
-            "Key": "Stack",
-            "Value": "ophan",
-          },
-          {
-            "Key": "Stage",
-            "Value": "TEST",
-          },
-        ],
-      },
-      "Type": "AWS::DynamoDB::Table",
       "UpdateReplacePolicy": "Retain",
     },
     "DescribeEC2PolicyFF5F9295": {
@@ -1142,6 +1125,41 @@ exports[`The StatusApp stack matches the snapshot 1`] = `
           "Version": "2012-10-17",
         },
         "PolicyName": "readmetadata4512F3FD",
+        "Roles": [
+          {
+            "Ref": "InstanceRoleStatusapp3C847643",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "statusappparameterstoreaccessF4FC62F0": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ssm:GetParameter",
+                "ssm:GetParameters",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:ssm:eu-west-1:",
+                    {
+                      "Ref": "AWS::AccountId",
+                    },
+                    ":parameter/status-app/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "statusappparameterstoreaccessF4FC62F0",
         "Roles": [
           {
             "Ref": "InstanceRoleStatusapp3C847643",

@@ -1,12 +1,14 @@
 import { GuEc2App } from '@guardian/cdk';
 import { AccessScope } from '@guardian/cdk/lib/constants';
 import type { GuStackProps } from '@guardian/cdk/lib/constructs/core';
-import { GuStack, GuStringParameter } from '@guardian/cdk/lib/constructs/core';
-import { GuDynamoTable } from '@guardian/cdk/lib/constructs/dynamodb';
+import {
+	GuParameter,
+	GuStack,
+	GuStringParameter,
+} from '@guardian/cdk/lib/constructs/core';
 import { GuSecurityGroup } from '@guardian/cdk/lib/constructs/ec2';
 import { GuAllowPolicy } from '@guardian/cdk/lib/constructs/iam';
 import { type App, Duration, Tags } from 'aws-cdk-lib';
-import { AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 import {
 	InstanceClass,
 	InstanceSize,
@@ -25,6 +27,36 @@ export class StatusApp extends GuStack {
 
 		const app = 'status-app';
 		const region = 'eu-west-1';
+
+		new GuParameter(this, 'OAuthHost', {
+			description: 'Host domain for the Status App',
+			default: `/status-app/oauth/host`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthProtocol', {
+			description: 'Protocol for the Status App',
+			default: `/status-app/oauth/protocol`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthClientId', {
+			description: 'Google OAuth client ID for authentication',
+			default: `/status-app/oauth/clientId`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthClientSecret', {
+			description: 'Google OAuth client secret for authentication',
+			default: `/status-app/oauth/clientSecret`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
+
+		new GuParameter(this, 'OAuthAllowedDomain', {
+			description: 'Allowed domain for Google OAuth authentication',
+			default: `/status-app/oauth/allowedDomain`,
+			type: 'AWS::SSM::Parameter::Value<String>',
+		});
 
 		const hostedZoneName = new GuStringParameter(this, 'hosted-zone-name', {
 			description:
@@ -60,12 +92,6 @@ export class StatusApp extends GuStack {
 			imageRecipe: 'ophan-ubuntu-jammy-ARM-CDK',
 			roleConfiguration: {
 				additionalPolicies: [
-					new GuAllowPolicy(this, 'dynamo-access', {
-						resources: [
-							`arn:aws:dynamodb:${region}:${this.account}:table/StatusAppConfig-${stage}`,
-						],
-						actions: ['dynamodb:GetItem'],
-					}),
 					new GuAllowPolicy(this, 'read-metadata', {
 						resources: ['*'],
 						actions: [
@@ -106,17 +132,6 @@ export class StatusApp extends GuStack {
 				],
 			}),
 		);
-
-		new GuDynamoTable(this, 'ConfigTable', {
-			devXBackups: {
-				enabled: true,
-			},
-			tableName: `StatusAppConfig-${stage}`,
-			partitionKey: { name: 'key', type: AttributeType.STRING },
-			billingMode: BillingMode.PROVISIONED,
-			readCapacity: 1,
-			writeCapacity: 1,
-		});
 
 		if (hostedZoneName.valueAsString) {
 			new CfnRecordSet(this, 'cname-record', {
