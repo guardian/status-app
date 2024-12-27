@@ -102,6 +102,12 @@ export class StatusApp extends GuStack {
 							'sqs:ListQueues',
 						],
 					}),
+					new GuAllowPolicy(this, 'status-app-parameter-store-access', {
+						resources: [
+							`arn:aws:ssm:${region}:${this.account}:parameter/status-app/*`,
+						],
+						actions: ['ssm:GetParameter', 'ssm:GetParameters'],
+					}),
 				],
 			},
 		});
