@@ -32,7 +32,7 @@ access to the management port of your apps.
 Running locally
 ---------------
 
-####Credentials
+#### Credentials
 
 Credentials are retrieved from the configuration file used for the AWS CLI. For a Guardian stack, get your 
 credentials via 'export to shell' in Janus as status-app doesn't currently handle AWS profiles.
@@ -42,7 +42,7 @@ credentials via 'export to shell' in Janus as status-app doesn't currently handl
 You'll need to do the [dev-nginx](https://github.com/guardian/dev-nginx) installation, before you do anything else.
 * In this repository's root directory, run:
 ```
-$ dev-nginx setup-app ./nginx/nginx-mapping.yml
+dev-nginx setup-app ./nginx/nginx-mapping.yml
 ```
 You will need to provide your sudo password.
 
