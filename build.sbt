@@ -31,7 +31,7 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor" % jacksonVersion,
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % jacksonVersion,
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
-  "software.amazon.awssdk" % "ssm" % "2.30.37"
+  "software.amazon.awssdk" % "ssm" % "2.37.4"
 ) ++ Seq(
   "ec2", "elasticloadbalancing", "s3", "autoscaling", "cloudwatch", "sqs"
 ).map(artifact => "com.amazonaws" % s"aws-java-sdk-$artifact" % "1.12.694")
