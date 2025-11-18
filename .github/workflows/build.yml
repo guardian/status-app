@@ -50,8 +50,8 @@ jobs:
         configPath: cdk/cdk.out/riff-raff.yaml
         projectName: status-app
         buildNumberOffset: 180
-          roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
+        roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
+        githubToken: ${{ secrets.GITHUB_TOKEN }}
         contentDirectories: |
           status-app:
           - target/status-app_1.0_all.deb
