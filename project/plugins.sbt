@@ -1,6 +1,6 @@
 resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
 
-addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.2")
+addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.10")
 
 addSbtPlugin("com.github.sbt" % "sbt-web" % "1.5.5")
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.2")
