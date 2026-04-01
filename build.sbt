@@ -11,9 +11,24 @@ scalaVersion := "2.13.18"
 scalacOptions ++= List("-feature", "-deprecation")
 
 val jacksonVersion = "2.18.6"
+val nettyVersion = "4.1.132.Final"
+
+val nettyOverrides = Seq(
+  "netty-buffer",
+  "netty-codec",
+  "netty-codec-http",
+  "netty-codec-http2",
+  "netty-common",
+  "netty-handler",
+  "netty-resolver",
+  "netty-transport",
+  "netty-transport-classes-epoll",
+  "netty-transport-native-unix-common"
+).map("io.netty" % _ % nettyVersion)
 
 // Until all dependencies are on scala-java8-compat v1.x, this avoids unnecessary fatal eviction errors
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % VersionScheme.Always
+ThisBuild / dependencyOverrides ++= nettyOverrides
 
 libraryDependencies ++= Seq(
   specs2 % Test,
