@@ -11,6 +11,7 @@ scalaVersion := "2.13.18"
 scalacOptions ++= List("-feature", "-deprecation")
 
 val jacksonVersion = "2.18.6"
+val nettyVersion = "4.1.132.Final"
 
 // Until all dependencies are on scala-java8-compat v1.x, this avoids unnecessary fatal eviction errors
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % VersionScheme.Always
@@ -19,6 +20,8 @@ libraryDependencies ++= Seq(
   specs2 % Test,
   ehcache,
   ws,
+  "io.netty" % "netty-codec-http" % nettyVersion,
+  "io.netty" % "netty-codec-http2" % nettyVersion,
   "com.gu.play-googleauth" %% "play-v30" % "6.0.0",
   "org.webjars.bower" % "react" % "0.14.0",
   "org.webjars" % "bootstrap" % "3.4.1",
