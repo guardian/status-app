@@ -21,6 +21,7 @@ libraryDependencies ++= Seq(
   ehcache,
   ws,
   "io.netty" % "netty-handler" % nettyVersion,
+  "io.netty" % "netty-codec" % nettyVersion,
   "io.netty" % "netty-codec-http" % nettyVersion,
   "io.netty" % "netty-codec-http2" % nettyVersion,
   "com.gu.play-googleauth" %% "play-v30" % "6.0.0",
