@@ -12,7 +12,7 @@ scalacOptions ++= List("-feature", "-deprecation")
 
 val jacksonVersion = "2.22.3"
 val jacksonAnnotationVersion = "2.22"
-val nettyVersion = "4.2.16.Final"
+val nettyVersion = "4.2.17.Final"
 
 // Until all dependencies are on scala-java8-compat v1.x, this avoids unnecessary fatal eviction errors
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % VersionScheme.Always
