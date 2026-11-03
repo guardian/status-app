@@ -17,12 +17,6 @@ val nettyVersion = "4.2.17.Final"
 // Until all dependencies are on scala-java8-compat v1.x, this avoids unnecessary fatal eviction errors
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-java8-compat" % VersionScheme.Always
 
-// Pin patched transitive dependencies for CVE-2026-102554 and the LZ4 Java advisories.
-// dependencyOverrides ++= Seq(
-//   "com.google.guava" % "guava" % "33.7.2-jre",
-//   "at.yawk.lz4" % "lz4-java" % "1.11.4"
-// )
-
 libraryDependencies ++= Seq(
   specs2 % Test,
   ehcache,
