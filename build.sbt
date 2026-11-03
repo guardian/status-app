@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
   "io.netty" % "netty-codec" % nettyVersion,
   "io.netty" % "netty-codec-http" % nettyVersion,
   "io.netty" % "netty-codec-http2" % nettyVersion,
-  "com.gu.play-googleauth" %% "play-v30" % "6.0.0",
+  "com.gu.play-googleauth" %% "play-v30" % "46.1.1",
   "org.webjars.bower" % "react" % "0.14.0",
   "org.webjars" % "bootstrap" % "3.4.1",
   "org.webjars" % "d3js" % "3.5.17",
@@ -37,7 +37,8 @@ libraryDependencies ++= Seq(
   "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor" % jacksonVersion,
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % jacksonVersion,
   "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
-  "software.amazon.awssdk" % "ssm" % "2.37.4"
+  "software.amazon.awssdk" % "ssm" % "2.37.4",
+  "com.google.guava" % "guava" % "33.7.2-jre", // Transitive dependency from play-google-auth. Can remove this when vuln fixed there
 ) ++ Seq(
   "ec2", "elasticloadbalancing", "s3", "autoscaling", "cloudwatch", "sqs"
 ).map(artifact => "com.amazonaws" % s"aws-java-sdk-$artifact" % "1.12.694")
