@@ -21,7 +21,7 @@ jobs:
 
       # See https://github.com/guardian/setup-java
     - name: Setup Java and sbt
-      uses: guardian/setup-scala@v1
+      uses: guardian/setup-scala@v2
 
     - name: build steps
       run: sbt clean test debian:packageBin
