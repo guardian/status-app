@@ -21,6 +21,12 @@ The Status App uses OAuth with Google as the provider for authentication. You'll
 create client ID in the Google API console and then copy the details into the DynamoDB table
 created by the CloudFormation scripts.
 
+All endpoints that return application, AWS estate, or deployment data require an
+authenticated Google session for the configured domain. The only public endpoints are the
+login and OAuth flow, static login assets, `favicon.ico`, `robots.txt`, and
+`/management/healthcheck`. The health check is public because it is called by the load
+balancer and returns no application data.
+
 ![Example of filling in the the config details](dynamo-config.png)
 
 Ensure that you have switched on access to the Google+ API for your credentials.
