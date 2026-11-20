@@ -48,6 +48,6 @@ class MyComponents(context: Context)
     new ApplicationController(wsClient, authAction, awsCost, estateProvider, controllerComponents),
     new Login(googleAuthConfig, wsClient, controllerComponents),
     assets,
-    new Management(estateProvider, controllerComponents)
+    new Management(estateProvider, authAction, controllerComponents)
   )
 }
